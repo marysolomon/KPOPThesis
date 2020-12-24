@@ -71,6 +71,8 @@ orangecaramel = 'spotify:artist:2QHTtUsN6Q13w3QHdfRqsK'
 gna = 'spotify:artist:3hzcooxMtbApMTvvn6XKVA'
 coedschool = 'spotify:artist:6ZsTqFoNYY6cyRcKnvOu3A'
 
+#add 2011 and more 
+
 
 ##### Create the artist dataframe ####
 artist_df = pd.DataFrame({'Artist':['Seo Taiji and Boys', 'H.O.T.', 'SECHSKIES', 'NRG','Baby VOX', 
