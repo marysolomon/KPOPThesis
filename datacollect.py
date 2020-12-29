@@ -15,6 +15,7 @@ client_secret = '5c08310205a943d8a995cba8fdb83c78'
 client_credentials_manager = SpotifyClientCredentials(client_id, client_secret)
 sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 #later figure out how to set up api with global config file so that keys are anonymous.
+#reference this:  https://towardsdatascience.com/how-to-hide-your-api-keys-in-python-fb2e1a61b0a0
 
 
 ############### Read in df of Artist Info ###############
@@ -55,7 +56,7 @@ def getTrackFeatures(id):
   if len(available_markets) == 0:
       track = [uri, name, album, album_uri, artist, artist_uri, release_date, popularity, None, None, None,
              None, None, None, None, None, None, None, None, None, None]
-      return
+      return track
 
   # As long as song is available in any market, get all of the audio features :D
   else: 
@@ -162,11 +163,15 @@ print(len(song_ids))
 # for each song call the getTrack Features function
 # To return both meta data and track features.
 for k in range(len(song_ids)):
-     time.sleep(.5)
-     print(k)
-     feature = getTrackFeatures(song_ids[k])
-     print(feature)
-     feature_list.append(feature)
+    if k % 100 == 0:
+        print('sleep 10 seconds')
+        time.sleep(10)
+    else:
+        time.sleep(0.5)
+    print(k)
+    feature = getTrackFeatures(song_ids[k])
+    print(feature)
+    feature_list.append(feature)
 #print(sp.audio_features(song_ids[:49]))
 #convert to df
 SongFeatures_df = pd.DataFrame(feature_list, columns = ['song_name', 'song_uri', 'album', 'album_uri','artist', 'artist_uri','release_date', 'popularity', 'acousticness', 
