@@ -16,6 +16,8 @@ client_credentials_manager = SpotifyClientCredentials(client_id, client_secret)
 sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 #later figure out how to set up api with global config file so that keys are anonymous.
 #reference this:  https://towardsdatascience.com/how-to-hide-your-api-keys-in-python-fb2e1a61b0a0
+# or reference this: https://code.visualstudio.com/docs/python/environments
+# https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#macos-and-linux
 
 
 ############### Read in df of Artist Info ###############
@@ -33,7 +35,6 @@ feature_list = []
 
 
 ############### Define Functions ###############
-
 def getTrackFeatures(id):
   meta = sp.track(id)
   features = sp.audio_features(id)
@@ -49,11 +50,13 @@ def getTrackFeatures(id):
   popularity = meta['popularity']
   available_markets = meta['available_markets']
 
-  # audio features not available if song is unavailable in any market
+  # audio features not available if 
+  # (1) song is unavailable in any market
+  # (2) song does not have any audio features: returned as [None]
   # prevent error :line 51, in getTrackFeatures
   # acousticness = features[0]['acousticness']
   # TypeError: 'NoneType' object is not subscriptable
-  if len(available_markets) == 0:
+  if len(available_markets) == 0 or features[0] == None:
       track = [uri, name, album, album_uri, artist, artist_uri, release_date, popularity, None, None, None,
              None, None, None, None, None, None, None, None, None, None]
       return track
@@ -75,54 +78,12 @@ def getTrackFeatures(id):
     time_signature = features[0]['time_signature']
     valence = features[0]['valence']
 
-    track = [uri, name, album, album_uri, artist, artist_uri, release_date, popularity, acousticness, danceability, duration_ms,
+    track = [name, uri, album, album_uri, artist, artist_uri, release_date, popularity, acousticness, danceability, duration_ms,
              energy, instrumentalness, key, liveness, loudness, mode, speechiness, tempo, time_signature, valence]
     return track
   
 
-
-
-# def getMetaFeatures(id):
-#   meta = sp.track(id) 
-
-#   # meta
-#   name = meta['name']
-#   uri = meta['uri']
-#   album = meta['album']['name']
-#   album_uri = meta['album']['uri']
-#   artist = meta['album']['artists'][0]['name']
-#   artist_uri = meta['album']['artists'][0]['uri']
-#   release_date = meta['album']['release_date']
-#   popularity = meta['popularity']
-#   duration_ms = meta['duration_ms']
-
-#   meta_track = [uri, name, album, album_uri, artist, artist_uri, 
-#                 release_date, popularity, duration_ms]
-#   return meta_track
-
-# def getTrackFeatures(id):
-#   features = sp.audio_features(id)
-
-#   # features
-#   acousticness = features[0]['acousticness']
-#   danceability = features[0]['danceability']
-#   energy = features[0]['energy']
-#   instrumentalness = features[0]['instrumentalness']
-#   key = features[0]['key']
-#   liveness = features[0]['liveness']
-#   loudness = features[0]['loudness']
-#   mode = features[0]['mode']
-#   speechiness = features[0]['speechiness']
-#   tempo = features[0]['tempo']
-#   time_signature = features[0]['time_signature']
-#   valence = features[0]['valence']
-
-#   track = [acousticness, danceability, energy, instrumentalness, 
-#             key, liveness, loudness, mode, speechiness, tempo, time_signature, valence]
-#   return track
-
 ############### Get Song IDs for each artist ###############
-
 for artist in artist_list:
     ## Limit value must be between 1 and 50
     artistalbums = sp.artist_albums(artist_id = artist, limit = 50)
@@ -145,20 +106,6 @@ print(len(song_ids))
 song_ids = pd.DataFrame(song_ids).drop_duplicates()[0].tolist()
 print(len(song_ids))
 
-############### Create Song Metadata DF ############### 
-# This contains data on song names, album names, artist names, 
-# as well as the unique identifiers (URIS)
-
-
-############### Clean Song list ############### 
-# remove 'live', 'tour', 'the best of' albums since they are repeats of the songs that exist on albums
-# remove songs that actually don't have the artists in our list as the main artist (compilation albums)
-# remove instrumental versions of songs
-## ?? remove the kingdom and queendom albums (from a competition show) ??
-## ?? remove japanese and english versions of songs ??
-
-
-
 ############### Get Song Features ############### 
 # for each song call the getTrack Features function
 # To return both meta data and track features.
@@ -167,7 +114,7 @@ for k in range(len(song_ids)):
         print('sleep 10 seconds')
         time.sleep(10)
     else:
-        time.sleep(0.5)
+        time.sleep(0.3)
     print(k)
     feature = getTrackFeatures(song_ids[k])
     print(feature)
