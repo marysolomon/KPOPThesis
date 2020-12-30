@@ -57,7 +57,7 @@ def getTrackFeatures(id):
   # acousticness = features[0]['acousticness']
   # TypeError: 'NoneType' object is not subscriptable
   if len(available_markets) == 0 or features[0] == None:
-      track = [uri, name, album, album_uri, artist, artist_uri, release_date, popularity, None, None, None,
+      track = [name, uri, album, album_uri, artist, artist_uri, release_date, popularity, None, None, None,
              None, None, None, None, None, None, None, None, None, None]
       return track
 
@@ -78,7 +78,7 @@ def getTrackFeatures(id):
     time_signature = features[0]['time_signature']
     valence = features[0]['valence']
 
-    track = [name, uri, album, album_uri, artist, artist_uri, release_date, popularity, acousticness, danceability, duration_ms,
+    track = [name, uri, album, album_uri, artist, artist_uri, release_date, popularity, duration_ms, acousticness, danceability, 
              energy, instrumentalness, key, liveness, loudness, mode, speechiness, tempo, time_signature, valence]
     return track
   
@@ -113,16 +113,20 @@ for k in range(len(song_ids)):
     if k % 100 == 0:
         print('sleep 10 seconds')
         time.sleep(10)
+    if k % 1000 == 0:
+        print('sleep 1 minute')
+        time.sleep(60)
     else:
-        time.sleep(0.3)
+        time.sleep(0.5)
     print(k)
     feature = getTrackFeatures(song_ids[k])
     print(feature)
     feature_list.append(feature)
 #print(sp.audio_features(song_ids[:49]))
 #convert to df
-SongFeatures_df = pd.DataFrame(feature_list, columns = ['song_name', 'song_uri', 'album', 'album_uri','artist', 'artist_uri','release_date', 'popularity', 'acousticness', 
-                                     'danceability','duration_ms', 'energy', 'instrumentalness', 'key', 
+SongFeatures_df = pd.DataFrame(feature_list, columns = ['song_name', 'song_uri', 'album', 'album_uri',  'artist', 'artist_uri',
+                                     'release_date', 'popularity', 'duration_ms', 'acousticness', 
+                                     'danceability', 'energy', 'instrumentalness', 'key', 
                                      'liveness','loudness', 'mode','speechiness', 'tempo', 'time_signature', 'valence'])
 SongFeatures_df
 SongFeatures_df.to_csv('/Users/marysolomon/Desktop/KPOPThesis/songfeatures_unclean.csv')
