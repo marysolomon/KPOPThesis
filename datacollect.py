@@ -49,6 +49,7 @@ def getTrackFeatures(id):
   release_date = meta['album']['release_date']
   popularity = meta['popularity']
   available_markets = meta['available_markets']
+  duration_ms = meta['duration_ms']
 
   # audio features not available if 
   # (1) song is unavailable in any market
@@ -57,7 +58,7 @@ def getTrackFeatures(id):
   # acousticness = features[0]['acousticness']
   # TypeError: 'NoneType' object is not subscriptable
   if len(available_markets) == 0 or features[0] == None:
-      track = [name, uri, album, album_uri, artist, artist_uri, release_date, popularity, None, None, None,
+      track = [name, uri, album, album_uri, artist, artist_uri, release_date, popularity, duration_ms, None, None,
              None, None, None, None, None, None, None, None, None, None]
       return track
 
@@ -66,7 +67,6 @@ def getTrackFeatures(id):
     # features
     acousticness = features[0]['acousticness']
     danceability = features[0]['danceability']
-    duration_ms = meta['duration_ms']
     energy = features[0]['energy']
     instrumentalness = features[0]['instrumentalness']
     key = features[0]['key']
