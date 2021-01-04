@@ -4,7 +4,7 @@
 2,SECHSKIES,spotify:artist:6uRyNreOHUvWPNGnKfIo27,group,male,1.0,1997
 3,NRG,spotify:artist:7xrfnodwPKuIxS9JuUECaf,group,male,1.0,1997
 4,Baby VOX,spotify:artist:7H5LMtjHqkyH4U8dpLR4lo,group,female,1.0,1997
-5,S.E.S,spotify:artist:61HUG80Xma4rnXsqfZkzeM,group,female,1.0,1997
+5,S.E.S.,spotify:artist:61HUG80Xma4rnXsqfZkzeM,group,female,1.0,1997
 6,Diva,spotify:artist:0CI6MkDddUbiuI8T7V5ZcF,group,female,1.0,1997
 7,Fin.K.L,spotify:artist:2aRLyjYp7WPr4EkjkI1gvS,group,female,1.0,1998
 8,SHINHWA,spotify:artist:0jVvkFPa6YbFXQ3Qmhita0,group,male,1.5,1998
@@ -46,7 +46,7 @@
 44,After School,spotify:artist:1loWI8jVk9btgJXHgqHXPD,group,female,2.5,2009
 45,T-ARA,spotify:artist:1R52cwGf75yTf7I3Q0Irf8,group,female,2.5,2009
 46,f(x),spotify:artist:3wRA5UYoo08BBKJnzyKkpF,group,female,2.5,2009
-47,Rainbow,spotify:artist:7xDyxRXgFgOZhdtLtkYR1y,group,female,2.5,2009
+47,Rainbow (레인보우),spotify:artist:7xDyxRXgFgOZhdtLtkYR1y,group,female,2.5,2009
 48,Secret,spotify:artist:503DjcVO5Ku1NgLPhVuNg7,group,female,2.5,2009
 49,NS Yoon-G,spotify:artist:15EDMg4DaX49QQyxlBzC2f,solo,female,2.5,2009
 50,CNBLUE,spotify:artist:6dCz3spfpIvqqqsIoP6wXi,group,male,2.5,2010
@@ -62,7 +62,7 @@
 60,Coed School,spotify:artist:6ZsTqFoNYY6cyRcKnvOu3A,group,coed,2.5,2010
 61,B1A4,spotify:artist:3sxWOFw4MSN54SIQ8np6iG,group,male,2.5,2011
 62,Block B,spotify:artist:4RnezwRV7VBJUCI1S0AE5u,group,male,2.5,2011
-63,BOYRFIREND,spotify:artist:2Pw8E6zZoeuksVWtyZPnzd,group,male,2.5,2011
+63,BOYFRIEND,spotify:artist:2Pw8E6zZoeuksVWtyZPnzd,group,male,2.5,2011
 64,Raina,spotify:artist:2lkUAt5tu0ucVOMFT9hYtg,solo,female,2.5,2011
 65,Apink,spotify:artist:2uWcrwgWmZcQc3IPBs3tfU,group,female,2.5,2011
 66,Brave Girls,spotify:artist:7t5H3uQv0Zw6cQUnSTF5BB,group,female,2.5,2011
@@ -104,7 +104,7 @@
 102,UP10TION,spotify:artist:2LjaeuGS0ubYXZfNihGp9y,group,male,3.5,2015
 103,VAV,spotify:artist:3riGN5iBVBk5naQxUDr5fk,group,male,3.5,2015
 104,ASTRO,spotify:artist:4pz4uzOMpJQyV8UTsDy4H8,group,male,3.5,2016
-105,NCT(NCT U),spotify:artist:48eO052eSDcn8aTxiv6QaG,group,male,3.5,2016
+105,NCT,spotify:artist:48eO052eSDcn8aTxiv6QaG,group,male,3.5,2016
 106,NCT 127,spotify:artist:7f4ignuCJhLXfZ9giKT7rH,group,male,3.5,2016
 107,NCT DREAM,spotify:artist:1gBUSTR3TyDdTVFIaQnc02,group,male,3.5,2016
 108,SF9,spotify:artist:7LOmc7gyMVMOWF8qwEdn2X,group,male,3.5,2016
@@ -121,7 +121,7 @@
 119,JBJ,spotify:artist:6VJXRJvRRyLv99RZbXJ8RO,group,male,3.5,2017
 120,RAINZ,spotify:artist:46JpdBeitfoEleoCabDawH,group,male,3.5,2017
 121,A.C.E,spotify:artist:25KT93FeotUTHC1dbLasxi,group,male,3.5,2017
-122,THEBOYZ,spotify:artist:0CmvFWTX9zmMNCUi6fHtAx,group,male,3.5,2017
+122,THE BOYZ,spotify:artist:0CmvFWTX9zmMNCUi6fHtAx,group,male,3.5,2017
 123,DREAMCATCHER,spotify:artist:5V1qsQHdXNm4ZEZHWvFnqQ,group,female,3.5,2017
 124,PRISTIN,spotify:artist:6VAphrHp0Oc88qg9BDaH9D,group,female,3.5,2017
 125,Weki Meki,spotify:artist:5LWkv2hDbDwZL3zNwZYNPx,group,female,3.5,2017
