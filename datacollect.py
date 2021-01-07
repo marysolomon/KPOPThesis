@@ -33,15 +33,18 @@ feature_list = []
 
 ############### Define Functions ###############
 def getTrackFeatures(id):
+
+    #call features from api
     features = sp.audio_features(id)
 
+    # handling no features.
     if features[0] == None:
         track = [id, None, None, None, None, None, 
             None, None, None, None, None, None, None]
-    return track
+        return track
 
     else: 
-    # features
+        # extract features
         acousticness = features[0]['acousticness']
         danceability = features[0]['danceability']
         energy = features[0]['energy']
