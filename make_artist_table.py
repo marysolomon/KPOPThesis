@@ -18,13 +18,17 @@ eaglefive = 'spotify:artist:4vkr97RLtHtBPFUHdBqADe'
 onetym = 'spotify:artist:0P8IEJrM7oUTK4WwdMKsvS'
 god = 'spotify:artist:1nTCpd63NkuGGpCIbo4Ywl'
 clickb = 'spotify:artist:2kOGSFThgEzPEjL4fFB25w'
-boa = 'spotify:artist:4muJrGMndyYWqZtfk8OWy4' #excessive amounts of albums, need to manually clean
+boa = 'spotify:artist:4muJrGMndyYWqZtfk8OWy4' 
 jewelry = 'spotify:artist:01iyQzyns6Ab0LxjYvHcg9'
 rain = 'spotify:artist:5L4EafeXwZ0stGuPtGr5Tz'
 wheesung = 'spotify:artist:7luxe2wCwtDtkKSP8ZhPLn'
 seven = 'spotify:artist:14yLuCwlBqteUdBqx9soJV'
 lexy = 'spotify:artist:5C9rYLjMoYuwbbM34ReBU5'
 
+turbo = 'spotify:artist:3aboSJaljyYlTRXt7pEH0G'
+deux = 'spotify:artist:64RfnYDHtR3ZaLdtxAjPDA'
+leehyori = 'spotify:artist:4FjoOJAndC0s9ZJUo6VGc5'
+psy = 'spotify:artist:2dd5mrQZvg6SmahdgVKDzh'
 
 ## Second Generation Idols
 tvxq = 'spotify:artist:6nVMMEywS5Y4tsHPKx1nIo'
@@ -91,6 +95,14 @@ ailee = 'spotify:artist:3uGFTJ7JMllvhgGpumieHF'
 anda = 'spotify:artist:2PZt7SATrAxsNG60Mqkan4'
 ladiescode = 'spotify:artist:4epPY1AW9lQeVUM1XaFiwi'
 
+taeyang = 'spotify:artist:6udveWUgX4vu75FF0DTrXV'
+gdragon = 'spotify:artist:30b9WulBM8sFuBo17nNq9c'
+hyuna = 'spotify:artist:3UwlejyX2b458azZ7eCnHb'
+gain = 'spotify:artist:4R60A85t9mTZzCqJlVswuo'
+parkbom = 'spotify:artist:3uHb6dRazmcaT15bMexUtt'
+cl = 'spotify:artist:0tzSBCPJZmHTdOA3ZV2mN3'
+sunmi = 'spotify:artist:6MoXcK2GyGg7FIyxPU5yW6'
+
 ## Third Generation Idols
 bap = 'spotify:artist:6kxCoNfY6U1eP0Yc88phvk'
 btob = 'spotify:artist:2hcsKca6hCfFMwwdbFvenJ'
@@ -142,6 +154,17 @@ pristin = 'spotify:artist:6VAphrHp0Oc88qg9BDaH9D'
 wekimeki = 'spotify:artist:5LWkv2hDbDwZL3zNwZYNPx'
 tripleh = 'spotify:artist:1klFdLh3pak3eOtJP0styY'
 
+blackpink = 'spotify:artist:41MozSoPIsD1dJM0CLPjZF'
+ericnam = 'spotify:artist:2FLqlgckDKdmpBrvLAT5BM'
+leehi = 'spotify:artist:7cVZApDoQZpS447nHTsNqu'
+akmu = 'spotify:artist:6OwKE9Ez6ALxpTaKcT5ayv'
+taeyeon = 'spotify:artist:3qNVuliS40BLgXGxhdBdqu'
+taemin = 'spotify:artist:13rF01aOogvnkuQXOlgTW8'
+jonghyun = 'spotify:artist:5rGgflnIpRNizTCozbYBuY'
+chungha = 'spotify:artist:2PSJ6YriU7JsFucxACpU7Y'
+jennie = 'spotify:artist:250b0Wlc5Vk0CoUsaCY84M'
+
+
 ## Fourth Generation Idols
 straykids = 'spotify:artist:2dIgFjalVxs4ThymZ67YCE'
 ateez = 'spotify:artist:68KmkJeZGfwe1OUaivBa2L'
@@ -170,6 +193,13 @@ too = 'spotify:artist:3a0xHIHQPhhzgSOJzgB2Rz'
 cravity = 'spotify:artist:6FkhUhUwSPl3mGB6mmE8wn'
 cignature = 'spotify:artist:5x9WawpXGR82PWDFk9CKYQ'
 aespa = 'spotify:artist:6YVMFz59CuY7ngCxTxjpxE'
+
+hwasa = 'spotify:artist:7bmYpVgQub656uNTu6qGNQ'
+baekhyun = 'spotify:artist:4ufh0WuMZh6y4Dmdnklvdl'
+kai = 'spotify:artist:6iVo62B0bdTknRcrktCmak'
+somi = 'spotify:artist:7zYj9S9SdIunYCfSm7vzAR'
+kangdaniel = 'spotify:artist:5vGoWnZO65NBgiZYBmi3iW'
+wonho = 'spotify:artist:6pC3vnUgNVITdYMMXefi6D'
 
 ##### Create the artist dataframe ####
 artist_df = pd.DataFrame({'Artist':['Seo Taiji and Boys', 'H.O.T.', 'SECHSKIES', 'NRG','Baby VOX', 
@@ -202,7 +232,13 @@ artist_df = pd.DataFrame({'Artist':['Seo Taiji and Boys', 'H.O.T.', 'SECHSKIES',
                     'VERIVERY', 'TOMORROW X TOGETHER', 'AB6IX', 'CIX', 'X1',
                     'Cherry Bullet', 'ITZY', 'EVERGLOW', 'BVNDIT', 'Rocket Punch',
                     'HINAPIA', '3YE', 'AleXa', 'MCND', 'DKB',
-                    'TOO', 'CRAVITY', 'cignature', 'aespa'],
+                    'TOO', 'CRAVITY', 'cignature', 'aespa',
+                    'BLACKPINK', 'TURBO', 'DEUX', 'Lee Hyori', 'PSY',
+                    'TAEYANG', 'G-DRAGON', 'HyunA', 'Gain', 'Park Bom',
+                    'CL', 'SUNMI', 'Eric Nam', 'LeeHi', 'AKMU',
+                    'Taeyeon', 'TAEMIN', 'JONGHYUN', 'CHUNGHA', 'JENNIE',
+                    'Hwa Sa', 'BAEKHYUN', 'KAI', 'SOMI', 'KANG DANIEL',
+                    'WONHO'],
                     
 
              'ID' : [seotaijiandboys, hot, sechskies, nrg, babyvox, 
@@ -235,7 +271,13 @@ artist_df = pd.DataFrame({'Artist':['Seo Taiji and Boys', 'H.O.T.', 'SECHSKIES',
                     verivery, txt, ab6ix, cix, x1,
                     cherrybullet, itzy, everglow, bvndit, rocketpunch,
                     hinapia, threeye, alexa, mcnd, dkb,
-                    too, cravity, cignature, aespa],
+                    too, cravity, cignature, aespa,
+                    blackpink, turbo, deux, leehyori, psy,
+                    taeyang, gdragon, hyuna, gain, parkbom,
+                    cl, sunmi, ericnam, leehi, akmu,
+                    taeyeon, taemin, jonghyun, chungha, jennie,
+                    hwasa, baekhyun, kai, somi, kangdaniel,
+                    wonho],
 
              'Type': ['group', 'group', 'group', 'group','group', 
                     'group', 'group', 'group','group', 'group', 
@@ -267,7 +309,13 @@ artist_df = pd.DataFrame({'Artist':['Seo Taiji and Boys', 'H.O.T.', 'SECHSKIES',
                     'group', 'group', 'group', 'group', 'group',
                     'group', 'group', 'group', 'group', 'group',
                     'group', 'group', 'solo', 'group', 'group',
-                    'group', 'group', 'group', 'group'],
+                    'group', 'group', 'group', 'group',
+                    'group', 'group', 'group', 'solo', 'solo',
+                    'solo', 'solo', 'solo', 'solo', 'solo',
+                    'solo', 'solo', 'solo', 'solo', 'group',
+                    'solo', 'solo', 'solo', 'solo', 'solo',
+                    'solo', 'solo', 'solo', 'solo', 'solo',
+                    'solo'],
 
              'Gender': ['male', 'male', 'male', 'male','female', 
                     'female', 'female', 'female','male', 'male', 
@@ -299,7 +347,13 @@ artist_df = pd.DataFrame({'Artist':['Seo Taiji and Boys', 'H.O.T.', 'SECHSKIES',
                     'male', 'male', 'male', 'male', 'male',
                     'female', 'female', 'female', 'female', 'female',
                     'female', 'female', 'female', 'male', 'male',
-                    'male', 'male', 'female', 'female'], 
+                    'male', 'male', 'female', 'female',
+                    'female', 'male', 'male', 'female', 'male',
+                    'male', 'male', 'female', 'female', 'female',
+                    'female', 'female', 'male', 'female', 'coed',
+                    'female', 'male', 'male', 'female', 'female',
+                    'female', 'male', 'male', 'female', 'male',
+                    'male'], 
 
              'Generation': [1, 1, 1, 1, 1, 
                     1, 1, 1, 1.5, 1.5, 
@@ -331,7 +385,13 @@ artist_df = pd.DataFrame({'Artist':['Seo Taiji and Boys', 'H.O.T.', 'SECHSKIES',
                     4, 4, 4, 4, 4,
                     4, 4, 4, 4, 4,
                     4, 4, 4, 4, 4,
-                    4, 4, 4, 4],
+                    4, 4, 4, 4,
+                    3.5, 1, 1, 1.5, 1.5,
+                    2, 2, 2.5, 2, 2,
+                    2, 2, 3, 3, 3,
+                    3, 3, 3, 3.5, 3.5,
+                    4, 4, 4, 4, 4,
+                    4],
 
              'DebutYear':[1992, 1996, 1997, 1997, 1997, 
                     1997, 1997, 1998, 1998, 1998, 
@@ -363,7 +423,13 @@ artist_df = pd.DataFrame({'Artist':['Seo Taiji and Boys', 'H.O.T.', 'SECHSKIES',
                     2019, 2019, 2019, 2019, 2019,
                     2019, 2019, 2019, 2019, 2019,
                     2019, 2019, 2019, 2020, 2020,
-                    2020, 2020, 2020, 2020]})
+                    2020, 2020, 2020, 2020,
+                    2016, 1995, 1993, 2003, 2001,
+                    2008, 2009, 2010, 2010, 2009,
+                    2013, 2013, 2013, 2012, 2012,
+                    2015, 2014, 2015, 2017, 2018,
+                    2019, 2019, 2020, 2019, 2019,
+                    2020]})
 
 print(artist_df)
 artist_df.to_csv('artist_df.csv')

@@ -16,8 +16,8 @@ client_credentials_manager = SpotifyClientCredentials(client_id, client_secret)
 sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
 ############### Read in df of Artist Info ###############
-artist_data = pd.read_csv('artist_df.csv')
-#print(artist_data)
+artist_data = pd.read_csv('artist_df.csv')[154:]
+artist_data.head(n=5)
 artist_list = artist_data['ID']
 
 ############### Global Variables and Lists ###############
@@ -86,4 +86,4 @@ for k in range(len(song_ids)):
 MetaFeatures_df = pd.DataFrame(meta_list, columns = ['song_name', 'song_uri', 'album', 'album_uri',  'artist', 'artist_uri',
                                      'release_date', 'popularity', 'duration_ms'])
 MetaFeatures_df
-MetaFeatures_df.to_csv('/Users/marysolomon/Desktop/KPOPThesis/songs_meta_table_unclean.csv')
+MetaFeatures_df.to_csv('/Users/marysolomon/Desktop/KPOPThesis/songs_meta_table_unclean2.csv')
