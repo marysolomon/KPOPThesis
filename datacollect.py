@@ -21,7 +21,7 @@ sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
 
 ############### Read in df of Artist Info ###############
-song_data = pd.read_csv('songs_meta_table_clean.csv')
+song_data = pd.read_csv('songs_meta_table_clean2.csv')
 song_data.head(n=5)
 song_ids = song_data['song_uri']
 print('There are ',len(song_ids), ' songs to collect audio features for')
@@ -86,4 +86,7 @@ SongFeatures_df = pd.DataFrame(feature_list, columns = ['song_uri','acousticness
 #combine it with the meta data from the songs df
 SongFeatures_df = pd.merge(left = song_data, right = SongFeatures_df, left_on = 'song_uri', right_on = 'song_uri')
 SongFeatures_df
-SongFeatures_df.to_csv('/Users/marysolomon/Desktop/KPOPThesis/audiofeatures_unclean.csv')
+#SongFeatures_df.to_csv('/Users/marysolomon/Desktop/KPOPThesis/audiofeatures_unclean.csv')
+
+#when appending
+SongFeatures_df.to_csv('/Users/marysolomon/Desktop/KPOPThesis/audiofeatures_unclean.csv', mode = 'a', header = False)
