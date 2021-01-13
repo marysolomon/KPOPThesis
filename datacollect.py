@@ -21,7 +21,7 @@ sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
 
 ############### Read in df of Artist Info ###############
-song_data = pd.read_csv('songs_meta_table_clean2.csv')
+song_data = pd.read_csv('songs_meta_table_clean3.csv')
 song_data.head(n=5)
 song_ids = song_data['song_uri']
 print('There are ',len(song_ids), ' songs to collect audio features for')

@@ -29,6 +29,8 @@ turbo = 'spotify:artist:3aboSJaljyYlTRXt7pEH0G'
 deux = 'spotify:artist:64RfnYDHtR3ZaLdtxAjPDA'
 leehyori = 'spotify:artist:4FjoOJAndC0s9ZJUo6VGc5'
 psy = 'spotify:artist:2dd5mrQZvg6SmahdgVKDzh'
+jyp = 'spotify:artist:1TTx0YcbKUtJIZY1HEnh9B'
+
 
 ## Second Generation Idols
 tvxq = 'spotify:artist:6nVMMEywS5Y4tsHPKx1nIo'
@@ -238,7 +240,7 @@ artist_df = pd.DataFrame({'Artist':['Seo Taiji and Boys', 'H.O.T.', 'SECHSKIES',
                     'CL', 'SUNMI', 'Eric Nam', 'LeeHi', 'AKMU',
                     'Taeyeon', 'TAEMIN', 'JONGHYUN', 'CHUNGHA', 'JENNIE',
                     'Hwa Sa', 'BAEKHYUN', 'KAI', 'SOMI', 'KANG DANIEL',
-                    'WONHO'],
+                    'WONHO', 'J.Y. Park'],
                     
 
              'ID' : [seotaijiandboys, hot, sechskies, nrg, babyvox, 
@@ -277,7 +279,7 @@ artist_df = pd.DataFrame({'Artist':['Seo Taiji and Boys', 'H.O.T.', 'SECHSKIES',
                     cl, sunmi, ericnam, leehi, akmu,
                     taeyeon, taemin, jonghyun, chungha, jennie,
                     hwasa, baekhyun, kai, somi, kangdaniel,
-                    wonho],
+                    wonho, jyp],
 
              'Type': ['group', 'group', 'group', 'group','group', 
                     'group', 'group', 'group','group', 'group', 
@@ -315,7 +317,7 @@ artist_df = pd.DataFrame({'Artist':['Seo Taiji and Boys', 'H.O.T.', 'SECHSKIES',
                     'solo', 'solo', 'solo', 'solo', 'group',
                     'solo', 'solo', 'solo', 'solo', 'solo',
                     'solo', 'solo', 'solo', 'solo', 'solo',
-                    'solo'],
+                    'solo', 'solo'],
 
              'Gender': ['male', 'male', 'male', 'male','female', 
                     'female', 'female', 'female','male', 'male', 
@@ -353,7 +355,7 @@ artist_df = pd.DataFrame({'Artist':['Seo Taiji and Boys', 'H.O.T.', 'SECHSKIES',
                     'female', 'female', 'male', 'female', 'coed',
                     'female', 'male', 'male', 'female', 'female',
                     'female', 'male', 'male', 'female', 'male',
-                    'male'], 
+                    'male', 'male'], 
 
              'Generation': [1, 1, 1, 1, 1, 
                     1, 1, 1, 1.5, 1.5, 
@@ -391,7 +393,7 @@ artist_df = pd.DataFrame({'Artist':['Seo Taiji and Boys', 'H.O.T.', 'SECHSKIES',
                     2, 2, 3, 3, 3,
                     3, 3, 3, 3.5, 3.5,
                     4, 4, 4, 4, 4,
-                    4],
+                    4, 1],
 
              'DebutYear':[1992, 1996, 1997, 1997, 1997, 
                     1997, 1997, 1998, 1998, 1998, 
@@ -429,7 +431,7 @@ artist_df = pd.DataFrame({'Artist':['Seo Taiji and Boys', 'H.O.T.', 'SECHSKIES',
                     2013, 2013, 2013, 2012, 2012,
                     2015, 2014, 2015, 2017, 2018,
                     2019, 2019, 2020, 2019, 2019,
-                    2020]})
+                    2020, 1994]})
 
 print(artist_df)
 artist_df.to_csv('artist_df.csv')
