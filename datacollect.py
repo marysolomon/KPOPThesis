@@ -22,7 +22,7 @@ sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
 ############### Read in df of Artist Info ###############
 song_data = pd.read_csv('songs_meta_table_clean.csv')
-song_data.head(n=5)
+print(song_data.head(n=5))
 song_ids = song_data['song_uri']
 print('There are ',len(song_ids), ' songs to collect audio features for')
 
@@ -75,7 +75,7 @@ for k in range(len(song_ids)):
         print('sleep 1 minute')
         time.sleep(60)
     print(k)
-    feature = getTrackFeatures(song_ids[k])
+    feature = getTrackFeatures(song_ids.iloc[k])
     print(feature)
     feature_list.append(feature)
 #print(sp.audio_features(song_ids[:49]))

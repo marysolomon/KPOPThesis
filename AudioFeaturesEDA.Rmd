@@ -1,0 +1,129 @@
+---
+title: "AudioFeaturesEDA"
+author: "Mary Solomon"
+date: "1/17/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(data.table)
+library(tidyverse)
+library(ggplot2)
+library(ggthemes)
+
+gghist <- function(var, var_name){
+  ggplot(data = data, aes(var)) + 
+  geom_histogram(fill = 'white', col = 'black') +
+  xlab(var_name) +
+  theme_minimal()
+}
+```
+
+### Import Data 
+```{r}
+data <- fread("audiofeatures_clean.csv")
+head(data, n=5)
+```
+
+Let's look at a summary
+```{r}
+summary(data)
+```
+
+
+release date distribution
+```{r}
+#gghist(data$release_date, 'release date')
+```
+
+
+popularity distribution
+```{r}
+ggplot(data = data, aes(popularity)) + 
+  geom_histogram(fill = 'white', col = 'black') +
+  theme_minimal()
+gghist(data$popularity, 'popularity')
+hist(data$popularity)
+```
+
+
+
+duration distribution
+```{r}
+gghist(data$duration_ms, 'duration (ms)')
+gghist(log(data$duration_ms), 'duration (ms) and log transform')
+```
+
+
+
+acousticness distribution
+```{r}
+gghist(data$acousticness, 'acousticness')
+```
+
+danceability distribution
+```{r}
+gghist(data$danceability, 'danceability')
+```
+
+energy distribution
+```{r}
+gghist(data$energy, 'energy')
+```
+
+instrumentalness distribution
+```{r}
+gghist(data$instrumentalness, 'instrumentalness')
+gghist(log(data$instrumentalness), 'instrumentalness (log transform)')
+```
+
+
+key distribution (categorical 1-12)
+```{r}
+gghist(data$key, 'musical key')
+```
+
+
+liveness distribution
+```{r}
+gghist(data$liveness, 'liveness')
+```
+
+loudness distribution
+```{r}
+gghist(data$loudness, 'loudness')
+```
+
+mode distribution (also categorical)
+```{r}
+gghist(data$mode, 'musical mode')
+```
+
+
+speechiness distribution
+```{r}
+gghist(data$speechiness, 'speechiness')
+gghist(log(data$speechiness), 'speechiness (log transform)')
+```
+
+
+tempo distribution
+```{r}
+gghist(data$tempo, 'tempo')
+```
+
+
+
+time_signature distirbution (categorical...)
+```{r}
+gghist(data$time_signature, 'time signature')
+```
+
+
+valence distribution
+```{r}
+gghist(data$valence, 'valence')
+```
+
+
