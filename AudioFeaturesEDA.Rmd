@@ -18,88 +18,230 @@ gghist <- function(var, var_name){
   xlab(var_name) +
   theme_minimal()
 }
+
+gghist.group <- function(var, var_name, group_var){
+  ggplot(data, aes(var, group = group_var)) + 
+  geom_histogram(aes(y = stat(density)), 
+                 fill = 'white', col = 'black') + 
+  xlab(var_name) +
+  theme_minimal() +
+  facet_wrap(~ group_var)
+}
 ```
 
 ### Import Data 
 ```{r}
-data <- fread("audiofeatures_clean.csv")
-head(data, n=5)
+audio <- fread("audiofeatures_clean.csv")
+artists <- fread("artist_df.csv")[,-1]
+data <- merge(artists, audio, by.x = 'ID', by.y = 'artist_uri')
+data = data %>% mutate(Generation = floor(Generation), duration_s = duration_ms / 1000) %>%
+  select(-artist) %>%
+  rename(
+    Artist_uri = ID, ArtistType = Type, ArtistGender  = Gender, ArtistGen = Generation, ArtistDebut = DebutYear)
+  
+# head(data, n=5)
 ```
 
+
+### Summary
 Let's look at a summary
 ```{r}
 summary(data)
 ```
 
 
+### Release Date
 release date distribution
 ```{r}
 #gghist(data$release_date, 'release date')
 ```
 
 
+
+### Popularity
 popularity distribution
 ```{r}
-ggplot(data = data, aes(popularity)) + 
-  geom_histogram(fill = 'white', col = 'black') +
-  theme_minimal()
 gghist(data$popularity, 'popularity')
-hist(data$popularity)
+```
+
+popularity by generation
+```{r}
+ggplot(data, aes(data$popularity, group = ArtistGen)) + 
+geom_histogram(aes(y = stat(density)), 
+                fill = 'white', col = 'black') + 
+xlab('popularity') +
+theme_minimal() +
+facet_wrap(~ArtistGen)
 ```
 
 
 
+#### Duration
 duration distribution
 ```{r}
 gghist(data$duration_ms, 'duration (ms)')
 gghist(log(data$duration_ms), 'duration (ms) and log transform')
 ```
 
+duration by generation
+```{r}
+ggplot(data, aes(data$duration_ms, group = ArtistGen)) + 
+geom_histogram(aes(y = stat(density)), 
+                fill = 'white', col = 'black') + 
+xlab('duration (seconds)') +
+theme_minimal() +
+facet_wrap(~ArtistGen)
+```
 
+
+
+### Acousticness
 
 acousticness distribution
 ```{r}
 gghist(data$acousticness, 'acousticness')
 ```
 
+
+acousticness by generation
+```{r}
+ggplot(data, aes(data$acousticness, group = ArtistGen)) + 
+geom_histogram(aes(y = stat(density)), 
+                fill = 'white', col = 'black') + 
+xlab('acousticness') +
+theme_minimal() +
+facet_wrap(~ArtistGen)
+```
+
+### Danceability
 danceability distribution
 ```{r}
 gghist(data$danceability, 'danceability')
 ```
 
+
+Danceability by generation
+```{r}
+ggplot(data, aes(data$danceability, group = ArtistGen)) + 
+geom_histogram(aes(y = stat(density)), 
+                fill = 'white', col = 'black') + 
+xlab('danceability') +
+theme_minimal() +
+facet_wrap(~ArtistGen)
+```
+
+
+### Energy
 energy distribution
 ```{r}
 gghist(data$energy, 'energy')
 ```
 
+
+energy by generation
+```{r}
+ggplot(data, aes(data$energy, group = ArtistGen)) + 
+geom_histogram(aes(y = stat(density)), 
+                fill = 'white', col = 'black') + 
+xlab('energy') +
+theme_minimal() +
+facet_wrap(~ArtistGen)
+```
+
+
+
+### Instrumentalness 
 instrumentalness distribution
 ```{r}
 gghist(data$instrumentalness, 'instrumentalness')
 gghist(log(data$instrumentalness), 'instrumentalness (log transform)')
 ```
 
+instrumentalness by generation
+```{r}
+ggplot(data, aes(data$instrumentalness, group = ArtistGen)) + 
+geom_histogram(aes(y = stat(density)), 
+                fill = 'white', col = 'black') + 
+xlab('instrumentalness') +
+theme_minimal() +
+facet_wrap(~ArtistGen)
 
+ggplot(data, aes(log(data$instrumentalness), group = ArtistGen)) + 
+geom_histogram(aes(y = stat(density)), 
+                fill = 'white', col = 'black') + 
+xlab('instrumentalness (log transform)') +
+theme_minimal() +
+facet_wrap(~ArtistGen)
+```
+
+### Musical Key 
 key distribution (categorical 1-12)
 ```{r}
 gghist(data$key, 'musical key')
 ```
 
 
+Key by Generation
+```{r}
+ggplot(data, aes(data$key, group = ArtistGen)) + 
+geom_histogram(aes(y = stat(density)), 
+                fill = 'white', col = 'black') + 
+xlab('musical key') +
+theme_minimal() +
+facet_wrap(~ArtistGen)
+```
+
+### Liveness
+
 liveness distribution
 ```{r}
 gghist(data$liveness, 'liveness')
 ```
 
+```{r}
+ggplot(data, aes(data$liveness, group = ArtistGen)) + 
+geom_histogram(aes(y = stat(density)), 
+                fill = 'white', col = 'black') + 
+xlab('liveness') +
+theme_minimal() +
+facet_wrap(~ArtistGen)
+```
+
+
+### Loudness 
 loudness distribution
 ```{r}
 gghist(data$loudness, 'loudness')
 ```
 
+```{r}
+ggplot(data, aes(data$loudness, group = ArtistGen)) + 
+geom_histogram(aes(y = stat(density)), 
+                fill = 'white', col = 'black') + 
+xlab('loudness') +
+theme_minimal() +
+facet_wrap(~ArtistGen)
+```
+
+
+
+### Mode (major vs. minor)
 mode distribution (also categorical)
 ```{r}
 gghist(data$mode, 'musical mode')
 ```
 
+```{r}
+ggplot(data, aes(data$mode, group = ArtistGen)) + 
+geom_histogram(aes(y = stat(density)), 
+                fill = 'white', col = 'black') + 
+xlab('musical mode') +
+theme_minimal() +
+facet_wrap(~ArtistGen)
+```
+
+
+### Speechiness
 
 speechiness distribution
 ```{r}
@@ -108,22 +250,68 @@ gghist(log(data$speechiness), 'speechiness (log transform)')
 ```
 
 
+```{r}
+ggplot(data, aes(data$speechiness, group = ArtistGen)) + 
+geom_histogram(aes(y = stat(density)), 
+                fill = 'white', col = 'black') + 
+xlab('speechiness') +
+theme_minimal() +
+facet_wrap(~ArtistGen)
+
+ggplot(data, aes(log(data$speechiness), group = ArtistGen)) + 
+geom_histogram(aes(y = stat(density)), 
+                fill = 'white', col = 'black') + 
+xlab('speechiness (log transform)') +
+theme_minimal() +
+facet_wrap(~ArtistGen)
+```
+
+### Tempo 
 tempo distribution
 ```{r}
 gghist(data$tempo, 'tempo')
 ```
 
+```{r}
+ggplot(data, aes(data$tempo, group = ArtistGen)) + 
+geom_histogram(aes(y = stat(density)), 
+                fill = 'white', col = 'black') + 
+xlab('tempo') +
+theme_minimal() +
+facet_wrap(~ArtistGen)
+```
 
 
+### Time Signature
 time_signature distirbution (categorical...)
 ```{r}
 gghist(data$time_signature, 'time signature')
 ```
 
 
+```{r}
+ggplot(data, aes(data$time_signature, group = ArtistGen)) + 
+geom_histogram(aes(y = stat(density)), 
+                fill = 'white', col = 'black') + 
+xlab('time signature') +
+theme_minimal() +
+facet_wrap(~ArtistGen)
+```
+
+
+### Valence
 valence distribution
 ```{r}
 gghist(data$valence, 'valence')
 ```
 
+
+```{r}
+ggplot(data, aes(data$valence, group = ArtistGen)) + 
+geom_histogram(aes(y = stat(density)), 
+                fill = 'white', col = 'black') + 
+xlab('valence') +
+theme_minimal() +
+facet_wrap(~ArtistGen)
+```
 
