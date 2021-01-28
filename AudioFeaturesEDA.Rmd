@@ -38,7 +38,7 @@ data = data %>% mutate(Generation = floor(Generation), duration_s = duration_ms 
   select(-artist) %>%
   rename(
     Artist_uri = ID, ArtistType = Type, ArtistGender  = Gender, ArtistGen = Generation, ArtistDebut = DebutYear)
-  
+albums <- unique(select(data, Artist, album))  
 # head(data, n=5)
 ```
 
