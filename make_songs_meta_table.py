@@ -16,10 +16,11 @@ client_credentials_manager = SpotifyClientCredentials(client_id, client_secret)
 sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
 ############### Read in df of Artist Info ###############
-artist_data = pd.read_csv('artist_df.csv').tail(1)
-artist_data.head(n=5)
-artist_list = artist_data['ID']
-
+#artist_data = pd.read_csv('artist_df.csv').tail(1)
+#artist_data.head(n=5)
+#artist_list = artist_data['ID']
+album_add = pd.read_csv('album_additions.csv')
+print(album_add)
 ############### Global Variables and Lists ###############
 song_ids = []
 meta_list = []
@@ -47,19 +48,22 @@ def getMetaFeatures(id):
 
 
 ############### Get Song IDs for each artist ###############
-for artist in artist_list:
+#for artist in artist_list:
     ## Limit value must be between 1 and 50
-    artistalbums = sp.artist_albums(artist_id = artist, limit = 50)
+    #artistalbums = sp.artist_albums(artist_id = artist, limit = 50)
     
     
     # go to their individual albums
-    for i in range(len(artistalbums['items'])):
-        album_uri = artistalbums['items'][i]['uri']
-        album_tracks = sp.album_tracks(album_uri)
+
+for i in range(len(album_add)):
+    #for i in range(len(artistalbums['items'])):
+        #album_uri = artistalbums['items'][i]['uri']
+    album_uri = album_add['album_uri'][i]
+    album_tracks = sp.album_tracks(album_uri)
         
         #go to their individual tracks
-        for j in range(len(album_tracks['items'])):
-            song_ids.append(album_tracks['items'][j]['uri'])
+    for j in range(len(album_tracks['items'])):
+        song_ids.append(album_tracks['items'][j]['uri'])
             #song_ids.append(album_tracks['items'][j]['id'])
 
 #print(song_ids)
@@ -86,4 +90,4 @@ for k in range(len(song_ids)):
 MetaFeatures_df = pd.DataFrame(meta_list, columns = ['song_name', 'song_uri', 'album', 'album_uri',  'artist', 'artist_uri',
                                      'release_date', 'popularity', 'duration_ms'])
 MetaFeatures_df
-MetaFeatures_df.to_csv('/Users/marysolomon/Desktop/KPOPThesis/songs_meta_table_unclean.csv')
+MetaFeatures_df.to_csv('/Users/marysolomon/Desktop/KPOPThesis/songs_meta_table_unclean3.csv')
