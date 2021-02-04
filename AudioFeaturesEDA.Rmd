@@ -11,6 +11,8 @@ library(data.table)
 library(tidyverse)
 library(ggplot2)
 library(ggthemes)
+library(stringr)
+library(scales)
 
 gghist <- function(var, var_name){
   ggplot(data = data, aes(var)) + 
@@ -21,7 +23,7 @@ gghist <- function(var, var_name){
 
 gghist.group <- function(var, var_name, group_var){
   ggplot(data, aes(var, group = group_var)) + 
-  geom_histogram(aes(y = stat(density)), 
+  geom_histogram(aes(y = stat(count/sum(count))), 
                  fill = 'white', col = 'black') + 
   xlab(var_name) +
   theme_minimal() +
@@ -34,13 +36,36 @@ gghist.group <- function(var, var_name, group_var){
 audio <- fread("audiofeatures_clean.csv")
 artists <- fread("artist_df.csv")[,-1]
 data <- merge(artists, audio, by.x = 'ID', by.y = 'artist_uri')
-data = data %>% mutate(Generation = floor(Generation), duration_s = duration_ms / 1000) %>%
+data <- na.omit(data) #remove NAs (there were less than 5 rows)
+data = data %>% mutate(Generation = floor(Generation), duration_mmss = format(as.POSIXct(Sys.Date()) + duration_ms/1000, "%M:%S"), duration_ms = duration_ms/60000) %>%
   select(-artist) %>%
-  rename(
-    Artist_uri = ID, ArtistType = Type, ArtistGender  = Gender, ArtistGen = Generation, ArtistDebut = DebutYear)
-albums <- unique(select(data, Artist, album))  
+  rename(Artist_uri = ID, 
+         ArtistType = Type, 
+         ArtistGender  = Gender, 
+         ArtistGen = Generation, 
+         ArtistDebut = DebutYear,
+         duration = duration_ms)
+#albums <- unique(select(data, Artist, album))  
 # head(data, n=5)
 ```
+
+### More data cleaning (based on EDA)
+
+There are intro and outro songs on albums that serve as aesthetic tracks to tie the entire album together as one artistic work. However, these intro and outro songs do not serve to categorize the kpop music genre as they simply act like 'filler' works and not ones that are candidates to actively be promoted in the commercial music market. 
+
+Therefore, we would like to remove these types of tracks from the dataset as they are the source for skewness in instrumentalness and speechiness being on the high end and for causing skewness in song duration from being on the low end.
+
+remove songs that have the words: intro, outro, interlude in the song name, songs that are longer than 10 minutes. And remove songs less than or equal to 2 minutes if they are outliers in the areas of instrumentalness or speechiness.
+
+This does not remove every single 'filler song' but it removes most of them. 
+```{r}
+remove <- data %>% filter(str_detect(song_name, "intro") | str_detect(song_name, "outro") | str_detect(song_name, "interlude") | duration >= 10 | (duration <= 2 & (instrumentalness >= 0.50 | speechiness >= 0.40 | speechiness == 0)))
+nrow(remove)
+data <- data[!data$song_uri %in% remove$song_uri, ]
+#fwrite(data, "kpopdata.csv")
+```
+
+
 
 
 ### Summary
@@ -59,10 +84,20 @@ release date distribution
 
 
 ### Popularity
+
+The popularity measure from Spotify is defined as:
+> The popularity of the track. The value will be between 0 and 100, with 100 being the most popular. The popularity of a track is a value between 0 and 100, with 100 being the most popular. The popularity is calculated by algorithm and is based, in the most part, on the total number of plays the track has had and how recent those plays are. Generally speaking, songs that are being played a lot now will have a higher popularity than songs that were played a lot in the past. Duplicate tracks (e.g. the same track from a single and an album) are rated independently. Artist and album popularity is derived mathematically from track popularity. Note that the popularity value may lag actual popularity by a few days: the value is not updated in real time.
+
+
 popularity distribution
+
+#### Histograms
 ```{r}
 gghist(data$popularity, 'popularity')
 ```
+
+
+The mode for popularity of songs in the entire dataset is around 10, and the majority of songs in the dataset have a popularity score of below 50. In otherwords, very few songs in the dataset have very high popularity scores. This is appropriate since Spotify's popularity score incorporates how recent the plays are (more recent the more popular). The vast majority of songs in the dataset older, released prior to 2018. The share of data that would be considered 'recent' is much smaller. Therefore, what we are seeing in the distribution is to be expected.
 
 popularity by generation
 ```{r}
@@ -74,112 +109,294 @@ theme_minimal() +
 facet_wrap(~ArtistGen)
 ```
 
+Again, due to the time sensitivty of the popularity score, we can see that the center of the data for each generation moves higher as the generation increases (to newest generation of kpop). 
+
+#### Boxplots 
+```{r}
+ggplot(data = data, aes(popularity)) + 
+  geom_boxplot(fill = 'white', col = 'black', outlier.color = 'red') +
+  xlab('Popularity') +
+  theme_minimal()
+```
+
+by generation
+```{r}
+ggplot(data = data, aes(x = popularity, group = ArtistGen)) + 
+  geom_boxplot(fill = 'white', col = 'black', 
+               outlier.color = 'red') +
+  xlab('Popularity') +
+  theme_minimal()+
+  facet_wrap(~ArtistGen)
+```
 
 
-#### Duration
+### Duration
+
+Duration is the track length measured by Spotify in milliseconds. However, I have converted the measurement to minutes (duration in milliseconds / 60000) in order to make the analysis more interpretable. Note this calculation of minutes is not equivalent to the MM:SS format, but it is a close approximation. 
+
 duration distribution
 ```{r}
-gghist(data$duration_ms, 'duration (ms)')
-gghist(log(data$duration_ms), 'duration (ms) and log transform')
+gghist(data$duration, 'duration (minutes)')
 ```
+
+As you can see the majority of tracks are between 2.5 - 5 minutes long. This is typical as most pop songs are 2-5 minutes. Upon investigation, there are two significantly long songs that have been removed.:       
+* Turbo's non-stop summer dj remix which is 22 minutes long. Likely a track used to play at clubs or party events.  
+* Orange Caramel's magic - origin at 13 minutes.    
+
+The rest of the songs are 9 minutes or less. 
+
 
 duration by generation
 ```{r}
-ggplot(data, aes(data$duration_ms, group = ArtistGen)) + 
+ggplot(data, aes(data$duration, group = ArtistGen)) + 
 geom_histogram(aes(y = stat(density)), 
                 fill = 'white', col = 'black') + 
-xlab('duration (seconds)') +
+xlab('duration (minutes)') +
 theme_minimal() +
 facet_wrap(~ArtistGen)
 ```
+
+Overall, the distributions look farily similar. However, songs from the first generation tended to have longer songs 4 minutes and above. 
+
+
+#### Boxplots 
+```{r}
+ggplot(data = data, aes(duration)) + 
+  geom_boxplot(fill = 'white', col = 'black', outlier.color = 'red') +
+  xlab('Duration (minutes)') +
+  theme_minimal()
+quantile(data$duration)
+```
+
+by generation
+```{r}
+ggplot(data = data, aes(x = duration, group = ArtistGen)) + 
+  geom_boxplot(fill = 'white', col = 'black', 
+               outlier.color = 'red') +
+  xlab('Duration (minutes)') +
+  theme_minimal()+
+  facet_wrap(~ArtistGen)
+```
+
+
 
 
 
 ### Acousticness
 
+>A confidence measure from 0.0 to 1.0 of whether the track is acoustic. 1.0 represents high confidence the track is acoustic.
+
 acousticness distribution
+
+
+#### Histograms
 ```{r}
 gghist(data$acousticness, 'acousticness')
+gghist(sqrt(data$acousticness), 'acousticness square root')
 ```
+
+Overall, kpop music is heavily influenced by styles like edm, hip hop, electronic, tropical house...etc.... (find a resource to make a conclusive statement about this?). Therefore the backing tracks for the singers use a lot of electronic sounds and instrumentation. It is appropriate for this dataset that the acousticness feature to be skewed to the right where majority of the tracks have acousticness levels below 0.25
 
 
 acousticness by generation
 ```{r}
+#calling density but converitng back to relative frequency.
 ggplot(data, aes(data$acousticness, group = ArtistGen)) + 
-geom_histogram(aes(y = stat(density)), 
-                fill = 'white', col = 'black') + 
-xlab('acousticness') +
-theme_minimal() +
-facet_wrap(~ArtistGen)
+  geom_histogram(bins = 30, aes(y = stat(width*density)),
+                 fill = 'white', col = 'black') + 
+  xlab('acousticness') +
+  scale_y_continuous(labels = percent_format())+
+  facet_wrap(~ArtistGen) +
+  theme_minimal() 
+
+ggplot(data, aes(x = data$acousticness,y = ..density.., group = ArtistGen)) + 
+  geom_histogram(bins = 30, fill = 'white', col = 'black') + 
+  xlab('acousticness') +
+  theme_minimal() +
+  facet_wrap(~ArtistGen) + 
+  geom_density(col = 'red')
+```
+
+
+
+
+#### Boxplots 
+```{r}
+ggplot(data = data, aes(acousticness)) + 
+  geom_boxplot(fill = 'white', col = 'black', outlier.color = 'red') +
+  xlab('Acousticness') +
+  theme_minimal()
+```
+
+by generation
+```{r}
+ggplot(data = data, aes(x = acousticness, group = ArtistGen)) + 
+  geom_boxplot(fill = 'white', col = 'black', 
+               outlier.color = 'red') +
+  xlab('Acousticness') +
+  theme_minimal()+
+  facet_wrap(~ArtistGen)
 ```
 
 ### Danceability
+
+>Danceability describes how suitable a track is for dancing based on a combination of musical elements including tempo, rhythm stability, beat strength, and overall regularity. A value of 0.0 is least danceable and 1.0 is most danceable.
+
+
 danceability distribution
+
+
+#### Histograms
 ```{r}
 gghist(data$danceability, 'danceability')
 ```
 
+Kpop is well known for its focus on eye catching choreography and dance to accompany the song. [provide some resources describing this?]. Therefore it is understandable that we are observing the majority of the tracks to be a majority above 0.50 on the danceability and low frequency tails below. The distribution looks negative skewed normal. 
 
 Danceability by generation
 ```{r}
 ggplot(data, aes(data$danceability, group = ArtistGen)) + 
-geom_histogram(aes(y = stat(density)), 
+  geom_histogram(bins = 30, aes(y = stat(width*density)), 
                 fill = 'white', col = 'black') + 
-xlab('danceability') +
-theme_minimal() +
-facet_wrap(~ArtistGen)
+  xlab('danceability') + ylab("relative frequency") +
+  scale_y_continuous(labels = percent_format())+ 
+  facet_wrap(~ArtistGen)+
+  theme_minimal() 
 ```
 
 
+#### Boxplots 
+```{r}
+ggplot(data = data, aes(danceability)) + 
+  geom_boxplot(fill = 'white', col = 'black', outlier.color = 'red') +
+  xlab('Danceability') +
+  theme_minimal()
+```
+
+by generation
+```{r}
+ggplot(data = data, aes(x = danceability, group = ArtistGen)) + 
+  geom_boxplot(fill = 'white', col = 'black', 
+               outlier.color = 'red') +
+  xlab('Danceability') +
+  theme_minimal()+
+  facet_wrap(~ArtistGen)
+```
+
+
+
+
+
 ### Energy
+
+>Energy is a measure from 0.0 to 1.0 and represents a perceptual measure of intensity and activity. Typically, energetic tracks feel fast, loud, and noisy. For example, death metal has high energy, while a Bach prelude scores low on the scale. Perceptual features contributing to this attribute include dynamic range, perceived loudness, timbre, onset rate, and general entropy.
+
+
 energy distribution
+
+#### Histograms
 ```{r}
 gghist(data$energy, 'energy')
 ```
 
 
+
 energy by generation
 ```{r}
 ggplot(data, aes(data$energy, group = ArtistGen)) + 
-geom_histogram(aes(y = stat(density)), 
+geom_histogram(bins = 30, aes(y = stat(width*density)), 
                 fill = 'white', col = 'black') + 
-xlab('energy') +
+xlab('energy') + ylab("relative frequency") +
+scale_y_continuous(labels = percent_format()) +
 theme_minimal() +
 facet_wrap(~ArtistGen)
 ```
 
+#### Boxplots 
+```{r}
+ggplot(data = data, aes(energy)) + 
+  geom_boxplot(fill = 'white', col = 'black', outlier.color = 'red') +
+  xlab('Energy') +
+  theme_minimal()
+```
 
+by generation
+```{r}
+ggplot(data = data, aes(x = energy, group = ArtistGen)) + 
+  geom_boxplot(fill = 'white', col = 'black', 
+               outlier.color = 'red') +
+  xlab('Energy') +
+  theme_minimal()+
+  facet_wrap(~ArtistGen)
+```
 
 ### Instrumentalness 
+
+>Predicts whether a track contains no vocals. “Ooh” and “aah” sounds are treated as instrumental in this context. Rap or spoken word tracks are clearly “vocal”. The closer the instrumentalness value is to 1.0, the greater likelihood the track contains no vocal content. Values above 0.5 are intended to represent instrumental tracks, but confidence is higher as the value approaches 1.0.
+
 instrumentalness distribution
+
+#### Histograms
+
 ```{r}
 gghist(data$instrumentalness, 'instrumentalness')
 gghist(log(data$instrumentalness), 'instrumentalness (log transform)')
 ```
 
+
+
+
 instrumentalness by generation
 ```{r}
 ggplot(data, aes(data$instrumentalness, group = ArtistGen)) + 
-geom_histogram(aes(y = stat(density)), 
+geom_histogram(bins = 30, aes(y = stat(width*density)), 
                 fill = 'white', col = 'black') + 
-xlab('instrumentalness') +
+xlab('instrumentalness') + ylab('relative frequency') +
+scale_y_continuous(labels=percent_format()) +
 theme_minimal() +
 facet_wrap(~ArtistGen)
 
 ggplot(data, aes(log(data$instrumentalness), group = ArtistGen)) + 
-geom_histogram(aes(y = stat(density)), 
+geom_histogram(bins = 30, aes(y = stat(width*density)), 
                 fill = 'white', col = 'black') + 
-xlab('instrumentalness (log transform)') +
+xlab('instrumentalness (log  transform)') + ylab('relative frequency') +
+scale_y_continuous(labels=percent_format()) +
 theme_minimal() +
 facet_wrap(~ArtistGen)
 ```
 
+
+#### Boxplots 
+```{r}
+ggplot(data = data, aes(log(instrumentalness))) + 
+  geom_boxplot(fill = 'white', col = 'black', outlier.color = 'red') +
+  xlab('Instrumentalness (log)') +
+  theme_minimal()
+```
+
+by generation
+```{r}
+ggplot(data = data, aes(x = log(instrumentalness), group = ArtistGen)) + 
+  geom_boxplot(fill = 'white', col = 'black', 
+               outlier.color = 'red') +
+  xlab('Instrumentalness (Log)') +
+  theme_minimal()+
+  facet_wrap(~ArtistGen)
+```
+
+
+
 ### Musical Key 
+
+> The key the track is in. Integers map to pitches using standard Pitch Class notation . E.g. 0 = C, 1 = C♯/D♭, 2 = D, and so on.
+
+
 key distribution (categorical 1-12)
 ```{r}
 gghist(data$key, 'musical key')
 ```
 
+surprise surprise, the majority of songs use the key of C.
 
 Key by Generation
 ```{r}
@@ -193,7 +410,15 @@ facet_wrap(~ArtistGen)
 
 ### Liveness
 
+>Detects the presence of an audience in the recording. Higher liveness values represent an increased probability that the track was performed live. A value above 0.8 provides strong likelihood that the track is live.
+
+During the data collection and cleaning process, I intentionally omitted any live performance recording of a song from the dataset. This is because these live performances are just a duplication of the originially commercially released song. 
+
+Any song detected as live is just subject to the Spotify algorithm detection and is not actually a live performance. This variable will be removed from analysis. 
+
 liveness distribution
+
+#### Histograms 
 ```{r}
 gghist(data$liveness, 'liveness')
 ```
@@ -208,8 +433,34 @@ facet_wrap(~ArtistGen)
 ```
 
 
+#### Boxplots 
+```{r}
+ggplot(data = data, aes(liveness)) + 
+  geom_boxplot(fill = 'white', col = 'black', outlier.color = 'red') +
+  xlab('Liveness') +
+  theme_minimal()
+```
+
+by generation
+```{r}
+ggplot(data = data, aes(x = liveness, group = ArtistGen)) + 
+  geom_boxplot(fill = 'white', col = 'black', 
+               outlier.color = 'red') +
+  xlab('Liveness') +
+  theme_minimal()+
+  facet_wrap(~ArtistGen)
+```
+
+
+
 ### Loudness 
+
+>The overall loudness of a track in decibels (dB). Loudness values are averaged across the entire track and are useful for comparing relative loudness of tracks. Loudness is the quality of a sound that is the primary psychological correlate of physical strength (amplitude). Values typical range between -60 and 0 db.
+
+
 loudness distribution
+
+#### Histograms
 ```{r}
 gghist(data$loudness, 'loudness')
 ```
@@ -223,9 +474,29 @@ theme_minimal() +
 facet_wrap(~ArtistGen)
 ```
 
+#### Boxplots 
+```{r}
+ggplot(data = data, aes(loudness)) + 
+  geom_boxplot(fill = 'white', col = 'black', outlier.color = 'red') +
+  xlab('Loudness') +
+  theme_minimal()
+```
+
+by generation
+```{r}
+ggplot(data = data, aes(x = loudness, group = ArtistGen)) + 
+  geom_boxplot(fill = 'white', col = 'black', 
+               outlier.color = 'red') +
+  xlab('Loudness') +
+  theme_minimal()+
+  facet_wrap(~ArtistGen)
+```
 
 
 ### Mode (major vs. minor)
+
+>Mode indicates the modality (major or minor) of a track, the type of scale from which its melodic content is derived. Major is represented by 1 and minor is 0.
+
 mode distribution (also categorical)
 ```{r}
 gghist(data$mode, 'musical mode')
@@ -243,12 +514,17 @@ facet_wrap(~ArtistGen)
 
 ### Speechiness
 
+>Speechiness detects the presence of spoken words in a track. The more exclusively speech-like the recording (e.g. talk show, audio book, poetry), the closer to 1.0 the attribute value. Values above 0.66 describe tracks that are probably made entirely of spoken words. Values between 0.33 and 0.66 describe tracks that may contain both music and speech, either in sections or layered, including such cases as rap music. Values below 0.33 most likely represent music and other non-speech-like tracks.
+
 speechiness distribution
+
+#### Histograms
 ```{r}
 gghist(data$speechiness, 'speechiness')
 gghist(log(data$speechiness), 'speechiness (log transform)')
 ```
 
+Because this dataset is of songs only and no podcasts or book readings, we would expect this heavily skewed shape of the distribution where the majority of the data is under 0.25 for speachiness. However, it is very difficult to see the details of the long right tail. For this reason, we will also investigate the distribution on the log scale. On the log scale, the data is still strongly skewed to the right, however, we can see more details in the right tail for the speechiness values above 0.25 (normal scale). There's a gradual decline in songs that have high levels of speechiness on the track, however, we can see a clear drop off for log values from -1 to 0. These are likely to be oddities of the data. Perhaps there are some spoken tracks between songs on albums, serving a similar artistic purpose as instrumental intro/outro tracks.
 
 ```{r}
 ggplot(data, aes(data$speechiness, group = ArtistGen)) + 
@@ -266,11 +542,48 @@ theme_minimal() +
 facet_wrap(~ArtistGen)
 ```
 
+Now, we are looking at the histograms by kpop generation. We can see that all are heavily right skewed just like the overall distribution. However we can see some differences between generations. For example, kpop generation 2 has the least amount of speechiness amongst tracks with the highest bar at speachiness levels at or close to zero. The 4th generation has a higher center of speechiness than the rest of the generations. Perhaps there is more rap incorporated into the music that is released in the 4th generation of kpop than the other eras. 
+
+However, behond these observations, it is difficult to compare the distribution for each generation amongst the higher levels of speechiness. For this, we will look at the distribution on the log scale. As observed for the 4th generation, not only is the center of the distribution higher on speechiness, but the upper tail is shorter than the 1st and 2nd generation while maintaining higher concentration of its distribution between log scale -2 and -1. The generation that also has a shorter tail to the right is generation 2. But not only is the tail shorter (ending at around log sclaed value -1), but the density of songs at speechiness levels from about -2.5 to -1 are consistently dropping and seem to be lower than other generations. 
+
+Generation 1 seems to have the most variation in speechiness with a similar center to generation 3, but greater variation in the density for speechiness levels of -2 to 0 on the log scale. It has the highest levels of speechiness as well. This level of variation could be attributed to the experimental nature of music in the first generation. This was the time that kpop was starting to become the model and style of what we listen to in the modern era. However, many music companies and artists were still trying to define their sound and fit into the demand of the market. The generally high levels of speechiness could be due to rap and hiphop elements being heavily influenced into the kpop genre at the time which has heavier levels of speechiness than the generic pop style.
+
+
+#### Boxplots 
+```{r}
+ggplot(data = data, aes(log(speechiness))) + 
+  geom_boxplot(fill = 'white', col = 'black', outlier.color = 'red') +
+  xlab('Speechiness (log)') +
+  theme_minimal()
+```
+
+by generation
+```{r}
+ggplot(data = data, aes(x = log(speechiness), group = ArtistGen)) + 
+  geom_boxplot(fill = 'white', col = 'black', 
+               outlier.color = 'red') +
+  xlab('Speechiness (log)') +
+  theme_minimal()+
+  facet_wrap(~ArtistGen)
+```
+
+
 ### Tempo 
+
+>The overall estimated tempo of a track in beats per minute (BPM). In musical terminology, tempo is the speed or pace of a given piece and derives directly from the average beat duration.
+
+
 tempo distribution
+
+
+#### Histograms
 ```{r}
 gghist(data$tempo, 'tempo')
 ```
+
+
+As expected, most songs have a tempo between 90 and 160. Any song with a tempo above 90 is fast at an allegro pace. 
+
 
 ```{r}
 ggplot(data, aes(data$tempo, group = ArtistGen)) + 
@@ -282,7 +595,29 @@ facet_wrap(~ArtistGen)
 ```
 
 
+#### Boxplots 
+```{r}
+ggplot(data = data, aes(tempo)) + 
+  geom_boxplot(fill = 'white', col = 'black', outlier.color = 'red') +
+  xlab('Tempo') +
+  theme_minimal()
+```
+
+by generation
+```{r}
+ggplot(data = data, aes(x = tempo, group = ArtistGen)) + 
+  geom_boxplot(fill = 'white', col = 'black', 
+               outlier.color = 'red') +
+  xlab('Tempo') +
+  theme_minimal()+
+  facet_wrap(~ArtistGen)
+```
+
+
 ### Time Signature
+
+>An estimated overall time signature of a track. The time signature (meter) is a notational convention to specify how many beats are in each bar (or measure).
+
 time_signature distirbution (categorical...)
 ```{r}
 gghist(data$time_signature, 'time signature')
@@ -300,7 +635,12 @@ facet_wrap(~ArtistGen)
 
 
 ### Valence
+
+>A measure from 0.0 to 1.0 describing the musical positiveness conveyed by a track. Tracks with high valence sound more positive (e.g. happy, cheerful, euphoric), while tracks with low valence sound more negative (e.g. sad, depressed, angry).
+
 valence distribution
+
+#### Histograms
 ```{r}
 gghist(data$valence, 'valence')
 ```
@@ -314,4 +654,63 @@ xlab('valence') +
 theme_minimal() +
 facet_wrap(~ArtistGen)
 ```
+
+#### Boxplots 
+```{r}
+ggplot(data = data, aes(valence)) + 
+  geom_boxplot(fill = 'white', col = 'black', outlier.color = 'red') +
+  xlab('Valence') +
+  theme_minimal()
+```
+
+by generation
+```{r}
+ggplot(data = data, aes(x = valence, group = ArtistGen)) + 
+  geom_boxplot(fill = 'white', col = 'black', 
+               outlier.color = 'red') +
+  xlab('Valence') +
+  theme_minimal()+
+  facet_wrap(~ArtistGen)
+```
+
+
+
+
+
+
+### Detecting multicollinearity
+
+#### pre-transformation
+```{r}
+numdata <- select(data, ArtistGen, ArtistDebut, popularity, duration, acousticness, danceability, energy, instrumentalness, key, liveness, loudness, mode, speechiness, tempo, time_signature, valence)
+cor(numdata)
+```
+
+prior to any sort of data transformations, the only highly correlated variables are Artist Debut and Artist Generation. This multicolinearity will not affect our analysis since we will not be investigating the relationship between those two variables extensively. This observation is reasonable and should be expected since the concept of kpop generations is partly defined in when the artist debuted into the kpop market and the time in which they promoted their msuic. 
+
+The next highest correlation can be observed between energy and loudness with a correlation of 0.72207761. This is suggesting a moderately strong positive association between energy and loudness in which, as the energy level detected increases, the loudness of the music also increases and vice versa. The third strongest correlation value is -0.671291890 between energy and acousticness. This moderate negative association indicates a possible association where the increase of energy in a song would correspond with a decrease in acousticness of a song and vice versa. 
+
+With moderate positive associations we can observe the following relationships:   
+
+* Popularity and Artist Generation: 0.573493768. Since the spotify algorithm measures popularity upon total plays within the recent time, some association between the score and time of when the song was being actively promoted is to be expected. This positive association would mean that the higher the popularity the later the generation we should expect (gen 4 rather than gen 1). What is surprising is that popularity and song's placement within a kpop generation is not stronger. This shows that many of the older songs are still listened to actively today.    
+
+* popularity and artist debut: 0.565269034. This relationship can be explained in the same way as popularity and artist generation due to the high correlation between artist generation and artist debut.    
+* Danceability and valence: 0.53901204. This positive relationship can be interpreted as with higher danceability, a song is expected to increase in valence (measures happier mood versus sadder moods). This relationship is reasonable since one would naturally be more drawn to dance to a happier song.    
+
+* Energy and Valence: 0.48875566
+
+
+
+#### With data transformations
+
+```{r}
+transformdata <- mutate(numdata, speechiness = log(speechiness + 0.000000001), instrumentalness = log(instrumentalness + 0.000000001))
+cor(transformdata)
+```
+
+No major changes in correlations. AFter the transform there are no new strong correlations between instrumentalness or speechiness with other variables. 
+
+
+
+
 
