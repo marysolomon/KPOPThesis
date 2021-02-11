@@ -1,0 +1,64 @@
+---
+title: "TrainTestSplit"
+author: "Mary Solomon"
+date: "2/10/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(data.table)
+library(tidyverse)
+library(ggplot2)
+library(ggthemes)
+library(stringr)
+library(scales)
+```
+
+
+Do some data EDA
+```{r}
+audio <- fread("audiofeatures_clean.csv")
+artists <- fread("artist_df.csv")[,-1]
+data <- merge(artists, audio, by.x = 'ID', by.y = 'artist_uri')
+data <- na.omit(data) #remove NAs (there were less than 5 rows)
+data = data %>% mutate(Generation = floor(Generation), 
+                       release_date = as.POSIXct(release_date, format = "%m/%d/%y"),
+                       mode = as.factor(mode),
+                       key = factor(key),
+                       time_signature = as.factor(time_signature),
+                       duration_mmss = format(as.POSIXct(Sys.Date()) + duration_ms/1000, "%M:%S"), 
+                       duration_ms = duration_ms/1000) %>%
+  select(-artist) %>%
+  rename(Artist_uri = ID, 
+         ArtistType = Type, 
+         ArtistGender  = Gender, 
+         ArtistGen = Generation, 
+         ArtistDebut = DebutYear,
+         duration = duration_ms)
+#albums <- unique(select(data, Artist, album))  
+# head(data, n=5)
+```
+
+
+
+### More data cleaning (based on EDA)
+
+There are intro and outro songs on albums that serve as aesthetic tracks to tie the entire album together as one artistic work. However, these intro and outro songs do not serve to categorize the kpop music genre as they simply act like 'filler' works and not ones that are candidates to actively be promoted in the commercial music market. 
+
+Therefore, we would like to remove these types of tracks from the dataset as they are the source for skewness in instrumentalness and speechiness being on the high end and for causing skewness in song duration from being on the low end.
+
+remove songs that have the words: intro, outro, interlude in the song name, songs that are longer than 10 minutes. And remove songs less than or equal to 2 minutes if they are outliers in the areas of instrumentalness or speechiness.
+
+This does not remove every single 'filler song' but it removes most of them. 
+```{r}
+remove <- data %>% filter(str_detect(song_name, "intro") | str_detect(song_name, "outro") | str_detect(song_name, "interlude") | duration >= 600 | duration <= 60 | (duration <= 120.5 & (instrumentalness >= 0.50 | speechiness >= 0.40 | speechiness == 0)))
+# short <- filter(data, duration <= 2)
+# nrow(short)
+nrow(remove)
+data <- data[!data$song_uri %in% remove$song_uri, ]
+#fwrite(data, "kpopdata.csv")
+```
+
+
+### Split data into train and test and export

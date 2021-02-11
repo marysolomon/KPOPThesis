@@ -1,0 +1,211 @@
+---
+title: "Classification and Clustering Methods"
+author: "Mary Solomon"
+date: "2/4/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(data.table)
+library(tidyverse)
+library(ggplot2)
+library(ggthemes)
+library(stringr)
+library(scales) #for formatting with percentage signs
+library(nnet) #for multinomial regression
+```
+
+
+Read data
+```{r}
+data <- fread("kpopdata.csv")
+colnames(data)
+```
+
+
+# Clustering (unsupervised)
+```{r}
+mode1 <- data %>% 
+  filter(mode == 1) %>%
+  select(popularity, duration, acousticness, danceability, energy, 
+         instrumentalness, key, loudness, speechiness, tempo, valence)
+mode0 <- data %>% 
+  filter(mode == 0) %>%
+  select(popularity, duration, acousticness, danceability, energy, 
+         instrumentalness, key, loudness, speechiness, tempo, valence)
+```
+The previous section aims to determine what kind of model we can build in order to predict which generation a kpop song is from based on audio/song features alone. However, could there be an alternative way to group the songs in the kpop genre based on audio/song features? Kpop Generations are grouped by the time and evolution of the kpop genre. By excluding time period, cultural trends, catchy visuals, dances, and only focusing on the audio features of the songs, what will the groups be defined by and how will it differ from the characteristics of the kpop generations observed in previous chapters?
+
+Before we can start clustering, we will perform dimension reduction which will reduce allow us to analyze the data on fewer dimensions yet retain as much accountability for the variation as possible.
+## Dimension Reduction: PCA ##
+
+PCA is a dimension reduction technique that defines uncorrelated linear combinations that maximize the variance. Or in otherwords, PCA reduces the dimensions by with linear combinations that maximizes the information explained by the data. The assumptions made to perform PCA dimension reduction are as follows:      
+
+* No assumption on the distribution: this is very good because the majority of the predictors have non-normal skewed distributions       
+
+* No indpendence to be assumed for elements in a random vector: aka colinearity can exist between variables (???)     
+
+* Assume independence between observations in the random sample: this is a fair assumption to make. Each song is composed independently from one another, for the most part.   
+
+* most appropriate for continuous data: this could be a potential issue since there are categorical variables such as key, mode, time signature. While numeric, they are integer values that span a small range. Because of this, we will be analyzing the dimension reduction separately for those with a minor mode versus those with major mode. In addition, time signature will be removed from the analysis since 97% of the songs are detected as being in 4/4 time.
+
+#### PCA for Major mode (mode = 1)
+
+standardized PCA
+```{r}
+pca <- prcomp(mode1, scale=TRUE)
+t(pca$rotation)
+```
+
+For clearer interpretation, we can express the principal components as linear combinations of the standardized value of each variable. The first 6 PCs are expressed below rounded to 3 decimals: 
+
+$$
+\hat y_1 = -0.087z_{Popularity} + 0.234z_{Duration} + 0.427z_{Acousticness} - 0.330z_{Danceability} -0.502z_{Energy} + 0.089z_{Instrumantalness} + 0.045z_{Key} - 0.420z_{Loudness} - 0.178z_{speechiness} -0.066z_{tempo} - 0.415z_{valence} 
+\\
+\hat y_2 = 0.335z_{Popularity} + 0.113z_{Duration} - 0.020z_{Acousticness} -0.516z_{Danceability} + 0.131z_{Energy} -0.259z_{Instrumantalness} + 0.066z_{Key} + 0.269z_{Loudness} + 0.200z_{speechiness} + 0.577z_{tempo} -0.274z_{valence}
+\\
+\hat y_3 = -0.545z_{Popularity} + 0.562z_{Duration} - 0.223z_{Acousticness} -0.129z_{Danceability} + 0.209z_{Energy} - 0.071z_{Instrumantalness} - 0.172z_{Key} +  0.185z_{Loudness} -0.446z_{speechiness} + 0.095z_{tempo} +0.005z_{valence}
+\\
+\hat y_4 = 0.367z_{Popularity} + 0.183z_{Duration} + 0.106z_{Acousticness} + 0.147z_{Danceability} -0.043z_{Energy} -0.632z_{Instrumantalness} + 0.230z_{Key} + 0.222z_{Loudness} -0.323z_{speechiness} - 0.433z_{tempo} -0.058z_{valence}
+\\
+\hat y_5 = 0.139z_{Popularity} + 0.014z_{Duration} + 0.077z_{Acousticness} + 0.036z_{Danceability} -0.086z_{Energy} -0.266z_{Instrumantalness} -0.934z_{Key}  -0.056z_{Loudness} + 0.124z_{speechiness} -0.064z_{tempo} -0.011z_{valence}
+$$
+
+INTERPRETATION OF THE PCs:     
+
+* PC1: this Principal component has the variables of duration, acousticness, instrumentalness and key grouped in the positive direction against the variables of Popularity, danceability, energy, loudness, speechiness, tempo and valence which are contributing in the negative direction. The variables that have negative loading factors seem to be variables that are characteristics which would determine if a song is very upbeat and achieves mainstream appeal of pop music to be an exciting song that you can dance and move to.  The factors with the greater loadings are Energy at -0.502, loudness at -0.420, valence at -0.415, and acousticness at 0.427.
+
+* PC2:    
+
+* PC3:     
+
+* PC4:    
+
+* PC5: When interpreting the 5th component, one attribute stands out. The loading factor for standardized variable of Key accounts for almost all of the variation in this principal component with a loading factor of -0.934. Therefore, the 5th component serves to characterize the musical key of the song.
+
+
+
+biplot
+```{r}
+biplot(pca, scale = 0, xlabs=rep("·", nrow(mode1)))
+```
+
+
+examine amount of variance explained to choose optimal principal components
+```{r}
+pca.var = pca$sdev^2
+pve = pca.var/sum(pca.var)
+cve = cumsum(pve)
+pca.var.explained <- data.frame("Variance" = pca.var, 
+                                "Proportion_Variation" = pve, 
+                                "Cummalitve_Proportion_Variation"= cve, 
+                                "PC" = factor(c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6", "PC7",
+                                         "PC8", "PC9", "PC10", "PC11"), 
+                                         levels = c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6", "PC7",
+                                         "PC8", "PC9", "PC10", "PC11")))
+pca.var.explained
+```
+
+
+
+```{r}
+pca.var.explained %>%
+  ggplot(aes(x=PC,y=Proportion_Variation, group=1))+
+  ylab("Proportion of Variance Explained") +
+  geom_point(size=3)+
+  geom_line()+
+  labs(title="Scree plot: PCA on scaled data") +
+  theme_minimal()
+```
+
+
+
+
+
+#### PCA for minor mode (mode = 0)
+
+standardized PCA
+```{r}
+pca <- prcomp(mode0, scale=TRUE)
+t(pca$rotation)
+```
+
+
+
+
+$$
+\hat y_1 = 0.040z_{Popularity} - 0.138z_{Duration} - 0.440z_{Acousticness} + 0.224z_{Danceability} + 0.554z_{Energy} -0.114z_{Instrumantalness} + 0.069z_{Key} + 0.472z_{Loudness} + 0.117z_{speechiness} + 0.105z_{tempo} + 0.404z_{valence} 
+\\
+\hat y_2 = -0.293z_{Popularity} -0.096z_{Duration} -0.005z_{Acousticness} + 0.625z_{Danceability} -0.151z_{Energy} + 0.126z_{Instrumantalness} + 0.118z_{Key}  -0.266z_{Loudness} -0.252z_{speechiness} -0.440z_{tempo} + 0.365z_{valence}
+\\
+\hat y_3 = 0.645z_{Popularity} -0.466z_{Duration} + 0.229z_{Acousticness} +0.177z_{Danceability} -0.157z_{Energy} -0.3451z_{Instrumantalness} -0.122z_{Key} +  0.142z_{Loudness} +0.070z_{speechiness} -0.314z_{tempo} -0.038z_{valence}
+\\
+\hat y_4 = -0.020z_{Popularity} + 0.548z_{Duration} -0.009z_{Acousticness} -0.035z_{Danceability} + 0.076z_{Energy} -0.482z_{Instrumantalness} -0.198z_{Key} + 0.255z_{Loudness} -0.508z_{speechiness} -0.302z_{tempo} -0.081z_{valence}
+\\
+\hat y_5 = -0.056z_{Popularity} +0.196z_{Duration} + 0.076z_{Acousticness} -0.007z_{Danceability}  -0.076z_{Energy} -0.458z_{Instrumantalness} +0.781z_{Key}  -0.065z_{Loudness} + 0.343z_{speechiness} -0.071z_{tempo} -0.005z_{valence}
+$$
+
+biplot
+```{r}
+biplot(pca, scale = 0, xlabs=rep("·", nrow(mode0)))
+```
+
+
+examine amount of variance explained to choose optimal principal components
+```{r}
+pca.var = pca$sdev^2
+pve = pca.var/sum(pca.var)
+cve = cumsum(pve)
+pca.var.explained <- data.frame("Variance" = pca.var, 
+                                "Proportion_Variation" = pve, 
+                                "Cummalitve_Proportion_Variation"= cve, 
+                                "PC" = factor(c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6", "PC7",
+                                         "PC8", "PC9", "PC10", "PC11"), 
+                                         levels = c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6", "PC7",
+                                         "PC8", "PC9", "PC10", "PC11")))
+pca.var.explained
+```
+
+
+
+```{r}
+pca.var.explained %>%
+  ggplot(aes(x=PC,y=Proportion_Variation, group=1))+
+  ylab("Proportion of Variance Explained") +
+  geom_point(size=3)+
+  geom_line()+
+  labs(title="Scree plot: PCA on scaled data") +
+  theme_minimal()
+```
+
+
+
+
+## Clustering on PCA (bad pca) ##
+
+```
+pc1n2 <- data.frame(pca$x[,1:2])
+set.seed(123)
+#compute total within cluster sum of square
+wss <- function(k) {
+  kmeans(pc1n2, k, iter.max = 1000, nstart = 25, algorithm = "Lloyd" )$tot.withinss
+}
+k.vals <- 1:10
+wss_values <- map_dbl(k.vals, wss)
+
+plot(k.vals, wss_values,
+       type="b", pch = 19, frame = FALSE, 
+       xlab="Number of clusters K",
+       ylab="Total within-clusters sum of squares")
+```
+
+
+```
+set.seed(123)
+k <- kmeans(pc1n2, 5, iter.max = 1000, nstart = 25, algorithm = "Lloyd")
+pc1n2$clusters <- as.factor(k$cluster)
+ggplot(pc1n2, aes(PC1, PC2, color = clusters)) + geom_point() + 
+  labs(title = "K-means Cluster on Principal Components", x = "PC1", y = "PC2") +
+  theme_bw()
+```
