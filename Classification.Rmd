@@ -1,5 +1,5 @@
 ---
-title: "Classification (Supervised Learning)"
+title: "Classification (Supervised Learning): Logistic Regression"
 author: "Mary Solomon"
 date: "2/9/2021"
 output: 
@@ -34,8 +34,8 @@ data <- mutate(data, ArtistType = as.factor(ArtistType),
                key = factor(key, levels = 0:11),
                mode = as.factor(mode),
                time_signature = factor(time_signature, levels = c(1,3,4,5)))
-data$gen1 <- ifelse(data$ArtistGen == 1, 1, 0)
-data$oldgen <- ifelse(data$ArtistGen == 1 | data$ArtistGen == 2, 1, 0)
+data$gen1 <- as.factor(ifelse(data$ArtistGen == 1, 1, 0))
+data$oldgen <- as.factor(ifelse(data$ArtistGen == 1 | data$ArtistGen == 2, 1, 0))
 ```
 
 
@@ -49,7 +49,7 @@ Personal predictions: I believe popularity will be a strong predictor since the 
 
 
 
-# Logistic: predict which are gen1 or not  gen 1 songs
+# Logistic: predict which are gen1 or not  gen 1 songs (CUT FROM THESIS)
 Create Training (75%) and Test data (25%) to train classification models on.
 ```{r}
 kpop <- select(data, gen1, popularity, duration, acousticness, danceability, energy, instrumentalness, key, loudness, mode, speechiness, tempo, valence)
@@ -79,6 +79,7 @@ g1.logit0 <- glm(gen1 ~., data = g1.train0, family = "binomial")
 summary(g1.logit0)
 ```
 
+
 confusion matrix on the training data:
 ```{r}
 g1.tain0.pred <- g1.logit0$fitted.values
@@ -88,9 +89,20 @@ confusionMatrix(as.factor(g1.train0.y), as.factor(g1.train0$gen1),
 ```
 
 
-### Variable Selection on the logistic model for mode = 0 songs to predict 1st generation or not.
+confusion matrix on the test data:
+```{r}
+#get predicted probabilities for the test data
+g1.test0.pred <- predict(g1.logit0, newdata = g1.test0, type = "response")
+g1.test0.y <- ifelse(g1.test0.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(g1.test0.y), as.factor(g1.test0$gen1), 
+                positive = "1")
+```
 
-stepwise
+
+
+### Variable Selection : Stepwise
+
+stepwise 
 ```{r}
 g1.logit0.none <- glm(gen1 ~ 1, data = g1.train0, family = binomial)
 g1.step0 <- step(g1.logit0.none, 
@@ -103,14 +115,60 @@ summary(g1.step0)
 
 confusion matrix on the training data:
 ```{r}
-g1.tain0.pred <- g1.step0$fitted.values
-g1.train0.y <- ifelse(g1.tain0.pred > 0.5, 1, 0) # using cutoff = 0.5
+g1.train0.pred <- g1.step0$fitted.values
+g1.train0.y <- ifelse(g1.train0.pred > 0.5, 1, 0) # using cutoff = 0.5
 confusionMatrix(as.factor(g1.train0.y), as.factor(g1.train0$gen1), 
                 positive = "1")
 ```
 
 
+predict and evaluate on test
+```{r}
+#get predicted probabilities for the test data
+g1.test0.pred <- predict(g1.step0, newdata = g1.test0, type = "response")
+g1.test0.y <- ifelse(g1.test0.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(g1.test0.y), as.factor(g1.test0$gen1), 
+                positive = "1")
+```
 
+### Variable Selection : Stepwise (10 fold CV)
+step-wise 10 fold cross validation
+```{r echo = TRUE, message=FALSE, result='hide', warning = FALSE, error = FALSE}
+set.seed(123)
+train_control <- trainControl(method = "cv", 
+                              number = 10) 
+
+# Fit K-fold CV model  
+g1.step0_kcv <- train(gen1 ~ ., data = g1.train0, family = "binomial", 
+                 method = "glmStepAIC", trControl = train_control, verbose = FALSE) 
+```
+
+
+```{r}
+g1.step0_kcv <- g1.step0_kcv$finalModel
+g1.step0_kcv
+```
+
+
+```{r}
+#get predicted probabilities for training data
+g1.train0.pred <- g1.step0_kcv$fitted.values
+g1.train0.y <- ifelse(g1.train0.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(g1.train0.y), as.factor(g1.train0$gen1), 
+                positive = "1")
+```
+
+Predict and evaluate performance on Test Data
+```
+#get predicted probabilities for the test data
+g1.test0.pred <- predict(g1.step0_kcv$finalModel, newdata = g1.test0, type = "response")
+g1.test0.y <- ifelse(g1.test0.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(g1.test0.y), as.factor(g1.test0$gen1), 
+                positive = "1")
+```
+Error: object Key4 not found
+
+### Variable Selection : All possible Regressions
 All possible regressions selection using the glmulti() package based on AIC.
 ```{r}
 glmulti.g1.out0 <- glmulti(gen1 ~ ., data = g1.train0,
@@ -137,26 +195,48 @@ allreg.g1.logit0 <- glmulti.g1.out0@objects[[1]]
 try fitting training data to results from all possible regression variable selection
 ```{r}
 #get predicted probabilities for training data
-g1.tain0.pred <- allreg.g1.logit0$fitted.values
-g1.train0.y <- ifelse(g1.tain0.pred > 0.5, 1, 0) # using cutoff = 0.5
+g1.train0.pred <- allreg.g1.logit0$fitted.values
+g1.train0.y <- ifelse(g1.train0.pred > 0.5, 1, 0) # using cutoff = 0.5
 confusionMatrix(as.factor(g1.train0.y), as.factor(g1.train0$gen1), 
+                positive = "1")
+```
+
+```{r}
+#get predicted probabilities for the test data
+g1.test0.pred <- predict(allreg.g1.logit0, newdata = g1.test0, type = "response")
+g1.test0.y <- ifelse(g1.test0.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(g1.test0.y), as.factor(g1.test0$gen1), 
                 positive = "1")
 ```
 
 
 ### Deciding on the best model
+
+Training data 
 ```{r}
-g1.models0 <- data.frame(Model = c("Full", "Stepwise", "AllReg"),
-                         Accuracy = c(0.8602, 0.8593, 0.8593),
-                         CI = c("(0.8482, 0.8715)", "(0.8473, 0.8707)", "(0.8473, 0.8707)"),
-                         Sensitivity = c(0.35593, 0.35424, 0.35424),
-                         Specificity = c(0.96225, 0.96156, 0.96156),
-                         Kappa = c(0.3892, 0.386,0.386))
+g1.models0 <- data.frame(Model = c("Full", "Stepwise", "StepwiseCV","AllReg"),
+                         Accuracy = c(0.8602, 0.8593, 0.8584, 0.8593),
+                         CI = c("(0.8482, 0.8715)", "(0.8473, 0.8707)", "(0.8465, 0.8698)","(0.8473, 0.8707)"),
+                         Sensitivity = c(0.35593, 0.35424, 0.35085,0.35424),
+                         Specificity = c(0.96225, 0.96156, 0.96122,0.96156),
+                         Kappa = c(0.3892, 0.386,0.3817, 0.386))
 g1.models0
 ```
 
 We can see that the Stepwise and All possible Regressions variable selection methods yielded the same optimal model this model, in turn was quite similar to the Full model. Ultimately, the Full model has the best performanceo n the training dataset as it has the highest measures for accuracy, sensitivity, specificity and kappa value. 
 
+Test Data
+```{r}
+g1.models0 <- data.frame(Model = c("Full", "Stepwise", "StepwiseCV","AllReg"),
+                         Accuracy = c(0.8494, 0.8494, NA, 0.8494),
+                         CI = c("(0.8276, 0.8695)", "(0.8276, 0.8695)", NA,"(0.8276, 0.8695)"),
+                         Sensitivity = c(0.35484, 0.35484, NA,0.35484),
+                         Specificity = c(0.96218 , 0.96218,NA,0.96218),
+                         Kappa = c(0.389, 0.389,NA, 0.389))
+g1.models0
+```
+
+They all perform equally on the test dataset. 
 
 ### Run final model on the test data and predict
 confusion matrix on the test data
@@ -191,7 +271,16 @@ confusionMatrix(as.factor(g1.train1.y), as.factor(g1.train1$gen1),
 ```
 
 
-### Variable Selection on the logistic model for mode = 1 songs to predict 1st generation or not.
+predict on test data
+```{r}
+#get predicted probabilities for the test data
+g1.test1.pred <- predict(g1.logit1, newdata = g1.test1, type = "response")
+g1.test1.y <- ifelse(g1.test1.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(g1.test1.y), as.factor(g1.test1$gen1), 
+                positive = "1")
+```
+
+### Variable Selection: Stepwise
 
 stepwise
 ```{r}
@@ -213,6 +302,52 @@ confusionMatrix(as.factor(g1.train1.y), as.factor(g1.train1$gen1),
                 positive = "1")
 ```
 
+predict on test data and evaluate
+```{r}
+#get predicted probabilities for the test data
+g1.test1.pred <- predict(g1.step1, newdata = g1.test1, type = "response")
+g1.test1.y <- ifelse(g1.test1.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(g1.test1.y), as.factor(g1.test1$gen1), 
+                positive = "1")
+```
+
+step-wise 10 fold cross validation
+```{r echo = TRUE, message=FALSE, result='hide', warning = FALSE, error = FALSE}
+set.seed(123)
+train_control <- trainControl(method = "cv", 
+                              number = 10) 
+
+# Fit K-fold CV model  
+g1.step1_kcv <- train(gen1 ~ ., data = g1.train1, family = "binomial", 
+                 method = "glmStepAIC", trControl = train_control, verbose = FALSE) 
+```
+
+
+```{r}
+g1.step1_kcv <- g1.step1_kcv$finalModel
+```
+
+
+```{r}
+#get predicted probabilities for training data
+g1.train1.pred <- g1.step1_kcv$fitted.values
+g1.train1.y <- ifelse(g1.train1.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(g1.train1.y), as.factor(g1.train1$gen1), 
+                positive = "1")
+```
+
+predict on test data and evaluate
+```
+#get predicted probabilities for the test data
+g1.test1.pred <- predict(g1.step1_kcv, newdata = g1.test1, type = "response")
+g1.test1.y <- ifelse(g1.test1.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(g1.test1.y), as.factor(g1.test1$gen1), 
+                positive = "1")
+```
+Error in eval(predvars, data, env) : object 'key3' not found
+
+
+### Variable Selection: All Possible Regression
 
 All possible regressions selection using the glmulti() package based on AIC.
 ```{r}
@@ -241,6 +376,13 @@ confusionMatrix(as.factor(g1.train1.y), as.factor(g1.train1$gen1),
                 positive = "1")
 ```
 
+```{r}
+#get predicted probabilities for the test data
+g1.test1.pred <- predict(allreg.g1.logit1, newdata = g1.test1, type = "response")
+g1.test1.y <- ifelse(g1.test1.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(g1.test1.y), as.factor(g1.test1$gen1), 
+                positive = "1")
+```
 
 ### Deciding on the best Logistic model for songs where mode = 1
 ```{r}
@@ -254,6 +396,18 @@ g1.models1
 ```
 
 Similar to the varaible selection methods for choosing the best logistic model for songs where mode = 0. The optimal model chosen from the stepwise and all possible regression variable selection methods are identical and very similar to the full model. However, the full model is still the best as it has the highest rates for diagnostic measures. 
+
+test data
+```{r}
+g1.models1 <- data.frame(Model = c("Full", "Stepwise", "AllReg"),
+                         Accuracy = c(0.849, 0.8496 , 0.8496),
+                         CI = c("(0.8318, 0.8651)", "(0.8324, 0.8657)", "(0.8324, 0.8657)"),
+                         Sensibility = c(0.23311, 0.23649, 0.23649),
+                         Specificity = c(0.96751 , 0.96751, 0.96751),
+                         Kappa = c(0.2645, 0.2685, 0.2685))
+g1.models1
+```
+
 
 ### Run final model on the test data and predict
 confusion matrix on the test data
@@ -275,7 +429,7 @@ This result is motivation to look at the relationship between song attributes an
 
 
 
-## Logistic: predict which are old gen vs new gen
+# Logistic: predict which songs are old gen (1 & 2) vs new gen (3 & 4)
 Create Training (75%) and Test data (25%) to train classification models on.
 ```{r}
 kpop <- select(data, oldgen, popularity, duration, acousticness, danceability, energy, instrumentalness, key, loudness, mode, speechiness, tempo, valence)
@@ -298,8 +452,10 @@ test1 <- kpop1[-smpl1,]
 ```
 
 
-### Logistic Where mode = 0
+## Logistic Where mode = 0
 Minor key
+
+Full logistic model
 ```{r}
 logit0 <- glm(oldgen ~., data = train0, family = "binomial")
 summary(logit0)
@@ -308,28 +464,192 @@ summary(logit0)
 
 confusion matrix on the training data:
 ```{r}
-tain0.pred <- logit0$fitted.values
-train0.y <- ifelse(tain0.pred > 0.5, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(train0.y), as.factor(train0$oldgen), 
+logit.train0.pred <- logit0$fitted.values
+logit.train0.y <- ifelse(logit.train0.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(logit.train0.y), as.factor(train0$oldgen), 
                 positive = "1")
 ```
-
-
 
 
 confusion matrix on the test data
 ```{r}
 #get predicted probabilities for the test data
-test0.pred <- predict(logit0, newdata = test0, type = "response")
-test0.y <- ifelse(test0.pred > 0.5, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(test0.y), as.factor(test0$oldgen), 
+logit.test0.pred <- predict(logit0, newdata = test0, type = "response")
+logit.test0.y <- ifelse(logit.test0.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(logit.test0.y), as.factor(test0$oldgen), 
                 positive = "1")
 ```
 
 
-### Logistic Where mode = 1
+### Variable Selection: Stepwise
+stepwise 
+```{r}
+logit0.none <- glm(oldgen ~ 1, data = train0, family = binomial)
+step0 <- step(logit0.none, 
+                 list(lower=formula(logit0.none), upper = formula(logit0)),
+                 direction = "both",
+                 trace=0)
+formula(step0)
+summary(step0)
+```
+
+confusion matrix on the training data:
+```{r}
+step.train0.pred <- step0$fitted.values
+step.train0.y <- ifelse(step.train0.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(step.train0.y), as.factor(train0$oldgen), 
+                positive = "1")
+```
+
+
+predict and evaluate on test
+```{r}
+#get predicted probabilities for the test data
+step.test0.pred <- predict(step0, newdata = test0, type = "response")
+step.test0.y <- ifelse(step.test0.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(step.test0.y), as.factor(test0$oldgen), 
+                positive = "1")
+```
+
+### Variable Selection: Stepwise (10 fold CV)
+
+step-wise 10 fold cross validation
+```{r echo = TRUE, message=FALSE, result='hide', warning = FALSE, error = FALSE}
+set.seed(123)
+train_control <- trainControl(method = "cv", 
+                              number = 10) 
+
+# Fit K-fold CV model  
+step0_kcv <- train(oldgen ~ ., data = train0, family = "binomial", 
+                 method = "glmStepAIC", trControl = train_control, verbose = FALSE) 
+```
+
+```{r}
+step0_kcv <- step0_kcv$finalModel
+step0_kcv
+```
+
+
+```{r}
+#get predicted probabilities for training data
+step_kcv.train0.pred <- step0_kcv$fitted.values
+step_kcv.train0.y <- ifelse(step_kcv.train0.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(step_kcv.train0.y), as.factor(train0$oldgen), 
+                positive = "1")
+```
+
+```
+#get predicted probabilities for the test data
+step_kcv.test0.pred <- predict(step0_kcv, newdata = test0, type = "response")
+step_kcv.test0.y <- ifelse(step_kcv.test0.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(step_kcv.test0.y), as.factor(test0$oldgen), 
+                positive = "1")
+```
+
+
+
+### Variable Selection: All possible regression
+
+```{r}
+glmulti.out0 <- glmulti(oldgen ~ ., data = train0,
+                           level = 1,               # No interaction considered
+            method = "h",            # Exhaustive approach
+            crit = "aic",            # AIC as criteria
+            confsetsize = 5,         # Keep 5 best models
+            plotty = F, report = F,  # No plot or interim reports
+            fitfunction = "glm",     # lm function
+            family = binomial)       # binomial to run logistic regression 
+glmulti.out0@formulas
+```
+
+view summary of top model
+```{r}
+summary(glmulti.out0@objects[[1]])
+```
+
+Store model
+```{r}
+allreg.logit0 <- glmulti.out0@objects[[1]]
+```
+
+
+try fitting training data to results from all possible regression variable selection
+```{r}
+#get predicted probabilities for training data
+all.train0.pred <- allreg.logit0$fitted.values
+all.train0.y <- ifelse(all.train0.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(all.train0.y), as.factor(train0$oldgen), 
+                positive = "1")
+```
+
+```{r}
+#get predicted probabilities for the test data
+all.test0.pred <- predict(allreg.logit0, newdata = test0, type = "response")
+all.test0.y <- ifelse(all.test0.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(all.test0.y), as.factor(test0$oldgen), 
+                positive = "1")
+```
+
+### Deciding on the best model for Mode 0 songs
+
+Full Logistic model
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = -0.223 - 0.073x_{Popularity} + 0.521x_{Duration} - 1.398x_{Acousticness} - 0.594x_{Danceability} 
+\\ - 0.587x_{Energy} - 2.510x_{Instrumentalness} - 0.107x_{Key1} - 0.136x_{Key2} 
+\\ + 0.582x_{Key3} + 0.283x_{Key4} + 0.247x_{Key5} + 0.218x_{Key6} - 0.441x_{Key7} 
+\\ + 0.213x_{Key8} + 0.333x_{Key9} + 0.391x_{Key10} + 0.184x_{Key11} - 0.204x_{Loudness}
+\\ -1.954x_{Speechiness} + 0.003x_{Tempo} + 1.376x_{Valence}
+$$
+
+Stepwise Logistic Model:
+In comparison to the full model, energy and danceability are not included
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = -1.219 - 0.073x_{Popularity} + 0.534x_{Duration} - 1.187x_{Acousticness} 
+\\ -2.515x_{Instrumentalness} - 0.092x_{Key1} - 0.125x_{Key2} 
+\\ + 0.598x_{Key3} + 0.275x_{Key4} + 0.254x_{Key5} + 0.233x_{Key6} - 0.435x_{Key7} 
+\\ + 0.225x_{Key8} + 0.338x_{Key9} + 0.395x_{Key10} + 0.186x_{Key11} - 0.225x_{Loudness}
+\\ -2.006x_{Speechiness} + 0.004x_{Tempo} + 1.184x_{Valence}
+$$
+
+Stepwise 10kcv Logistic Model
+compared to The full model, energy, danceability, Key1, key2, and key8 are not included in this model. Code would not run predictions on the test data so I don't have fair performance metrics for this model
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = -1.251 - 0.072x_{Popularity} + 0.538x_{Duration} - 1.172x_{Acousticness} 
+\\ -2.520x_{Instrumentalness} 
+\\ + 0.610x_{Key3} + 0.287x_{Key4} + 0.267x_{Key5} + 0.246x_{Key6} - 0.422x_{Key7} 
+\\ 0.351x_{Key9} + 0.408x_{Key10} + 0.199x_{Key11} - 0.226x_{Loudness}
+\\ -2.000x_{Speechiness} + 0.004x_{Tempo} + 1.196x_{Valence}
+$$
+
+All Possible Regressions Model
+Danceability and energy are not included in this model
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = -1.219 - 0.073x_{Popularity} + 0.534x_{Duration} - 1.187x_{Acousticness} 
+\\ - 2.515x_{Instrumentalness} - 0.092x_{Key1} - 0.125x_{Key2} 
+\\ + 0.598x_{Key3} + 0.275x_{Key4} + 0.254x_{Key5} + 0.233x_{Key6} - 0.435x_{Key7} 
+\\ + 0.225x_{Key8} + 0.338x_{Key9} + 0.395x_{Key10} + 0.186x_{Key11} - 0.225x_{Loudness}
+\\ -2.006x_{Speechiness} + 0.004x_{Tempo} + 1.184x_{Valence}
+$$
+
+Performance metrics
+```{r}
+mode0.results <- data.frame(Model = c("Full", "Step", "Step 10kCV", "AllReg"),
+                            AIC = c(3408.5, 3407, 3403, 3407),
+                            Accuracy = c(0.7682, 0.7682, NA, 0.7682),
+                            Kappa = c(0.4902, 0.4902, NA, 0.4902),
+                            Sensitivity = c(0.8531, 0.8531, NA, 0.8531),
+                            Specificity = c(0.6244, 0.6244, NA, 0.6244))
+mode0.results
+```
+
+All models have exactly the same results. unsure about the cross validation approach however, due to technical difficulties.
+
+
+## Logistic Where mode = 1
 
 Major key
+
+Full logistic regression model
 ```{r}
 logit1 <- glm(oldgen ~., data = train1, family = "binomial")
 summary(logit1)
@@ -338,9 +658,9 @@ summary(logit1)
 
 confusion matrix on the training data:
 ```{r}
-tain1.pred <- logit1$fitted.values
-train1.y <- ifelse(tain1.pred > 0.5, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(train1.y), as.factor(train1$oldgen), 
+logit.train1.pred <- logit1$fitted.values
+logit.train1.y <- ifelse(logit.train1.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(logit.train1.y), as.factor(train1$oldgen), 
                 positive = "1")
 ```
 
@@ -348,26 +668,195 @@ confusionMatrix(as.factor(train1.y), as.factor(train1$oldgen),
 confusion matrix on the test data
 ```{r}
 #get predicted probabilities for the test data
-test1.pred <- predict(logit1, newdata = test1, type = "response")
+logit.test1.pred <- predict(logit1, newdata = test1, type = "response")
+logit.test1.y <- ifelse(logit.test1.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(logit.test1.y), as.factor(test1$oldgen), 
+                positive = "1")
+```
+
+
+### Variable Selection: Stepwise
+
+stepwise 
+```{r}
+logit1.none <- glm(oldgen ~ 1, data = train1, family = binomial)
+step1 <- step(logit1.none, 
+                 list(lower=formula(logit1.none), upper = formula(logit1)),
+                 direction = "both",
+                 trace=0)
+formula(step1)
+summary(step1)
+```
+
+confusion matrix on the training data:
+```{r}
+step.train1.pred <- step1$fitted.values
+step.train1.y <- ifelse(step.train1.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(step.train1.y), as.factor(train1$oldgen), 
+                positive = "1")
+```
+
+
+predict and evaluate on test
+```{r}
+#get predicted probabilities for the test data
+step.test1.pred <- predict(step1, newdata = test1, type = "response")
+step.test1.y <- ifelse(step.test1.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(step.test1.y), as.factor(test1$oldgen), 
+                positive = "1")
+```
+
+
+### Variable Selection: Stepwise (10 fold CV)
+
+step-wise 10 fold cross validation
+```{r echo = TRUE, message=FALSE, result='hide', warning = FALSE, error = FALSE}
+set.seed(123)
+train_control <- trainControl(method = "cv", 
+                              number = 10) 
+
+# Fit K-fold CV model  
+step1_kcv <- train(oldgen ~ ., data = train1, family = binomial(), 
+                 method = "glmStepAIC", trControl = train_control, verbose = FALSE) 
+```
+
+```{r}
+step1_kcv <- step1_kcv$finalModel
+step1_kcv
+```
+
+
+```{r}
+#get predicted probabilities for training data
+step_kcv.train1.pred <- step1_kcv$fitted.values
+step_kcv.train1.y <- ifelse(step_kcv.train1.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(step_kcv.train1.y), as.factor(train1$oldgen), 
+                positive = "1")
+```
+
+```
+#get predicted probabilities for the test data
+test1.pred <- predict(step1_kcv, newdata = test1, type = "response")
 test1.y <- ifelse(test1.pred > 0.5, 1, 0) # using cutoff = 0.5
 confusionMatrix(as.factor(test1.y), as.factor(test1$oldgen), 
                 positive = "1")
 ```
 
-### Multinomial Logistic Regression ###
+
+### Variable Selection: All possible regression
+
+```{r}
+glmulti.out1 <- glmulti(oldgen ~ ., data = train1,
+                           level = 1,               # No interaction considered
+            method = "h",            # Exhaustive approach
+            crit = "aic",            # AIC as criteria
+            confsetsize = 5,         # Keep 5 best models
+            plotty = F, report = F,  # No plot or interim reports
+            fitfunction = "glm",     # lm function
+            family = binomial)       # binomial to run logistic regression 
+glmulti.out1@formulas
+```
+
+view summary of top model
+```{r}
+summary(glmulti.out1@objects[[1]])
+```
+
+Store model
+```{r}
+allreg.logit1 <- glmulti.out1@objects[[1]]
+```
+
+
+try fitting training data to results from all possible regression variable selection
+```{r}
+#get predicted probabilities for training data
+all.train1.pred <- allreg.logit1$fitted.values
+all.train1.y <- ifelse(all.train1.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(all.train1.y), as.factor(train1$oldgen), 
+                positive = "1")
+```
+
+```{r}
+#get predicted probabilities for the test data
+all.test1.pred <- predict(allreg.logit1, newdata = test1, type = "response")
+all.test1.y <- ifelse(all.test1.pred > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(all.test1.y), as.factor(test1$oldgen), 
+                positive = "1")
+```
+
+
+
+
+### Deciding on the best model for Mode 0 songs
+
+Full Logistic model
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 0.852 - 0.080{Popularity} + 0.481{Duration} - 0.893{Acousticness} - 0.645{Danceability} 
+\\ - 0.453{Energy} - 2.408{Instrumentalness} + 0.461{Key1} + 0.065{Key2} 
+\\ - 0.095{Key3} -0.164{Key4} + 0.246{Key5} + 0.317{Key6} + 0.192{Key7} 
+\\ + 0.280{Key8} -0.040{Key9} + 0.133{Key10} + 0.259{Key11} - 0.146{Loudness}
+\\ -0.760{Speechiness} - 0.0003{Tempo} + 0.740{Valence}
+$$
+
+Stepwise Logistic Model
+Compared to the full model, the stepwise logistic model does not have tempo or energy in the model
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 0.346 - 0.080{Popularity} + 0.484Duration - 0.770{Acousticness} - 0.600{Danceability} 
+\\ - 2.439{Instrumentalness} + 0.462{Key1} + 0.065{Key2} 
+\\ - 0.093{Key3} -0.161{Key4} + 0.250{Key5} + 0.313{Key6} + 0.194{Key7} 
+\\ + 0.282{Key8} -0.035{Key9} + 0.131{Key10} + 0.259{Key11} - 0.146{Loudness}
+\\ -0.928{Speechiness} + 0.672{Valence}
+$$
+
+Stepwise 10kcv Logistic Model
+Energy, key2, key3, key4, key 9, key 10, and tempo not included.
+Code has issues running this model through prediction due to the dummy variables :(
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 0.322 - 0.080{Popularity} + 0.486{Duration} - 0.782{Acousticness} - 0.579{Danceability} 
+\\ - 2.420{Instrumentalness} + 0.462{Key1}
+\\ + 0.252{Key5} + 0.314{Key6} + 0.194{Key7} 
+\\ + 0.283{Key8} + 0.261{Key11} - 0.167{Loudness}
+\\ -0.909{Speechiness} + 0.673{Valence}
+$$
+
+All Possible Regressions Model
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 0.346 - 0.080{Popularity} + 0.484Duration - 0.770{Acousticness} - 0.600{Danceability} 
+\\ - 2.439{Instrumentalness} + 0.462{Key1} + 0.065{Key2} 
+\\ - 0.093{Key3} -0.161{Key4} + 0.250{Key5} + 0.313{Key6} + 0.194{Key7} 
+\\ + 0.282{Key8} -0.036{Key9} + 0.131{Key10} + 0.259{Key11} - 0.167{Loudness}
+\\ -0.928{Speechiness} + 0.672{Valence}
+$$
+
+Performance metrics
+```{r}
+mode1.results <- data.frame(Model = c("Full", "Step", "Step 10kCV", "AllReg"),
+                            AIC = c(5243.3, 5240.5, 5233, 5240.5),
+                            Accuracy = c(0.776, 0.776, NA, 0.7682),
+                            Kappa = c(0.4952, 0.4956, NA, 0.4902),
+                            Sensitivity = c(0.8685, 0.8677, NA, 0.8531),
+                            Specificity = c(0.6098, 0.6113, NA, 0.6244))
+mode1.results
+```
+
+
+
+
+# Multinomial Logistic Regression 
 #### Assumptions
 
 
 #### Model building 
 run on the training data.
-```{r}
+```
 data<- select(data, ArtistGen, popularity, duration, acousticness, danceability, energy, instrumentalness, key, loudness, mode, speechiness, tempo, valence)
 multi.train <- multinom(ArtistGen ~ ., data = data)
 summary(multi.train)
 ```
 
 Get p-values for the significance of each predictor variable in the model.
-```{r}
+```
 z <- summary(multi.train)$coefficients/summary(multi.train)$standard.errors
 #z
 ### Using Wald Z-test (need to check assumptions)###

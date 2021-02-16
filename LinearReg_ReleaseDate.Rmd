@@ -1,0 +1,53 @@
+---
+title: 'Linear Regression: Release Date'
+author: "Mary Solomon"
+date: "2/15/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(data.table)
+library(tidyverse)
+library(ggplot2)
+library(ggthemes)
+library(stringr)
+library(scales) #for formatting with percentage signs
+library(nnet) #for multinomial regression
+library(caret)
+```
+
+
+set levels of ordinal data, and other variables to their appropriate dataypes. Did not adjust the datatypes for date/time since those will not be used in this portion
+```{r}
+data <- fread("kpopdata.csv")
+data <- mutate(data, ArtistType = as.factor(ArtistType),
+               ArtistGender = as.factor(ArtistGender),
+               ArtistGen = factor(ArtistGen),
+               #release_date = as.POSIXct.Date(release_date),
+               key = factor(key, levels = 0:11),
+               mode = as.factor(mode),
+               time_signature = factor(time_signature, levels = c(1,3,4,5)))
+```
+
+
+Create Training (75%) and Test data (25%) to train classification models on.
+```{r}
+kpop <- select(data, gen1, popularity, duration, acousticness, danceability, energy, instrumentalness, key, loudness, mode, speechiness, tempo, valence)
+kpop0 <- kpop %>% filter(mode == 0)%>% select(-mode)
+kpop1 <- kpop %>% filter(mode == 1) %>% select(-mode)
+
+### Kpop mode 0 train and test
+smpl.size0 <- floor(0.75*nrow(kpop0))
+set.seed(123)
+smpl0 <- sample(nrow(g1.kpop0), g1.smpl.size0, replace = FALSE)
+train0 <- g1.kpop0[smpl0,]
+test0 <- g1.kpop0[-smpl0,]
+
+### Kpop mode 1 train and test
+smpl.size1 <- floor(0.75*nrow(kpop1))
+set.seed(123)
+smpl1 <- sample(nrow(kpop1), smpl.size1, replace = FALSE)
+train1 <- g1.kpop1[smpl1,]
+test1 <- g1.kpop1[-smpl1,]
+```

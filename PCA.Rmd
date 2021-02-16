@@ -1,5 +1,5 @@
 ---
-title: "Classification and Clustering Methods"
+title: "Clustering Methods"
 author: "Mary Solomon"
 date: "2/4/2021"
 output: html_document
@@ -76,11 +76,11 @@ INTERPRETATION OF THE PCs:
 
 * PC1: this Principal component has the variables of duration, acousticness, instrumentalness and key grouped in the positive direction against the variables of Popularity, danceability, energy, loudness, speechiness, tempo and valence which are contributing in the negative direction. The variables that have negative loading factors seem to be variables that are characteristics which would determine if a song is very upbeat and achieves mainstream appeal of pop music to be an exciting song that you can dance and move to.  The factors with the greater loadings are Energy at -0.502, loudness at -0.420, valence at -0.415, and acousticness at 0.427.
 
-* PC2:    
+* PC2: Here, the positive loading factors are associated with standardized scores for popularity, duration, energy, key loudness, speechiness and tempo. Where tempo has the greatest loading factor at 0.577, therefore accounting for the most variation. Whereas the negative direction loading values are coefficients for variables of Acousticness, danceability, instrumentalness and valence. For the negative direction standardized variables, Danceability has the largest negative coefficient of -0.516.
 
-* PC3:     
+* PC3: The positive standardized variables are Duration, Energy, Loudness, Tempo and Valence. Duration has the highest factor in comparison with the others at a loading factor of 0.562. For the Negative direction, we have variables of Popularity, Acousticness, Danceability, instrumentalness, Key, and speechiness, where Popularity and Speechiness have the greatest negative weight at -0.545 and -0.446 respectively.     
 
-* PC4:    
+* PC4: The variable that is weighted with the most variation in this component is instrumentalness with a loading factor of -0.632. Other variables weighted in the negative direction are tempo with the second largest loading factor at -0.433, speechiness, valence and energy. In the positive direction, we have popularity, duration, acousticness, danceability,, Key and Loudness, which are more equally weighted than the variables with negative loading factors.
 
 * PC5: When interpreting the 5th component, one attribute stands out. The loading factor for standardized variable of Key accounts for almost all of the variation in this principal component with a loading factor of -0.934. Therefore, the 5th component serves to characterize the musical key of the song.
 
@@ -146,6 +146,21 @@ $$
 \hat y_5 = -0.056z_{Popularity} +0.196z_{Duration} + 0.076z_{Acousticness} -0.007z_{Danceability}  -0.076z_{Energy} -0.458z_{Instrumantalness} +0.781z_{Key}  -0.065z_{Loudness} + 0.343z_{speechiness} -0.071z_{tempo} -0.005z_{valence}
 $$
 
+
+INTERPRETATION OF THE PCs:     
+
+* PC1: The variables with positive direction coefficients are: Energy, Loudness, Valence, Danceability, Speechiness, Tempo, and Popularity, with Energy, Loudness and Valence having the greatest weights, therefore accounting for the majoiryt of the variation in the positive direction. The negative weighted variables are Acousticness, Duration and Instrumentalness where Acousticness has the highest weight. The variables with the positive direction weights are ones that an average person would assume to be associated with fun, upbeat, pop hits as opposed to the variables that are weighted in the negative direction. A fun observation to point out is the contrast to the songs with mode = 1. Notice how there are similar groupings of variables, but with the signs flipped. This shows that songs that are in a minor key (mode = 0) experience opposite direction for similar groupings as major and minor key songs tend to give off opposite moods/tones from one another musically. 
+
+* PC2: Variables weighted in the positive direction are: Danceability, Valence, Instrumentallness,and KEy, with Danceability being weighted the most heavily at 0.625. The variables weighted in the negative direction are: Tempo, Popularity, Loudness, Speechiness,Energy, Duraiton and Acousticness with Tempo holding the greatest negative weight.
+
+* PC3: For this PC, Popularity is weighted very heavily in the positive direction compared to other variables such as Acousticness, Danceability, loudness, and speechiness. In the negative direction there is Duration, Instrumentalness, Tempo and Valence, where all variables except valence are weighted fairly equally in the negative direction. 
+
+* PC4: In the positive direction, Duration is weighted the most at 0.548, followed by Loudness, at 0.255 and Energy with a loading factor of just 0.076 and Valence at 0.038 in the negative direction, Speechiness carreies the most weight at -0.508, followed by Instrumentalness at -0.482, then Tempo, Key, Valence, Danceability, Popularity and Acousticness.
+
+* PC5: Similar to the 5th pc of songs with mode of 1, this component has Key as the variabl that accounts for the largest amount of variation in the data due to the highest loading factor of 0.781. The next significant weight is in the negative direction: -0.458 for the variable of Instrumentalness. Therefore, this PC serves to capture the characteristics of the instrumentation and its musical quality (key).
+
+
+
 biplot
 ```{r}
 biplot(pca, scale = 0, xlabs=rep("·", nrow(mode0)))
@@ -182,7 +197,7 @@ pca.var.explained %>%
 
 
 
-## Clustering on PCA (bad pca) ##
+## Clustering on PCA ##
 
 ```
 pc1n2 <- data.frame(pca$x[,1:2])
@@ -209,3 +224,78 @@ ggplot(pc1n2, aes(PC1, PC2, color = clusters)) + geom_point() +
   labs(title = "K-means Cluster on Principal Components", x = "PC1", y = "PC2") +
   theme_bw()
 ```
+
+## Heirarchical Clustering: Ward's method ##
+
+```{r}
+mode0.st <- scale(mode0)
+mode1.st <- scale(mode1)
+
+```
+
+
+column means and covariates of songs with mode == 0
+```{r}
+colMeans(mode0.st);cov(mode0.st)
+```
+
+
+column means and covariates of songs with mode == 1
+```{r}
+colMeans(mode1.st);cov(mode1.st)
+```
+
+
+
+No issues of multicollinearity in either subset.
+
+### Ward's Method: Mode 0
+
+```{r}
+mode0.d <- dist(mode0.st, method = "euclidean")
+mode0_ward <- hclust(mode0.d, method = "ward.D2")
+plot(mode0_ward)
+```
+
+The largest distance from the first cluster can be observed on the left side where the height has a distance of about 30. Therefore, Ward's method groups the dataset into 3 clusters. 
+
+```{r}
+plot(mode0_ward)
+rect.hclust(mode0_ward, k=3, border="red")
+```
+
+
+We can see that there is one large cluster to the left, a very small amount of songs in the second cluster and about 1/5 of the songs in the 3rd cluster. Lets see exactly how many songs are assigned to each cluster:
+```{r}
+mode0.groups <- cutree(mode0_ward, k=3)
+table(mode0.groups)
+table(mode0.groups)/nrow(mode0)
+```
+
+
+
+### Ward's Method: Mode 1
+
+```{r}
+mode1.d <- dist(mode1.st, method = "euclidean")
+mode1_ward <- hclust(mode1.d, method = "ward.D2")
+plot(mode1_ward)
+```
+
+Similarly to the songs where mode = 0, Ward's heirarchical method clusters the music into 3 separate groups. In addition, the 2nd group is also extremely small compared to the rest of the music.
+
+
+```{r}
+plot(mode1_ward)
+rect.hclust(mode1_ward, k=3, border="red")
+```
+
+
+```{r}
+mode1.groups <- cutree(mode1_ward, k=3)
+table(mode1.groups)
+table(mode1.groups)/nrow(mode1)
+```
+
+
+

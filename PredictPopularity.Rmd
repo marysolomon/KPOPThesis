@@ -1,0 +1,57 @@
+---
+title: "Predict Popularity"
+author: "Mary Solomon"
+date: "2/11/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(QuantPsyc)#for multivariate normality function
+library(data.table)
+library(tidyverse)
+library(ggplot2)
+library(ggthemes)
+library(stringr)
+library(scales)
+```
+
+data :D
+```{r}
+data <- fread("kpopdata.csv")
+# data <- mutate(data, ArtistType = as.factor(ArtistType),
+#                ArtistGender = as.factor(ArtistGender),
+#                ArtistGen = factor(ArtistGen),
+#                #release_date = as.POSIXct.Date(release_date),
+#                key = factor(key, levels = 0:11),
+#                mode = as.factor(mode),
+#                time_signature = factor(time_signature, levels = c(1,3,4,5)))
+```
+
+
+select just audio features
+```{r}
+kpop <- dplyr::select(data, popularity, duration, acousticness, danceability, energy, instrumentalness, key, loudness, mode, speechiness, time_signature, tempo, valence)
+```
+
+General Assumptions:
+continuous response: popularity score ranging from 0 - 100.
+mix of categorical and continuous response.
+the distribution of the variables are not normal, we will check for normality of error terms where appropriate.
+
+Goal: create model for predicting popularity scores
+
+
+# Linear Model?
+
+multivariate normality
+```{r}
+mult.norm(kpop)$mult.test
+```
+
+
+no or little multicollinearity
+
+no autocorrelation 
+
+no homoscedasticity.
