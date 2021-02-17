@@ -22,6 +22,23 @@ library(glmulti)# for all possible regressions approach LOGISTIC
 ```
 
 
+```{r}
+key.dummy <- function(x){
+  x <- x %>% mutate(key1 = ifelse(x$key == 1, 1, 0),
+              key2 = ifelse(x$key == 2, 1, 0),
+              key3 = ifelse(x$key == 3, 1, 0),
+              key4 = ifelse(x$key == 4, 1, 0),
+              key5 = ifelse(x$key == 5, 1, 0),
+              key6 = ifelse(x$key == 6, 1, 0),
+              key7 = ifelse(x$key == 7, 1, 0),
+              key8 = ifelse(x$key == 8, 1, 0),
+              key9 = ifelse(x$key == 9, 1, 0),
+              key10 = ifelse(x$key == 10, 1, 0),
+              key11 = ifelse(x$key == 11, 1, 0)) %>% select(-key)
+    
+  x
+}
+```
 
 
 set levels of ordinal data, and other variables to their appropriate dataypes. Did not adjust the datatypes for date/time since those will not be used in this portion
@@ -159,9 +176,9 @@ confusionMatrix(as.factor(g1.train0.y), as.factor(g1.train0$gen1),
 ```
 
 Predict and evaluate performance on Test Data
-```
+```{r}
 #get predicted probabilities for the test data
-g1.test0.pred <- predict(g1.step0_kcv$finalModel, newdata = g1.test0, type = "response")
+g1.test0.pred <- predict(g1.step0_kcv, newdata = key.dummy(g1.test0), type = "response")
 g1.test0.y <- ifelse(g1.test0.pred > 0.5, 1, 0) # using cutoff = 0.5
 confusionMatrix(as.factor(g1.test0.y), as.factor(g1.test0$gen1), 
                 positive = "1")
@@ -311,6 +328,9 @@ confusionMatrix(as.factor(g1.test1.y), as.factor(g1.test1$gen1),
                 positive = "1")
 ```
 
+
+### Variable Selection: Stepwise (10 fold CV)
+
 step-wise 10 fold cross validation
 ```{r echo = TRUE, message=FALSE, result='hide', warning = FALSE, error = FALSE}
 set.seed(123)
@@ -337,9 +357,9 @@ confusionMatrix(as.factor(g1.train1.y), as.factor(g1.train1$gen1),
 ```
 
 predict on test data and evaluate
-```
+```{r}
 #get predicted probabilities for the test data
-g1.test1.pred <- predict(g1.step1_kcv, newdata = g1.test1, type = "response")
+g1.test1.pred <- predict(g1.step1_kcv, newdata = key.dummy(g1.test1), type = "response")
 g1.test1.y <- ifelse(g1.test1.pred > 0.5, 1, 0) # using cutoff = 0.5
 confusionMatrix(as.factor(g1.test1.y), as.factor(g1.test1$gen1), 
                 positive = "1")
@@ -538,9 +558,9 @@ confusionMatrix(as.factor(step_kcv.train0.y), as.factor(train0$oldgen),
                 positive = "1")
 ```
 
-```
+```{r}
 #get predicted probabilities for the test data
-step_kcv.test0.pred <- predict(step0_kcv, newdata = test0, type = "response")
+step_kcv.test0.pred <- predict(step0_kcv, newdata = key.dummy(test0), type = "response")
 step_kcv.test0.y <- ifelse(step_kcv.test0.pred > 0.5, 1, 0) # using cutoff = 0.5
 confusionMatrix(as.factor(step_kcv.test0.y), as.factor(test0$oldgen), 
                 positive = "1")
@@ -635,10 +655,10 @@ Performance metrics
 ```{r}
 mode0.results <- data.frame(Model = c("Full", "Step", "Step 10kCV", "AllReg"),
                             AIC = c(3408.5, 3407, 3403, 3407),
-                            Accuracy = c(0.7682, 0.7682, NA, 0.7682),
-                            Kappa = c(0.4902, 0.4902, NA, 0.4902),
-                            Sensitivity = c(0.8531, 0.8531, NA, 0.8531),
-                            Specificity = c(0.6244, 0.6244, NA, 0.6244))
+                            Accuracy = c(0.7682, 0.7682, 0.7665, 0.7682),
+                            Kappa = c(0.4902, 0.4902, 0.4864, 0.4902),
+                            Sensitivity = c(0.8531, 0.8531, 0.8517, 0.8531),
+                            Specificity = c(0.6244, 0.6244, 0.6221, 0.6244))
 mode0.results
 ```
 
@@ -734,9 +754,9 @@ confusionMatrix(as.factor(step_kcv.train1.y), as.factor(train1$oldgen),
                 positive = "1")
 ```
 
-```
+```{r}
 #get predicted probabilities for the test data
-test1.pred <- predict(step1_kcv, newdata = test1, type = "response")
+test1.pred <- predict(step1_kcv, newdata = key.dummy(test1), type = "response")
 test1.y <- ifelse(test1.pred > 0.5, 1, 0) # using cutoff = 0.5
 confusionMatrix(as.factor(test1.y), as.factor(test1$oldgen), 
                 positive = "1")
@@ -788,7 +808,7 @@ confusionMatrix(as.factor(all.test1.y), as.factor(test1$oldgen),
 
 
 
-### Deciding on the best model for Mode 0 songs
+### Deciding on the best model for Mode 1 songs
 
 Full Logistic model
 $$
@@ -833,10 +853,10 @@ Performance metrics
 ```{r}
 mode1.results <- data.frame(Model = c("Full", "Step", "Step 10kCV", "AllReg"),
                             AIC = c(5243.3, 5240.5, 5233, 5240.5),
-                            Accuracy = c(0.776, 0.776, NA, 0.7682),
-                            Kappa = c(0.4952, 0.4956, NA, 0.4902),
-                            Sensitivity = c(0.8685, 0.8677, NA, 0.8531),
-                            Specificity = c(0.6098, 0.6113, NA, 0.6244))
+                            Accuracy = c(0.776, 0.776, 0.776, 0.7682),
+                            Kappa = c(0.4952, 0.4956, 0.4956, 0.4902),
+                            Sensitivity = c(0.8685, 0.8677, 0.8677, 0.8531),
+                            Specificity = c(0.6098, 0.6113, 0.6113, 0.6244))
 mode1.results
 ```
 

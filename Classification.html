@@ -195,6 +195,7 @@ summary {
 </ul></li>
 <li><a href="#logistic-where-mode-1">Logistic Where mode = 1</a><ul>
 <li><a href="#variable-selection-stepwise-1">Variable Selection: Stepwise</a></li>
+<li><a href="#variable-selection-stepwise-10-fold-cv-1">Variable Selection: Stepwise (10 fold CV)</a></li>
 <li><a href="#variable-selection-all-possible-regression">Variable Selection: All Possible Regression</a></li>
 <li><a href="#deciding-on-the-best-logistic-model-for-songs-where-mode-1">Deciding on the best Logistic model for songs where mode = 1</a></li>
 <li><a href="#run-final-model-on-the-test-data-and-predict-1">Run final model on the test data and predict</a></li>
@@ -203,13 +204,13 @@ summary {
 <li><a href="#logistic-predict-which-songs-are-old-gen-1-2-vs-new-gen-3-4">Logistic: predict which songs are old gen (1 &amp; 2) vs new gen (3 &amp; 4)</a><ul>
 <li><a href="#logistic-where-mode-0-1">Logistic Where mode = 0</a><ul>
 <li><a href="#variable-selection-stepwise-2">Variable Selection: Stepwise</a></li>
-<li><a href="#variable-selection-stepwise-10-fold-cv-1">Variable Selection: Stepwise (10 fold CV)</a></li>
+<li><a href="#variable-selection-stepwise-10-fold-cv-2">Variable Selection: Stepwise (10 fold CV)</a></li>
 <li><a href="#variable-selection-all-possible-regression-1">Variable Selection: All possible regression</a></li>
 <li><a href="#deciding-on-the-best-model-for-mode-0-songs">Deciding on the best model for Mode 0 songs</a></li>
 </ul></li>
 <li><a href="#logistic-where-mode-1-1">Logistic Where mode = 1</a><ul>
 <li><a href="#variable-selection-stepwise-3">Variable Selection: Stepwise</a></li>
-<li><a href="#variable-selection-stepwise-10-fold-cv-2">Variable Selection: Stepwise (10 fold CV)</a></li>
+<li><a href="#variable-selection-stepwise-10-fold-cv-3">Variable Selection: Stepwise (10 fold CV)</a></li>
 <li><a href="#variable-selection-all-possible-regression-2">Variable Selection: All possible regression</a></li>
 <li><a href="#deciding-on-the-best-model-for-mode-0-songs-1">Deciding on the best model for Mode 0 songs</a></li>
 </ul></li>
@@ -218,6 +219,21 @@ summary {
 </ul>
 </div>
 
+<pre class="r"><code>key.dummy &lt;- function(x){
+  x &lt;- x %&gt;% mutate(key1 = ifelse(x$key == 1, 1, 0),
+              key2 = ifelse(x$key == 2, 1, 0),
+              key3 = ifelse(x$key == 3, 1, 0),
+              key4 = ifelse(x$key == 4, 1, 0),
+              key5 = ifelse(x$key == 5, 1, 0),
+              key6 = ifelse(x$key == 6, 1, 0),
+              key7 = ifelse(x$key == 7, 1, 0),
+              key8 = ifelse(x$key == 8, 1, 0),
+              key9 = ifelse(x$key == 9, 1, 0),
+              key10 = ifelse(x$key == 10, 1, 0),
+              key11 = ifelse(x$key == 11, 1, 0)) %&gt;% select(-key)
+    
+  x
+}</code></pre>
 <p>set levels of ordinal data, and other variables to their appropriate dataypes. Did not adjust the datatypes for date/time since those will not be used in this portion</p>
 <pre class="r"><code>data &lt;- fread(&quot;kpopdata.csv&quot;)
 data &lt;- mutate(data, ArtistType = as.factor(ArtistType),
@@ -1928,11 +1944,38 @@ confusionMatrix(as.factor(g1.train0.y), as.factor(g1.train0$gen1),
 ##        'Positive' Class : 1               
 ## </code></pre>
 <p>Predict and evaluate performance on Test Data</p>
-<pre><code>#get predicted probabilities for the test data
-g1.test0.pred &lt;- predict(g1.step0_kcv$finalModel, newdata = g1.test0, type = &quot;response&quot;)
+<pre class="r"><code>#get predicted probabilities for the test data
+g1.test0.pred &lt;- predict(g1.step0_kcv, newdata = key.dummy(g1.test0), type = &quot;response&quot;)
 g1.test0.y &lt;- ifelse(g1.test0.pred &gt; 0.5, 1, 0) # using cutoff = 0.5
 confusionMatrix(as.factor(g1.test0.y), as.factor(g1.test0$gen1), 
                 positive = &quot;1&quot;)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction   0   1
+##          0 916 140
+##          1  36  77
+##                                           
+##                Accuracy : 0.8494          
+##                  95% CI : (0.8276, 0.8695)
+##     No Information Rate : 0.8144          
+##     P-Value [Acc &gt; NIR] : 0.0009086       
+##                                           
+##                   Kappa : 0.389           
+##                                           
+##  Mcnemar's Test P-Value : 8.235e-15       
+##                                           
+##             Sensitivity : 0.35484         
+##             Specificity : 0.96218         
+##          Pos Pred Value : 0.68142         
+##          Neg Pred Value : 0.86742         
+##              Prevalence : 0.18563         
+##          Detection Rate : 0.06587         
+##    Detection Prevalence : 0.09666         
+##       Balanced Accuracy : 0.65851         
+##                                           
+##        'Positive' Class : 1               
+## </code></pre>
 <p>Error: object Key4 not found</p>
 </div>
 <div id="variable-selection-all-possible-regressions" class="section level3">
@@ -1950,28 +1993,28 @@ glmulti.g1.out0@formulas</code></pre>
 <pre><code>## [[1]]
 ## gen1 ~ 1 + key + popularity + duration + acousticness + danceability + 
 ##     energy + instrumentalness + loudness + speechiness + valence
-## &lt;environment: 0x7fdbaa8cd678&gt;
+## &lt;environment: 0x7f9a733148d8&gt;
 ## 
 ## [[2]]
 ## gen1 ~ 1 + popularity + duration + acousticness + danceability + 
 ##     energy + instrumentalness + loudness + speechiness + valence
-## &lt;environment: 0x7fdbaa8cd678&gt;
+## &lt;environment: 0x7f9a733148d8&gt;
 ## 
 ## [[3]]
 ## gen1 ~ 1 + key + popularity + duration + acousticness + danceability + 
 ##     energy + instrumentalness + loudness + valence
-## &lt;environment: 0x7fdbaa8cd678&gt;
+## &lt;environment: 0x7f9a733148d8&gt;
 ## 
 ## [[4]]
 ## gen1 ~ 1 + popularity + duration + acousticness + danceability + 
 ##     energy + instrumentalness + loudness + valence
-## &lt;environment: 0x7fdbaa8cd678&gt;
+## &lt;environment: 0x7f9a733148d8&gt;
 ## 
 ## [[5]]
 ## gen1 ~ 1 + key + popularity + duration + acousticness + danceability + 
 ##     energy + instrumentalness + loudness + speechiness + tempo + 
 ##     valence
-## &lt;environment: 0x7fdbaa8cd678&gt;</code></pre>
+## &lt;environment: 0x7f9a733148d8&gt;</code></pre>
 <pre class="r"><code>summary(glmulti.g1.out0@objects[[1]])</code></pre>
 <pre><code>## 
 ## Call:
@@ -2383,6 +2426,9 @@ confusionMatrix(as.factor(g1.test1.y), as.factor(g1.test1$gen1),
 ##                                           
 ##        'Positive' Class : 1               
 ## </code></pre>
+</div>
+<div id="variable-selection-stepwise-10-fold-cv-1" class="section level3">
+<h3>Variable Selection: Stepwise (10 fold CV)</h3>
 <p>step-wise 10 fold cross validation</p>
 <pre class="r"><code>set.seed(123)
 train_control &lt;- trainControl(method = &quot;cv&quot;, 
@@ -4939,11 +4985,38 @@ confusionMatrix(as.factor(g1.train1.y), as.factor(g1.train1$gen1),
 ##        'Positive' Class : 1               
 ## </code></pre>
 <p>predict on test data and evaluate</p>
-<pre><code>#get predicted probabilities for the test data
-g1.test1.pred &lt;- predict(g1.step1_kcv, newdata = g1.test1, type = &quot;response&quot;)
+<pre class="r"><code>#get predicted probabilities for the test data
+g1.test1.pred &lt;- predict(g1.step1_kcv, newdata = key.dummy(g1.test1), type = &quot;response&quot;)
 g1.test1.y &lt;- ifelse(g1.test1.pred &gt; 0.5, 1, 0) # using cutoff = 0.5
 confusionMatrix(as.factor(g1.test1.y), as.factor(g1.test1$gen1), 
                 positive = &quot;1&quot;)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    0    1
+##          0 1490  223
+##          1   49   73
+##                                           
+##                Accuracy : 0.8518          
+##                  95% CI : (0.8347, 0.8677)
+##     No Information Rate : 0.8387          
+##     P-Value [Acc &gt; NIR] : 0.06671         
+##                                           
+##                   Kappa : 0.2816          
+##                                           
+##  Mcnemar's Test P-Value : &lt; 2e-16         
+##                                           
+##             Sensitivity : 0.24662         
+##             Specificity : 0.96816         
+##          Pos Pred Value : 0.59836         
+##          Neg Pred Value : 0.86982         
+##              Prevalence : 0.16131         
+##          Detection Rate : 0.03978         
+##    Detection Prevalence : 0.06649         
+##       Balanced Accuracy : 0.60739         
+##                                           
+##        'Positive' Class : 1               
+## </code></pre>
 <p>Error in eval(predvars, data, env) : object 'key3' not found</p>
 </div>
 <div id="variable-selection-all-possible-regression" class="section level3">
@@ -4961,29 +5034,29 @@ glmulti.g1.out1@formulas</code></pre>
 <pre><code>## [[1]]
 ## gen1 ~ 1 + key + popularity + duration + acousticness + danceability + 
 ##     energy + instrumentalness + loudness + speechiness + valence
-## &lt;environment: 0x7fdbaa975758&gt;
+## &lt;environment: 0x7f9a79294230&gt;
 ## 
 ## [[2]]
 ## gen1 ~ 1 + popularity + duration + acousticness + danceability + 
 ##     energy + instrumentalness + loudness + speechiness + valence
-## &lt;environment: 0x7fdbaa975758&gt;
+## &lt;environment: 0x7f9a79294230&gt;
 ## 
 ## [[3]]
 ## gen1 ~ 1 + key + popularity + duration + acousticness + danceability + 
 ##     energy + instrumentalness + loudness + speechiness + tempo + 
 ##     valence
-## &lt;environment: 0x7fdbaa975758&gt;
+## &lt;environment: 0x7f9a79294230&gt;
 ## 
 ## [[4]]
 ## gen1 ~ 1 + popularity + duration + acousticness + danceability + 
 ##     energy + instrumentalness + loudness + speechiness + tempo + 
 ##     valence
-## &lt;environment: 0x7fdbaa975758&gt;
+## &lt;environment: 0x7f9a79294230&gt;
 ## 
 ## [[5]]
 ## gen1 ~ 1 + key + popularity + duration + danceability + energy + 
 ##     instrumentalness + loudness + speechiness + valence
-## &lt;environment: 0x7fdbaa975758&gt;</code></pre>
+## &lt;environment: 0x7f9a79294230&gt;</code></pre>
 <pre class="r"><code>summary(glmulti.g1.out1@objects[[1]])</code></pre>
 <pre><code>## 
 ## Call:
@@ -5414,7 +5487,7 @@ confusionMatrix(as.factor(step.test0.y), as.factor(test0$oldgen),
 ##        'Positive' Class : 1               
 ## </code></pre>
 </div>
-<div id="variable-selection-stepwise-10-fold-cv-1" class="section level3">
+<div id="variable-selection-stepwise-10-fold-cv-2" class="section level3">
 <h3>Variable Selection: Stepwise (10 fold CV)</h3>
 <p>step-wise 10 fold cross validation</p>
 <pre class="r"><code>set.seed(123)
@@ -7838,11 +7911,38 @@ confusionMatrix(as.factor(step_kcv.train0.y), as.factor(train0$oldgen),
 ##                                           
 ##        'Positive' Class : 1               
 ## </code></pre>
-<pre><code>#get predicted probabilities for the test data
-step_kcv.test0.pred &lt;- predict(step0_kcv, newdata = test0, type = &quot;response&quot;)
+<pre class="r"><code>#get predicted probabilities for the test data
+step_kcv.test0.pred &lt;- predict(step0_kcv, newdata = key.dummy(test0), type = &quot;response&quot;)
 step_kcv.test0.y &lt;- ifelse(step_kcv.test0.pred &gt; 0.5, 1, 0) # using cutoff = 0.5
 confusionMatrix(as.factor(step_kcv.test0.y), as.factor(test0$oldgen), 
                 positive = &quot;1&quot;)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction   0   1
+##          0 270 109
+##          1 164 626
+##                                           
+##                Accuracy : 0.7665          
+##                  95% CI : (0.7411, 0.7905)
+##     No Information Rate : 0.6287          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
+##                                           
+##                   Kappa : 0.4864          
+##                                           
+##  Mcnemar's Test P-Value : 0.001082        
+##                                           
+##             Sensitivity : 0.8517          
+##             Specificity : 0.6221          
+##          Pos Pred Value : 0.7924          
+##          Neg Pred Value : 0.7124          
+##              Prevalence : 0.6287          
+##          Detection Rate : 0.5355          
+##    Detection Prevalence : 0.6758          
+##       Balanced Accuracy : 0.7369          
+##                                           
+##        'Positive' Class : 1               
+## </code></pre>
 </div>
 <div id="variable-selection-all-possible-regression-1" class="section level3">
 <h3>Variable Selection: All possible regression</h3>
@@ -7858,28 +7958,28 @@ glmulti.out0@formulas</code></pre>
 <pre><code>## [[1]]
 ## oldgen ~ 1 + key + popularity + duration + acousticness + instrumentalness + 
 ##     loudness + speechiness + tempo + valence
-## &lt;environment: 0x7fdbae340ca8&gt;
+## &lt;environment: 0x7f9a7136ce50&gt;
 ## 
 ## [[2]]
 ## oldgen ~ 1 + key + popularity + duration + acousticness + danceability + 
 ##     instrumentalness + loudness + speechiness + tempo + valence
-## &lt;environment: 0x7fdbae340ca8&gt;
+## &lt;environment: 0x7f9a7136ce50&gt;
 ## 
 ## [[3]]
 ## oldgen ~ 1 + key + popularity + duration + acousticness + energy + 
 ##     instrumentalness + loudness + speechiness + tempo + valence
-## &lt;environment: 0x7fdbae340ca8&gt;
+## &lt;environment: 0x7f9a7136ce50&gt;
 ## 
 ## [[4]]
 ## oldgen ~ 1 + key + popularity + duration + acousticness + danceability + 
 ##     energy + instrumentalness + loudness + speechiness + tempo + 
 ##     valence
-## &lt;environment: 0x7fdbae340ca8&gt;
+## &lt;environment: 0x7f9a7136ce50&gt;
 ## 
 ## [[5]]
 ## oldgen ~ 1 + key + popularity + duration + acousticness + danceability + 
 ##     instrumentalness + loudness + speechiness + valence
-## &lt;environment: 0x7fdbae340ca8&gt;</code></pre>
+## &lt;environment: 0x7f9a7136ce50&gt;</code></pre>
 <p>view summary of top model</p>
 <pre class="r"><code>summary(glmulti.out0@objects[[1]])</code></pre>
 <pre><code>## 
@@ -8269,7 +8369,7 @@ confusionMatrix(as.factor(step.test1.y), as.factor(test1$oldgen),
 ##        'Positive' Class : 1               
 ## </code></pre>
 </div>
-<div id="variable-selection-stepwise-10-fold-cv-2" class="section level3">
+<div id="variable-selection-stepwise-10-fold-cv-3" class="section level3">
 <h3>Variable Selection: Stepwise (10 fold CV)</h3>
 <p>step-wise 10 fold cross validation</p>
 <pre class="r"><code>set.seed(123)
@@ -10889,11 +10989,38 @@ confusionMatrix(as.factor(step_kcv.train1.y), as.factor(train1$oldgen),
 ##                                           
 ##        'Positive' Class : 1               
 ## </code></pre>
-<pre><code>#get predicted probabilities for the test data
-test1.pred &lt;- predict(step1_kcv, newdata = test1, type = &quot;response&quot;)
+<pre class="r"><code>#get predicted probabilities for the test data
+test1.pred &lt;- predict(step1_kcv, newdata = key.dummy(test1), type = &quot;response&quot;)
 test1.y &lt;- ifelse(test1.pred &gt; 0.5, 1, 0) # using cutoff = 0.5
 confusionMatrix(as.factor(test1.y), as.factor(test1$oldgen), 
                 positive = &quot;1&quot;)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    0    1
+##          0  401  156
+##          1  255 1023
+##                                           
+##                Accuracy : 0.776           
+##                  95% CI : (0.7562, 0.7949)
+##     No Information Rate : 0.6425          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
+##                                           
+##                   Kappa : 0.4956          
+##                                           
+##  Mcnemar's Test P-Value : 1.338e-06       
+##                                           
+##             Sensitivity : 0.8677          
+##             Specificity : 0.6113          
+##          Pos Pred Value : 0.8005          
+##          Neg Pred Value : 0.7199          
+##              Prevalence : 0.6425          
+##          Detection Rate : 0.5575          
+##    Detection Prevalence : 0.6965          
+##       Balanced Accuracy : 0.7395          
+##                                           
+##        'Positive' Class : 1               
+## </code></pre>
 </div>
 <div id="variable-selection-all-possible-regression-2" class="section level3">
 <h3>Variable Selection: All possible regression</h3>
@@ -10909,27 +11036,27 @@ glmulti.out1@formulas</code></pre>
 <pre><code>## [[1]]
 ## oldgen ~ 1 + key + popularity + duration + acousticness + danceability + 
 ##     instrumentalness + loudness + speechiness + valence
-## &lt;environment: 0x7fdba77242d8&gt;
+## &lt;environment: 0x7f9a73298da8&gt;
 ## 
 ## [[2]]
 ## oldgen ~ 1 + key + popularity + duration + acousticness + danceability + 
 ##     instrumentalness + loudness + valence
-## &lt;environment: 0x7fdba77242d8&gt;
+## &lt;environment: 0x7f9a73298da8&gt;
 ## 
 ## [[3]]
 ## oldgen ~ 1 + key + popularity + duration + acousticness + danceability + 
 ##     energy + instrumentalness + loudness + valence
-## &lt;environment: 0x7fdba77242d8&gt;
+## &lt;environment: 0x7f9a73298da8&gt;
 ## 
 ## [[4]]
 ## oldgen ~ 1 + key + popularity + duration + acousticness + danceability + 
 ##     energy + instrumentalness + loudness + speechiness + valence
-## &lt;environment: 0x7fdba77242d8&gt;
+## &lt;environment: 0x7f9a73298da8&gt;
 ## 
 ## [[5]]
 ## oldgen ~ 1 + key + popularity + duration + acousticness + instrumentalness + 
 ##     loudness + speechiness + valence
-## &lt;environment: 0x7fdba77242d8&gt;</code></pre>
+## &lt;environment: 0x7f9a73298da8&gt;</code></pre>
 <p>view summary of top model</p>
 <pre class="r"><code>summary(glmulti.out1@objects[[1]])</code></pre>
 <pre><code>## 

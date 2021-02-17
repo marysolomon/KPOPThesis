@@ -16,21 +16,42 @@ library(stringr)
 library(scales)
 ```
 
-data :D
+
+global functions (convert key to dummy)
 ```{r}
-data <- fread("kpopdata.csv")
-# data <- mutate(data, ArtistType = as.factor(ArtistType),
-#                ArtistGender = as.factor(ArtistGender),
-#                ArtistGen = factor(ArtistGen),
-#                #release_date = as.POSIXct.Date(release_date),
-#                key = factor(key, levels = 0:11),
-#                mode = as.factor(mode),
-#                time_signature = factor(time_signature, levels = c(1,3,4,5)))
+key.dummy <- function(x){
+  x <- x %>% mutate(key1 = ifelse(x$key == 1, 1, 0),
+              key2 = ifelse(x$key == 2, 1, 0),
+              key3 = ifelse(x$key == 3, 1, 0),
+              key4 = ifelse(x$key == 4, 1, 0),
+              key5 = ifelse(x$key == 5, 1, 0),
+              key6 = ifelse(x$key == 6, 1, 0),
+              key7 = ifelse(x$key == 7, 1, 0),
+              key8 = ifelse(x$key == 8, 1, 0),
+              key9 = ifelse(x$key == 9, 1, 0),
+              key10 = ifelse(x$key == 10, 1, 0),
+              key11 = ifelse(x$key == 11, 1, 0)) %>% select(-key)
+    
+  x
+}
 ```
 
 
-select just audio features
+data :D
 ```{r}
+data <- fread("kpopdata.csv")
+data <- mutate(data, ArtistType = as.factor(ArtistType),
+               ArtistGender = as.factor(ArtistGender),
+               ArtistGen = factor(ArtistGen),
+               release_date = as.POSIXct(release_date, format = "%m/%d/%y"),
+               key = factor(key, levels = 0:11),
+               mode = as.factor(mode),
+               time_signature = factor(time_signature, levels = c(1,3,4,5)),
+               popular = factor(ifelse(popularity >=50, 1, 0)))
+```
+
+
+```
 kpop <- dplyr::select(data, popularity, duration, acousticness, danceability, energy, instrumentalness, key, loudness, mode, speechiness, time_signature, tempo, valence)
 ```
 
@@ -42,16 +63,77 @@ the distribution of the variables are not normal, we will check for normality of
 Goal: create model for predicting popularity scores
 
 
-# Linear Model?
-
-multivariate normality
+# Multiple Linear Model?
+select just audio features
 ```{r}
-mult.norm(kpop)$mult.test
+kpop <- select(data, popularity, duration, acousticness, danceability, energy, instrumentalness, key, loudness, mode, speechiness, tempo, valence)
+kpop0 <- kpop %>% filter(mode == 0)%>% select(-mode)
+kpop1 <- kpop %>% filter(mode == 1) %>% select(-mode)
+
+### Kpop mode 0 train and test
+smpl.size0 <- floor(0.75*nrow(kpop0))
+set.seed(123)
+smpl0 <- sample(nrow(kpop0), smpl.size0, replace = FALSE)
+train0 <- kpop0[smpl0,]
+test0 <- kpop0[-smpl0,]
+
+### Kpop mode 1 train and test
+smpl.size1 <- floor(0.75*nrow(kpop1))
+set.seed(123)
+smpl1 <- sample(nrow(kpop1), smpl.size1, replace = FALSE)
+train1 <- kpop1[smpl1,]
+test1 <- kpop1[-smpl1,]
 ```
 
+fit a multiple linear regression model
+```{r}
+ml0 <- lm(popularity ~. , data = train0)
+summary(ml0)
+```
+
+
+
+```{r}
+plot(ml0)
+```
 
 no or little multicollinearity
 
 no autocorrelation 
 
 no homoscedasticity.
+
+Try again with tranformation to make popularity normal:(to the squareroot)
+```{r}
+ml0.sqrt <- lm(popularity^0.5 ~. , data = train0)
+summary(ml0.sqrt)
+```
+
+assumption checking and diagnostics
+```{r}
+plot(ml0.sqrt)
+```
+
+Much improved!
+
+
+# Logistic (classification approach)
+```{r}
+kpop.logit <- select(data, popular, duration, acousticness, danceability, energy, instrumentalness, key, loudness, mode, speechiness, tempo, valence)
+logit.kpop0 <- logit.kpop %>% filter(mode == 0)%>% select(-mode)
+logit.kpop1 <- logit.kpop %>% filter(mode == 1) %>% select(-mode)
+
+### Kpop mode 0 train and test
+smpl.size0 <- floor(0.75*nrow(kpop0))
+set.seed(123)
+smpl0 <- sample(nrow(logit.kpop0), smpl.size0, replace = FALSE)
+logit.train0 <- logit.kpop0[smpl0,]
+logit.test0 <- logit.kpop0[-smpl0,]
+
+### Kpop mode 1 train and test
+smpl.size1 <- floor(0.75*nrow(logit.kpop1))
+set.seed(123)
+smpl1 <- sample(nrow(logit.kpop1), smpl.size1, replace = FALSE)
+logit.train1 <- logit.kpop1[smpl1,]
+logit.test1 <- logit.kpop1[-smpl1,]
+```
