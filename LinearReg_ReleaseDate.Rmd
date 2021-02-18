@@ -38,6 +38,20 @@ data$months = 12*(year(data$release_date) - ref.year) + month(data$release_date)
 ```
 
 
+check out distribution of the months 
+```{r}
+hist(data$months)
+summary(data$months)
+```
+
+try to find a transformation to normalize
+```{r}
+hist(log(360-data$months))
+```
+
+
+
+# splitting into training and test data.
 Create Training (75%) and Test data (25%) to train classification models on.
 ```{r}
 kpop <- select(data, months, popularity, duration, acousticness, danceability, energy, instrumentalness, key, loudness, mode, speechiness, tempo, valence)

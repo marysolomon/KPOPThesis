@@ -212,7 +212,7 @@ summary {
 <li><a href="#variable-selection-stepwise-3">Variable Selection: Stepwise</a></li>
 <li><a href="#variable-selection-stepwise-10-fold-cv-3">Variable Selection: Stepwise (10 fold CV)</a></li>
 <li><a href="#variable-selection-all-possible-regression-2">Variable Selection: All possible regression</a></li>
-<li><a href="#deciding-on-the-best-model-for-mode-0-songs-1">Deciding on the best model for Mode 0 songs</a></li>
+<li><a href="#deciding-on-the-best-model-for-mode-1-songs">Deciding on the best model for Mode 1 songs</a></li>
 </ul></li>
 </ul></li>
 <li><a href="#multinomial-logistic-regression">Multinomial Logistic Regression</a></li>
@@ -1993,28 +1993,28 @@ glmulti.g1.out0@formulas</code></pre>
 <pre><code>## [[1]]
 ## gen1 ~ 1 + key + popularity + duration + acousticness + danceability + 
 ##     energy + instrumentalness + loudness + speechiness + valence
-## &lt;environment: 0x7f9a733148d8&gt;
+## &lt;environment: 0x7fcc9bfbae30&gt;
 ## 
 ## [[2]]
 ## gen1 ~ 1 + popularity + duration + acousticness + danceability + 
 ##     energy + instrumentalness + loudness + speechiness + valence
-## &lt;environment: 0x7f9a733148d8&gt;
+## &lt;environment: 0x7fcc9bfbae30&gt;
 ## 
 ## [[3]]
 ## gen1 ~ 1 + key + popularity + duration + acousticness + danceability + 
 ##     energy + instrumentalness + loudness + valence
-## &lt;environment: 0x7f9a733148d8&gt;
+## &lt;environment: 0x7fcc9bfbae30&gt;
 ## 
 ## [[4]]
 ## gen1 ~ 1 + popularity + duration + acousticness + danceability + 
 ##     energy + instrumentalness + loudness + valence
-## &lt;environment: 0x7f9a733148d8&gt;
+## &lt;environment: 0x7fcc9bfbae30&gt;
 ## 
 ## [[5]]
 ## gen1 ~ 1 + key + popularity + duration + acousticness + danceability + 
 ##     energy + instrumentalness + loudness + speechiness + tempo + 
 ##     valence
-## &lt;environment: 0x7f9a733148d8&gt;</code></pre>
+## &lt;environment: 0x7fcc9bfbae30&gt;</code></pre>
 <pre class="r"><code>summary(glmulti.g1.out0@objects[[1]])</code></pre>
 <pre><code>## 
 ## Call:
@@ -5034,29 +5034,29 @@ glmulti.g1.out1@formulas</code></pre>
 <pre><code>## [[1]]
 ## gen1 ~ 1 + key + popularity + duration + acousticness + danceability + 
 ##     energy + instrumentalness + loudness + speechiness + valence
-## &lt;environment: 0x7f9a79294230&gt;
+## &lt;environment: 0x7fcc96adf938&gt;
 ## 
 ## [[2]]
 ## gen1 ~ 1 + popularity + duration + acousticness + danceability + 
 ##     energy + instrumentalness + loudness + speechiness + valence
-## &lt;environment: 0x7f9a79294230&gt;
+## &lt;environment: 0x7fcc96adf938&gt;
 ## 
 ## [[3]]
 ## gen1 ~ 1 + key + popularity + duration + acousticness + danceability + 
 ##     energy + instrumentalness + loudness + speechiness + tempo + 
 ##     valence
-## &lt;environment: 0x7f9a79294230&gt;
+## &lt;environment: 0x7fcc96adf938&gt;
 ## 
 ## [[4]]
 ## gen1 ~ 1 + popularity + duration + acousticness + danceability + 
 ##     energy + instrumentalness + loudness + speechiness + tempo + 
 ##     valence
-## &lt;environment: 0x7f9a79294230&gt;
+## &lt;environment: 0x7fcc96adf938&gt;
 ## 
 ## [[5]]
 ## gen1 ~ 1 + key + popularity + duration + danceability + energy + 
 ##     instrumentalness + loudness + speechiness + valence
-## &lt;environment: 0x7f9a79294230&gt;</code></pre>
+## &lt;environment: 0x7fcc96adf938&gt;</code></pre>
 <pre class="r"><code>summary(glmulti.g1.out1@objects[[1]])</code></pre>
 <pre><code>## 
 ## Call:
@@ -7958,28 +7958,28 @@ glmulti.out0@formulas</code></pre>
 <pre><code>## [[1]]
 ## oldgen ~ 1 + key + popularity + duration + acousticness + instrumentalness + 
 ##     loudness + speechiness + tempo + valence
-## &lt;environment: 0x7f9a7136ce50&gt;
+## &lt;environment: 0x7fcc9667d460&gt;
 ## 
 ## [[2]]
 ## oldgen ~ 1 + key + popularity + duration + acousticness + danceability + 
 ##     instrumentalness + loudness + speechiness + tempo + valence
-## &lt;environment: 0x7f9a7136ce50&gt;
+## &lt;environment: 0x7fcc9667d460&gt;
 ## 
 ## [[3]]
 ## oldgen ~ 1 + key + popularity + duration + acousticness + energy + 
 ##     instrumentalness + loudness + speechiness + tempo + valence
-## &lt;environment: 0x7f9a7136ce50&gt;
+## &lt;environment: 0x7fcc9667d460&gt;
 ## 
 ## [[4]]
 ## oldgen ~ 1 + key + popularity + duration + acousticness + danceability + 
 ##     energy + instrumentalness + loudness + speechiness + tempo + 
 ##     valence
-## &lt;environment: 0x7f9a7136ce50&gt;
+## &lt;environment: 0x7fcc9667d460&gt;
 ## 
 ## [[5]]
 ## oldgen ~ 1 + key + popularity + duration + acousticness + danceability + 
 ##     instrumentalness + loudness + speechiness + valence
-## &lt;environment: 0x7f9a7136ce50&gt;</code></pre>
+## &lt;environment: 0x7fcc9667d460&gt;</code></pre>
 <p>view summary of top model</p>
 <pre class="r"><code>summary(glmulti.out0@objects[[1]])</code></pre>
 <pre><code>## 
@@ -8123,15 +8123,15 @@ log(\frac{\hat \pi}{1 - \hat \pi}) = -1.219 - 0.073x_{Popularity} + 0.534x_{Dura
 <p>Performance metrics</p>
 <pre class="r"><code>mode0.results &lt;- data.frame(Model = c(&quot;Full&quot;, &quot;Step&quot;, &quot;Step 10kCV&quot;, &quot;AllReg&quot;),
                             AIC = c(3408.5, 3407, 3403, 3407),
-                            Accuracy = c(0.7682, 0.7682, NA, 0.7682),
-                            Kappa = c(0.4902, 0.4902, NA, 0.4902),
-                            Sensitivity = c(0.8531, 0.8531, NA, 0.8531),
-                            Specificity = c(0.6244, 0.6244, NA, 0.6244))
+                            Accuracy = c(0.7682, 0.7682, 0.7665, 0.7682),
+                            Kappa = c(0.4902, 0.4902, 0.4864, 0.4902),
+                            Sensitivity = c(0.8531, 0.8531, 0.8517, 0.8531),
+                            Specificity = c(0.6244, 0.6244, 0.6221, 0.6244))
 mode0.results</code></pre>
 <pre><code>##        Model    AIC Accuracy  Kappa Sensitivity Specificity
 ## 1       Full 3408.5   0.7682 0.4902      0.8531      0.6244
 ## 2       Step 3407.0   0.7682 0.4902      0.8531      0.6244
-## 3 Step 10kCV 3403.0       NA     NA          NA          NA
+## 3 Step 10kCV 3403.0   0.7665 0.4864      0.8517      0.6221
 ## 4     AllReg 3407.0   0.7682 0.4902      0.8531      0.6244</code></pre>
 <p>All models have exactly the same results. unsure about the cross validation approach however, due to technical difficulties.</p>
 </div>
@@ -11036,27 +11036,27 @@ glmulti.out1@formulas</code></pre>
 <pre><code>## [[1]]
 ## oldgen ~ 1 + key + popularity + duration + acousticness + danceability + 
 ##     instrumentalness + loudness + speechiness + valence
-## &lt;environment: 0x7f9a73298da8&gt;
+## &lt;environment: 0x7fcc95f6ab48&gt;
 ## 
 ## [[2]]
 ## oldgen ~ 1 + key + popularity + duration + acousticness + danceability + 
 ##     instrumentalness + loudness + valence
-## &lt;environment: 0x7f9a73298da8&gt;
+## &lt;environment: 0x7fcc95f6ab48&gt;
 ## 
 ## [[3]]
 ## oldgen ~ 1 + key + popularity + duration + acousticness + danceability + 
 ##     energy + instrumentalness + loudness + valence
-## &lt;environment: 0x7f9a73298da8&gt;
+## &lt;environment: 0x7fcc95f6ab48&gt;
 ## 
 ## [[4]]
 ## oldgen ~ 1 + key + popularity + duration + acousticness + danceability + 
 ##     energy + instrumentalness + loudness + speechiness + valence
-## &lt;environment: 0x7f9a73298da8&gt;
+## &lt;environment: 0x7fcc95f6ab48&gt;
 ## 
 ## [[5]]
 ## oldgen ~ 1 + key + popularity + duration + acousticness + instrumentalness + 
 ##     loudness + speechiness + valence
-## &lt;environment: 0x7f9a73298da8&gt;</code></pre>
+## &lt;environment: 0x7fcc95f6ab48&gt;</code></pre>
 <p>view summary of top model</p>
 <pre class="r"><code>summary(glmulti.out1@objects[[1]])</code></pre>
 <pre><code>## 
@@ -11167,8 +11167,8 @@ confusionMatrix(as.factor(all.test1.y), as.factor(test1$oldgen),
 ##        'Positive' Class : 1               
 ## </code></pre>
 </div>
-<div id="deciding-on-the-best-model-for-mode-0-songs-1" class="section level3">
-<h3>Deciding on the best model for Mode 0 songs</h3>
+<div id="deciding-on-the-best-model-for-mode-1-songs" class="section level3">
+<h3>Deciding on the best model for Mode 1 songs</h3>
 <p>Full Logistic model <span class="math display">\[
 log(\frac{\hat \pi}{1 - \hat \pi}) = 0.852 - 0.080{Popularity} + 0.481{Duration} - 0.893{Acousticness} - 0.645{Danceability} 
 \\ - 0.453{Energy} - 2.408{Instrumentalness} + 0.461{Key1} + 0.065{Key2} 
@@ -11200,15 +11200,15 @@ log(\frac{\hat \pi}{1 - \hat \pi}) = 0.346 - 0.080{Popularity} + 0.484Duration -
 <p>Performance metrics</p>
 <pre class="r"><code>mode1.results &lt;- data.frame(Model = c(&quot;Full&quot;, &quot;Step&quot;, &quot;Step 10kCV&quot;, &quot;AllReg&quot;),
                             AIC = c(5243.3, 5240.5, 5233, 5240.5),
-                            Accuracy = c(0.776, 0.776, NA, 0.7682),
-                            Kappa = c(0.4952, 0.4956, NA, 0.4902),
-                            Sensitivity = c(0.8685, 0.8677, NA, 0.8531),
-                            Specificity = c(0.6098, 0.6113, NA, 0.6244))
+                            Accuracy = c(0.776, 0.776, 0.776, 0.7682),
+                            Kappa = c(0.4952, 0.4956, 0.4956, 0.4902),
+                            Sensitivity = c(0.8685, 0.8677, 0.8677, 0.8531),
+                            Specificity = c(0.6098, 0.6113, 0.6113, 0.6244))
 mode1.results</code></pre>
 <pre><code>##        Model    AIC Accuracy  Kappa Sensitivity Specificity
 ## 1       Full 5243.3   0.7760 0.4952      0.8685      0.6098
 ## 2       Step 5240.5   0.7760 0.4956      0.8677      0.6113
-## 3 Step 10kCV 5233.0       NA     NA          NA          NA
+## 3 Step 10kCV 5233.0   0.7760 0.4956      0.8677      0.6113
 ## 4     AllReg 5240.5   0.7682 0.4902      0.8531      0.6244</code></pre>
 </div>
 </div>

@@ -14,6 +14,7 @@ library(ggplot2)
 library(ggthemes)
 library(stringr)
 library(scales)
+library(caret)
 ```
 
 
@@ -34,6 +35,55 @@ key.dummy <- function(x){
     
   x
 }
+
+#train/valid/test function from data mining class:
+partition.3 <- function(data, prop.train, prop.val){
+  # select a random sample of size = prop.train % of total records
+  selected1 <- sample(1:nrow(data), round(nrow(data)*prop.train), replace = FALSE) 
+  # create training data which has prop.train % of total records
+  data.train <- data[selected1,]
+  # select a random sample of size = prop.val % of the total records
+  rest <- setdiff(1:nrow(data), selected1)
+  selected2 <- sample(rest, round(nrow(data)*prop.val), replace = FALSE) 
+  # create validation data which has prop.val % of total records
+  data.val <- data[selected2,]
+  # create testing data with the remaining records
+  data.test <- data[setdiff(rest, selected2),]
+  return(list(data.train=data.train, data.test=data.test, data.val=data.val))
+}
+
+#creates plot for optimal cut off value
+opt.cut.func <- function(model, data){
+  # create a vector for cutoff values
+  cutoff <- seq(0, 1, 0.05)
+
+  # create three empty vectors of same length
+  sensitivity.vec <- rep(NA, length(cutoff))
+  specificity.vec <- rep(NA, length(cutoff))
+  kappa.vec <- rep(NA, length(cutoff))
+
+# For loop.
+  for(i in 1:length(cutoff)){
+    pred.prob.val <- predict(model, newdata = data, type = "response")
+    pred.y.val <- as.factor(ifelse(pred.prob.val > cutoff[i], 1, 0)) 
+    # warning messages galore because the probability of a value actually being popular is SO LOW
+    c <- confusionMatrix(pred.y.val, data$popular, 
+                        positive = "1")
+    sensitivity.vec[i] <- c$byClass["Sensitivity"]
+    specificity.vec[i] <- c$byClass["Specificity"]
+    kappa.vec[i] <- c$overall["Kappa"]
+  }
+  return(list(cutoff = cutoff, sensitivity.vec = sensitivity.vec, specificity.vec = specificity.vec, kappa.vec = kappa.vec))
+}
+
+opt.cut.plot <- function(opt.out){
+  plot(opt.out$cutoff, opt.out$sensitivity.vec,xlab = "cutoff", type = "l", col = "blue")
+  lines(opt.out$cutoff, opt.out$specificity.vec, type = "l", col = "green")
+  lines(opt.out$cutoff, opt.out$kappa.vec, type = "l", col = "red")
+  legend( x="right", legend=c("Sensitivity","Specificity", "Kappa"),
+        col=c("blue","green","red"), lty = 1, lwd=1)
+  
+}
 ```
 
 
@@ -50,6 +100,27 @@ data <- mutate(data, ArtistType = as.factor(ArtistType),
                popular = factor(ifelse(popularity >=50, 1, 0)))
 ```
 
+understanding popularity
+```{r}
+hist(data$popularity)
+summary(data$popularity)
+```
+
+heavily skewed right.
+
+
+The square root transformation makes it more normal. This will help to meet the multiple linear regression assumptions.
+```{r}
+hist(data$popularity^0.5)
+```
+
+
+Classification of 
+```{r}
+table(data$popular)/nrow(data)
+```
+
+if classifying a song as popular when it's score is greater than 50, only ~12% of the data is considered a popular song.
 
 ```
 kpop <- dplyr::select(data, popularity, duration, acousticness, danceability, energy, instrumentalness, key, loudness, mode, speechiness, time_signature, tempo, valence)
@@ -105,7 +176,7 @@ no homoscedasticity.
 
 Try again with tranformation to make popularity normal:(to the squareroot)
 ```{r}
-ml0.sqrt <- lm(popularity^0.5 ~. , data = train0)
+ml0.sqrt <- lm(popularity ~. , data = train0 %>% mutate(popularity = popularity^0.5))
 summary(ml0.sqrt)
 ```
 
@@ -114,26 +185,284 @@ assumption checking and diagnostics
 plot(ml0.sqrt)
 ```
 
+prediction on test data
+```{r}
+# prediction on test data
+yhat.mlr = predict(ml0.sqrt, newdata = test0 %>% mutate(popularity = popularity^0.5))
+# RMSE for test data
+error.mlr <- yhat.mlr - test0$popularity^0.5
+rmse.mlr <- sqrt(mean(error.mlr^2))
+rmse.mlr
+```
+
 Much improved!
 
+# Variable selection: Stewpise (10 fold cv)
+```{r}
+set.seed(123)
+train_control <- trainControl(method = "cv", 
+                              number = 5) 
+bye <- capture.output(mlr.step_kcv <- train(popularity ~. , data = train0 %>% mutate(popularity = popularity^0.5),  
+                 method = "lmStepAIC", trControl = train_control)) 
+print(mlr.step_kcv)
+mlr.step_kcv$finalModel 
+```
+
+prediction on test data
+```{r}
+# prediction on test data
+yhat.step_kcv = predict(mlr.step_kcv$finalModel, newdata=key.dummy(test0) %>% mutate(popularity = popularity^0.5))
+# RMSE for test data
+error.step_kcv <- yhat.step_kcv - test0$popularity^0.5
+rmse.step_kcv <- sqrt(mean(error.step_kcv^2))
+rmse.step_kcv
+```
+
+Both of the models have RMSE scores of around 2. This isn't terrible since the range of the transformed popularity scores is 0-10.
 
 # Logistic (classification approach)
+
+Use 70% train, 15% validation, 15% test,  to use validation for finding optimal cutoff value.
 ```{r}
 kpop.logit <- select(data, popular, duration, acousticness, danceability, energy, instrumentalness, key, loudness, mode, speechiness, tempo, valence)
-logit.kpop0 <- logit.kpop %>% filter(mode == 0)%>% select(-mode)
-logit.kpop1 <- logit.kpop %>% filter(mode == 1) %>% select(-mode)
+logit.kpop0 <- kpop.logit %>% filter(mode == 0)%>% select(-mode)
+logit.kpop1 <- kpop.logit %>% filter(mode == 1) %>% select(-mode)
 
 ### Kpop mode 0 train and test
-smpl.size0 <- floor(0.75*nrow(kpop0))
+smpl.size0 <- floor(0.75*nrow(logit.kpop0))
 set.seed(123)
 smpl0 <- sample(nrow(logit.kpop0), smpl.size0, replace = FALSE)
-logit.train0 <- logit.kpop0[smpl0,]
-logit.test0 <- logit.kpop0[-smpl0,]
+og.logit.train0 <- logit.kpop0[smpl0,]
+og.logit.test0 <- logit.kpop0[-smpl0,]
 
-### Kpop mode 1 train and test
-smpl.size1 <- floor(0.75*nrow(logit.kpop1))
-set.seed(123)
-smpl1 <- sample(nrow(logit.kpop1), smpl.size1, replace = FALSE)
-logit.train1 <- logit.kpop1[smpl1,]
-logit.test1 <- logit.kpop1[-smpl1,]
+p3 <- partition.3(logit.kpop0, 0.70, 0.15)
+logit.train0 <- p3$data.train
+logit.valid0 <- p3$data.val
+logit.test0 <- p3$data.test
+
+
+# ### Kpop mode 1 train and test
+# smpl.size1 <- floor(0.75*nrow(logit.kpop1))
+# set.seed(123)
+# smpl1 <- sample(nrow(logit.kpop1), smpl.size1, replace = FALSE)
+# logit.train1 <- logit.kpop1[smpl1,]
+# logit.test1 <- logit.kpop1[-smpl1,]
+
+p3 <- partition.3(logit.kpop1, 0.70, 0.15)
+logit.train1 <- p3$data.train
+logit.valid1 <- p3$data.val
+logit.test1 <- p3$data.test
 ```
+
+
+## Mode 0 popularity
+
+### Full Logistic Model: train/test
+
+fitting logistic model using combo of train/test, finding optimal model using training data.
+```
+# Fit logistic model on training data
+og.logit.model0 <- glm(popular ~ ., family=binomial(link='logit'),data= og.logit.train0)
+
+# create a vector for cutoff values
+cutoff <- seq(0, 1, 0.05)
+
+# create three empty vectors of same length
+sensitivity.vec <- rep(NA, length(cutoff))
+specificity.vec <- rep(NA, length(cutoff))
+kappa.vec <- rep(NA, length(cutoff))
+
+# For loop.
+for(i in 1:length(cutoff)){
+  pred.prob.val <- predict(og.logit.model0, newdata = og.logit.train0, type = "response")
+  pred.y.val <- as.factor(ifelse(pred.prob.val > cutoff[i], 1, 0)) 
+  # warning messages galore because the probability of a value actually being popular is SO LOW
+  c <- confusionMatrix(pred.y.val, og.logit.train0$popular, 
+                       positive = "1")
+  sensitivity.vec[i] <- c$byClass["Sensitivity"]
+  specificity.vec[i] <- c$byClass["Specificity"]
+  kappa.vec[i] <- c$overall["Kappa"]
+}
+
+plot(cutoff, sensitivity.vec,xlab = "cutoff", type = "l", col = "blue")
+lines(cutoff, specificity.vec, type = "l", col = "green")
+lines(cutoff, kappa.vec, type = "l", col = "red")
+legend( x="right", legend=c("Sensitivity","Specificity", "Kappa"),
+        col=c("blue","green","red"), lty = 1, lwd=1)
+
+#ideal cut off value
+opt.cut <- cutoff[which.max(kappa.vec)]
+opt.cut
+```
+
+
+Evaluate performance on test
+
+Using just og cut off
+```
+og.prob.test <- predict(og.logit.model0, newdata = og.logit.test0, type = "response")
+og.pred.test <- ifelse(og.prob.test > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(og.pred.test), as.factor(og.logit.test0$popular), positive = "1")
+```
+
+Using optimal cutoff.
+```
+og.prob.test <- predict(og.logit.model0, newdata = og.logit.test0, type = "response")
+og.pred.test <- ifelse(og.prob.test > opt.cut, 1, 0) # using cutoff = 0.15
+confusionMatrix(as.factor(og.pred.test), as.factor(og.logit.test0$popular), positive = "1")
+```
+
+
+
+### Full Logistic Model: train/valid/test
+
+fitting logistic model using combo of train/valid/test, finding optimal model using training data.
+```{r}
+# Fit logistic model on training data
+v.logit.model0 <- glm(popular ~ ., family=binomial(link='logit'),data= logit.train0)
+
+# create a vector for cutoff values
+cutoff <- seq(0, 1, 0.05)
+
+# create three empty vectors of same length
+sensitivity.vec <- rep(NA, length(cutoff))
+specificity.vec <- rep(NA, length(cutoff))
+kappa.vec <- rep(NA, length(cutoff))
+
+# For loop.
+for(i in 1:length(cutoff)){
+  pred.prob.val <- predict(v.logit.model0, newdata = logit.valid0, type = "response")
+  pred.y.val <- as.factor(ifelse(pred.prob.val > cutoff[i], 1, 0)) 
+  # warning messages galore because the probability of a value actually being popular is SO LOW
+  c <- confusionMatrix(pred.y.val, logit.valid0$popular, 
+                       positive = "1")
+  sensitivity.vec[i] <- c$byClass["Sensitivity"]
+  specificity.vec[i] <- c$byClass["Specificity"]
+  kappa.vec[i] <- c$overall["Kappa"]
+}
+
+plot(cutoff, sensitivity.vec,xlab = "cutoff", type = "l", col = "blue")
+lines(cutoff, specificity.vec, type = "l", col = "green")
+lines(cutoff, kappa.vec, type = "l", col = "red")
+legend( x="right", legend=c("Sensitivity","Specificity", "Kappa"),
+        col=c("blue","green","red"), lty = 1, lwd=1)
+
+#ideal cut off value
+v.opt.cut <- cutoff[which.max(kappa.vec)]
+v.opt.cut
+```
+
+Fit final model (combo of train and validation)
+```{r}
+all.train0 <- rbind(logit.train0, logit.valid0)
+v.model.final <-  glm(popular ~ ., data=all.train0, family=binomial(link='logit'))
+```
+
+predict on test using 0.5 cutoff 
+```{r}
+v.prob.test <- predict(v.logit.model0, newdata = logit.test0, type = "response")
+v.pred.test <- ifelse(v.prob.test > 0.5, 1, 0) # using cutoff = 0.15
+confusionMatrix(as.factor(v.pred.test), as.factor(logit.test0$popular), positive = "1")
+```
+
+
+
+predict on optimal cutoff (0.15)
+```{r}
+v.prob.test <- predict(v.logit.model0, newdata = logit.test0, type = "response")
+v.pred.test <- ifelse(v.prob.test > v.opt.cut, 1, 0) # using cutoff = 0.15
+confusionMatrix(as.factor(v.pred.test), as.factor(logit.test0$popular), positive = "1")
+```
+
+### Variable Selection: Stepwise (10 fold CV)
+
+step-wise 10 fold cross validation
+```{r echo = TRUE, message=FALSE, result='hide', warning = FALSE, error = FALSE}
+set.seed(123)
+train_control <- trainControl(method = "cv", 
+                              number = 10) 
+
+# Fit K-fold CV model  
+meh <- capture.output(step1_kcv <- train(popular ~ ., data = logit.train0, family = binomial(), 
+                 method = "glmStepAIC", trControl = train_control, verbose = FALSE))
+```
+
+```{r}
+step1_kcv <- step1_kcv$finalModel
+step1_kcv
+```
+
+
+
+
+
+
+## Mode 1 popularity
+
+### Full Logistic Model: train/valid/test
+
+fitting logistic model using combo of train/valid/test, finding optimal model using training data.
+```{r}
+# Fit logistic model on training data
+v.logit.model1 <- glm(popular ~ ., family=binomial(link='logit'),data= logit.train1)
+
+# create a vector for cutoff values
+cutoff <- seq(0, 1, 0.05)
+
+# create three empty vectors of same length
+sensitivity.vec <- rep(NA, length(cutoff))
+specificity.vec <- rep(NA, length(cutoff))
+kappa.vec <- rep(NA, length(cutoff))
+
+# For loop.
+for(i in 1:length(cutoff)){
+  pred.prob.val <- predict(v.logit.model1, newdata = logit.valid1, type = "response")
+  pred.y.val <- as.factor(ifelse(pred.prob.val > cutoff[i], 1, 0)) 
+  # warning messages galore because the probability of a value actually being popular is SO LOW
+  c <- confusionMatrix(pred.y.val, logit.valid1$popular, 
+                       positive = "1")
+  sensitivity.vec[i] <- c$byClass["Sensitivity"]
+  specificity.vec[i] <- c$byClass["Specificity"]
+  kappa.vec[i] <- c$overall["Kappa"]
+}
+
+plot(cutoff, sensitivity.vec,xlab = "cutoff", type = "l", col = "blue")
+lines(cutoff, specificity.vec, type = "l", col = "green")
+lines(cutoff, kappa.vec, type = "l", col = "red")
+legend( x="right", legend=c("Sensitivity","Specificity", "Kappa"),
+        col=c("blue","green","red"), lty = 1, lwd=1)
+
+#ideal cut off value
+v.opt.cut1 <- cutoff[which.max(kappa.vec)]
+v.opt.cut1
+```
+
+```{r}
+out1 <- opt.cut.func(v.logit.model1, logit.valid1)
+opt.cut.plot(out1)
+cutoff[which.max(out1$kappa.vec)]
+```
+
+
+Fit final model (combo of train and validation)
+```{r}
+all.train1 <- rbind(logit.train1, logit.valid1)
+v.model.final1 <-  glm(popular ~ ., data=all.train1, family=binomial(link='logit'))
+```
+
+predict on test using 0.5 cutoff 
+```{r}
+v.prob.test1 <- predict(v.logit.model1, newdata = logit.test1, type = "response")
+v.pred.test1 <- ifelse(v.prob.test1 > 0.5, 1, 0) # using cutoff = 0.15
+confusionMatrix(as.factor(v.pred.test1), as.factor(logit.test1$popular), positive = "1")
+```
+
+predict on test using optimal cutoff 
+```{r}
+v.prob.test1 <- predict(v.logit.model1, newdata = logit.test1, type = "response")
+v.pred.test1 <- ifelse(v.prob.test1 > v.opt.cut1, 1, 0) # using cutoff = 0.15
+confusionMatrix(as.factor(v.pred.test1), as.factor(logit.test1$popular), positive = "1")
+```
+
+
+
