@@ -15,6 +15,8 @@ library(ggthemes)
 library(stringr)
 library(scales)
 library(caret)
+library(leaps) # for all possible regressions approach LINEAR
+library(glmulti)# for all possible regressions approach LOGISTIC
 ```
 
 
@@ -55,11 +57,12 @@ partition.3 <- function(data, prop.train, prop.val){
 #creates plot for optimal cut off value
 opt.cut.func <- function(model, data){
   # create a vector for cutoff values
-  cutoff <- seq(0, 1, 0.05)
+  cutoff <- seq(0, 1, 0.01)
 
   # create three empty vectors of same length
   sensitivity.vec <- rep(NA, length(cutoff))
   specificity.vec <- rep(NA, length(cutoff))
+  ssdiff.vec <- rep(NA, length(cutoff))
   kappa.vec <- rep(NA, length(cutoff))
 
 # For loop.
@@ -71,9 +74,10 @@ opt.cut.func <- function(model, data){
                         positive = "1")
     sensitivity.vec[i] <- c$byClass["Sensitivity"]
     specificity.vec[i] <- c$byClass["Specificity"]
+    ssdiff.vec[i] <- abs(sensitivity.vec[i] - specificity.vec[i])
     kappa.vec[i] <- c$overall["Kappa"]
   }
-  return(list(cutoff = cutoff, sensitivity.vec = sensitivity.vec, specificity.vec = specificity.vec, kappa.vec = kappa.vec))
+  return(list(cutoff = cutoff, sensitivity.vec = sensitivity.vec, specificity.vec = specificity.vec, ssdiff.vec = ssdiff.vec, kappa.vec = kappa.vec))
 }
 
 opt.cut.plot <- function(opt.out){
@@ -229,17 +233,17 @@ logit.kpop0 <- kpop.logit %>% filter(mode == 0)%>% select(-mode)
 logit.kpop1 <- kpop.logit %>% filter(mode == 1) %>% select(-mode)
 
 ### Kpop mode 0 train and test
-smpl.size0 <- floor(0.75*nrow(logit.kpop0))
-set.seed(123)
-smpl0 <- sample(nrow(logit.kpop0), smpl.size0, replace = FALSE)
-og.logit.train0 <- logit.kpop0[smpl0,]
-og.logit.test0 <- logit.kpop0[-smpl0,]
+# smpl.size0 <- floor(0.75*nrow(logit.kpop0))
+# set.seed(123)
+# smpl0 <- sample(nrow(logit.kpop0), smpl.size0, replace = FALSE)
+# og.logit.train0 <- logit.kpop0[smpl0,]
+# og.logit.test0 <- logit.kpop0[-smpl0,]
 
 p3 <- partition.3(logit.kpop0, 0.70, 0.15)
 logit.train0 <- p3$data.train
 logit.valid0 <- p3$data.val
 logit.test0 <- p3$data.test
-
+all.train0 <- rbind(logit.train0, logit.valid0)
 
 # ### Kpop mode 1 train and test
 # smpl.size1 <- floor(0.75*nrow(logit.kpop1))
@@ -252,6 +256,7 @@ p3 <- partition.3(logit.kpop1, 0.70, 0.15)
 logit.train1 <- p3$data.train
 logit.valid1 <- p3$data.val
 logit.test1 <- p3$data.test
+all.train1 <- rbind(logit.train1, logit.valid1)
 ```
 
 
@@ -321,40 +326,16 @@ fitting logistic model using combo of train/valid/test, finding optimal model us
 # Fit logistic model on training data
 v.logit.model0 <- glm(popular ~ ., family=binomial(link='logit'),data= logit.train0)
 
-# create a vector for cutoff values
-cutoff <- seq(0, 1, 0.05)
-
-# create three empty vectors of same length
-sensitivity.vec <- rep(NA, length(cutoff))
-specificity.vec <- rep(NA, length(cutoff))
-kappa.vec <- rep(NA, length(cutoff))
-
-# For loop.
-for(i in 1:length(cutoff)){
-  pred.prob.val <- predict(v.logit.model0, newdata = logit.valid0, type = "response")
-  pred.y.val <- as.factor(ifelse(pred.prob.val > cutoff[i], 1, 0)) 
-  # warning messages galore because the probability of a value actually being popular is SO LOW
-  c <- confusionMatrix(pred.y.val, logit.valid0$popular, 
-                       positive = "1")
-  sensitivity.vec[i] <- c$byClass["Sensitivity"]
-  specificity.vec[i] <- c$byClass["Specificity"]
-  kappa.vec[i] <- c$overall["Kappa"]
-}
-
-plot(cutoff, sensitivity.vec,xlab = "cutoff", type = "l", col = "blue")
-lines(cutoff, specificity.vec, type = "l", col = "green")
-lines(cutoff, kappa.vec, type = "l", col = "red")
-legend( x="right", legend=c("Sensitivity","Specificity", "Kappa"),
-        col=c("blue","green","red"), lty = 1, lwd=1)
-
-#ideal cut off value
-v.opt.cut <- cutoff[which.max(kappa.vec)]
-v.opt.cut
+#search for best cutoff
+out0 <- opt.cut.func(v.logit.model0, logit.valid0)
+opt.cut.plot(out0)
+out0$cutoff[which.min(out0$ssdiff.vec)]
+v.opt.cut0 <- out0$cutoff[which.max(out0$kappa.vec)]
+v.opt.cut0
 ```
 
 Fit final model (combo of train and validation)
 ```{r}
-all.train0 <- rbind(logit.train0, logit.valid0)
 v.model.final <-  glm(popular ~ ., data=all.train0, family=binomial(link='logit'))
 ```
 
@@ -367,12 +348,20 @@ confusionMatrix(as.factor(v.pred.test), as.factor(logit.test0$popular), positive
 
 
 
-predict on optimal cutoff (0.15)
+predict on optimal cutoff (0.16)
 ```{r}
 v.prob.test <- predict(v.logit.model0, newdata = logit.test0, type = "response")
-v.pred.test <- ifelse(v.prob.test > v.opt.cut, 1, 0) # using cutoff = 0.15
+v.pred.test <- ifelse(v.prob.test > v.opt.cut0, 1, 0) # using cutoff = 0.16
 confusionMatrix(as.factor(v.pred.test), as.factor(logit.test0$popular), positive = "1")
 ```
+
+
+```{r}
+v.prob.test <- predict(v.logit.model0, newdata = logit.test0, type = "response")
+v.pred.test <- ifelse(v.prob.test > 0.13, 1, 0) # using cutoff = 0.13
+confusionMatrix(as.factor(v.pred.test), as.factor(logit.test0$popular), positive = "1")
+```
+
 
 ### Variable Selection: Stepwise (10 fold CV)
 
@@ -383,18 +372,137 @@ train_control <- trainControl(method = "cv",
                               number = 10) 
 
 # Fit K-fold CV model  
-meh <- capture.output(step1_kcv <- train(popular ~ ., data = logit.train0, family = binomial(), 
+meh <- capture.output(step0_kcv <- train(popular ~ ., data = logit.train0, family = binomial(), 
                  method = "glmStepAIC", trControl = train_control, verbose = FALSE))
 ```
 
 ```{r}
-step1_kcv <- step1_kcv$finalModel
-step1_kcv
+step0_kcv <- step0_kcv$finalModel
+step0_kcv
 ```
 
 
+```
+kcv.prob.test0 <- predict(step0_kcv, newdata = key.dummy(logit.test0), type = "response")
+kcv.pred.test0 <- ifelse(kcv.prob.test0 > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(kcv.pred.test0), as.factor(logit.test0$popular), positive = "1")
+```
+
+Find optimal cut off value:
+```{r}
+#search for best cutoff
+kcv.out0 <- opt.cut.func(step0_kcv, key.dummy(logit.valid0))
+opt.cut.plot(kcv.out0)
+kcv.out0$cutoff[which.min(kcv.out0$ssdiff.vec)]
+kcv.out0.cut0 <- kcv.out0$cutoff[which.max(kcv.out0$kappa.vec)]
+kcv.out0.cut0
+```
+
+Fit final model (combo of train and validation)
+```{r}
+finalmeh <- capture.output(step0_kcv.final0 <- train(popular ~ ., data = all.train0, family = binomial(), 
+                 method = "glmStepAIC", trControl = train_control, verbose = FALSE))
+step0_kcv.final0 <- step0_kcv.final0$finalModel
+step0_kcv.final0
+```
+
+predict on test using 0.5 cutoff 
+```{r}
+kcv.prob.test0 <- predict(step0_kcv.final0, newdata = key.dummy(logit.test0), type = "response")
+kcv.pred.test0 <- ifelse(kcv.prob.test0 > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(kcv.pred.test0), as.factor(logit.test0$popular), positive = "1")
+```
+
+predict on test using 0.16 cutoff 
+```{r}
+kcv.prob.test0 <- predict(step0_kcv.final0, newdata = key.dummy(logit.test0), type = "response")
+kcv.pred.test0 <- ifelse(kcv.prob.test0 > 0.16, 1, 0) # using cutoff = 0.16
+confusionMatrix(as.factor(kcv.pred.test0), as.factor(logit.test0$popular), positive = "1")
+```
+
+predict on test using 0.13 cutoff 
+```{r}
+kcv.prob.test0 <- predict(step0_kcv.final0, newdata = key.dummy(logit.test0), type = "response")
+kcv.pred.test0 <- ifelse(kcv.prob.test0 > 0.13, 1, 0) # using cutoff = 0.16
+confusionMatrix(as.factor(kcv.pred.test0), as.factor(logit.test0$popular), positive = "1")
+```
 
 
+### Variable Selection: All possible regression
+
+```{r}
+glmulti.out0 <- glmulti(popular ~ ., data = logit.train0,
+                           level = 1,               # No interaction considered
+            method = "h",            # Exhaustive approach
+            crit = "aic",            # AIC as criteria
+            confsetsize = 5,         # Keep 5 best models
+            plotty = F, report = F,  # No plot or interim reports
+            fitfunction = "glm",     # lm function
+            family = binomial)       # binomial to run logistic regression 
+#glmulti.out0@formulas
+```
+
+view summary of top model
+```{r}
+summary(glmulti.out0@objects[[1]])
+```
+
+
+Store model
+```{r}
+allreg.logit0 <- glmulti.out0@objects[[1]]
+```
+
+```{r}
+#search for best cutoff
+allreg.out0 <- opt.cut.func(allreg.logit0, logit.valid0)
+opt.cut.plot(allreg.out0)
+allreg.out0$cutoff[which.min(allreg.out0$ssdiff.vec)]
+allreg.out0.cut0 <- allreg.out0$cutoff[which.max(allreg.out0$kappa.vec)]
+allreg.out0.cut0
+```
+
+fit final model to combo of training and validation
+```{r}
+glmulti.out0 <- glmulti(popular ~ ., data = all.train0,
+                           level = 1,               # No interaction considered
+            method = "h",            # Exhaustive approach
+            crit = "aic",            # AIC as criteria
+            confsetsize = 5,         # Keep 5 best models
+            plotty = F, report = F,  # No plot or interim reports
+            fitfunction = "glm",     # lm function
+            family = binomial)       # binomial to run logistic regression 
+#glmulti.out1@formulas
+summary(glmulti.out0@objects[[1]])
+```
+
+store final model
+```{r}
+allreg.logit0.final <- glmulti.out0@objects[[1]]
+```
+
+Predictions with 0.5 as the cut off
+```{r}
+allreg.prob.test0 <- predict(allreg.logit0.final, newdata = logit.test0, type = "response")
+allreg.pred.test0 <- ifelse(allreg.prob.test0 > 0.5, 1, 0) # using standard cutoff 0.5
+confusionMatrix(as.factor(allreg.pred.test0), as.factor(logit.test0$popular), positive = "1")
+```
+
+
+Predictions where cut off is the best kappa
+```{r}
+allreg.prob.test0 <- predict(allreg.logit0.final, newdata = logit.test0, type = "response")
+allreg.pred.test0 <- ifelse(allreg.prob.test0 > allreg.out0.cut0, 1, 0) # using standard cutoff 0.5
+confusionMatrix(as.factor(allreg.pred.test0), as.factor(logit.test0$popular), positive = "1")
+```
+
+
+Predictions where cut off is the best balance of sensitivity and specificity
+```{r}
+allreg.prob.test0 <- predict(allreg.logit0.final, newdata = logit.test0, type = "response")
+allreg.pred.test0 <- ifelse(allreg.prob.test0 > 0.14, 1, 0) # using standard cutoff 0.5
+confusionMatrix(as.factor(allreg.pred.test0), as.factor(logit.test0$popular), positive = "1")
+```
 
 
 ## Mode 1 popularity
@@ -406,47 +514,18 @@ fitting logistic model using combo of train/valid/test, finding optimal model us
 # Fit logistic model on training data
 v.logit.model1 <- glm(popular ~ ., family=binomial(link='logit'),data= logit.train1)
 
-# create a vector for cutoff values
-cutoff <- seq(0, 1, 0.05)
-
-# create three empty vectors of same length
-sensitivity.vec <- rep(NA, length(cutoff))
-specificity.vec <- rep(NA, length(cutoff))
-kappa.vec <- rep(NA, length(cutoff))
-
-# For loop.
-for(i in 1:length(cutoff)){
-  pred.prob.val <- predict(v.logit.model1, newdata = logit.valid1, type = "response")
-  pred.y.val <- as.factor(ifelse(pred.prob.val > cutoff[i], 1, 0)) 
-  # warning messages galore because the probability of a value actually being popular is SO LOW
-  c <- confusionMatrix(pred.y.val, logit.valid1$popular, 
-                       positive = "1")
-  sensitivity.vec[i] <- c$byClass["Sensitivity"]
-  specificity.vec[i] <- c$byClass["Specificity"]
-  kappa.vec[i] <- c$overall["Kappa"]
-}
-
-plot(cutoff, sensitivity.vec,xlab = "cutoff", type = "l", col = "blue")
-lines(cutoff, specificity.vec, type = "l", col = "green")
-lines(cutoff, kappa.vec, type = "l", col = "red")
-legend( x="right", legend=c("Sensitivity","Specificity", "Kappa"),
-        col=c("blue","green","red"), lty = 1, lwd=1)
-
-#ideal cut off value
-v.opt.cut1 <- cutoff[which.max(kappa.vec)]
+#search for best cutoff
+out1 <- opt.cut.func(v.logit.model1, logit.valid1)
+opt.cut.plot(out1)
+out1$cutoff[which.min(out1$ssdiff.vec)]
+v.opt.cut1 <- out1$cutoff[which.max(out1$kappa.vec)]
 v.opt.cut1
 ```
 
-```{r}
-out1 <- opt.cut.func(v.logit.model1, logit.valid1)
-opt.cut.plot(out1)
-cutoff[which.max(out1$kappa.vec)]
-```
 
 
 Fit final model (combo of train and validation)
 ```{r}
-all.train1 <- rbind(logit.train1, logit.valid1)
 v.model.final1 <-  glm(popular ~ ., data=all.train1, family=binomial(link='logit'))
 ```
 
@@ -457,12 +536,154 @@ v.pred.test1 <- ifelse(v.prob.test1 > 0.5, 1, 0) # using cutoff = 0.15
 confusionMatrix(as.factor(v.pred.test1), as.factor(logit.test1$popular), positive = "1")
 ```
 
-predict on test using optimal cutoff 
+predict on test using optimal cutoff (kappa)
 ```{r}
 v.prob.test1 <- predict(v.logit.model1, newdata = logit.test1, type = "response")
-v.pred.test1 <- ifelse(v.prob.test1 > v.opt.cut1, 1, 0) # using cutoff = 0.15
+v.pred.test1 <- ifelse(v.prob.test1 > v.opt.cut1, 1, 0) # using cutoff = 0.16
+confusionMatrix(as.factor(v.pred.test1), as.factor(logit.test1$popular), positive = "1")
+```
+
+
+predict on test using optimal cutoff (sensitivity and specificity)
+```{r}
+v.prob.test1 <- predict(v.logit.model1, newdata = logit.test1, type = "response")
+v.pred.test1 <- ifelse(v.prob.test1 > 0.11, 1, 0) # using cutoff = 0.11
 confusionMatrix(as.factor(v.pred.test1), as.factor(logit.test1$popular), positive = "1")
 ```
 
 
 
+### Variable Selection: Stepwise (10 fold CV)
+
+step-wise 10 fold cross validation
+```{r echo = TRUE, message=FALSE, result='hide', warning = FALSE, error = FALSE}
+set.seed(123)
+train_control <- trainControl(method = "cv", 
+                              number = 10) 
+
+# Fit K-fold CV model  
+meh <- capture.output(step1_kcv <- train(popular ~ ., data = logit.train1, family = binomial(), 
+                 method = "glmStepAIC", trControl = train_control, verbose = FALSE))
+```
+
+```{r}
+step1_kcv <- step1_kcv$finalModel
+step1_kcv
+```
+
+```{r}
+#search for best cutoff
+kcv.out1 <- opt.cut.func(step1_kcv, key.dummy(logit.valid1))
+opt.cut.plot(kcv.out1)
+kcv.out1$cutoff[which.min(kcv.out1$ssdiff.vec)]
+kcv.out1.cut1 <- kcv.out1$cutoff[which.max(kcv.out1$kappa.vec)]
+kcv.out1.cut1
+```
+
+Fit final model (combo of train and validation)
+```{r}
+finalmeh <- capture.output(step1_kcv.final <- train(popular ~ ., data = all.train1, family = binomial(), 
+                 method = "glmStepAIC", trControl = train_control, verbose = FALSE))
+```
+
+```{r}
+step1_kcv.final <- step1_kcv.final$finalModel
+step1_kcv.final
+```
+
+
+
+predict on test using 0.5 cutoff 
+```{r}
+kcv.prob.test1 <- predict(step1_kcv.final, newdata = key.dummy(logit.test1), type = "response")
+kcv.pred.test1 <- ifelse(kcv.prob.test1 > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(kcv.pred.test1), as.factor(logit.test1$popular), positive = "1")
+```
+
+
+```{r}
+kcv.prob.test1 <- predict(step1_kcv.final, newdata = key.dummy(logit.test1), type = "response")
+kcv.pred.test1 <- ifelse(kcv.prob.test1 > kcv.out1.cut1, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(kcv.pred.test1), as.factor(logit.test1$popular), positive = "1")
+```
+
+```{r}
+kcv.prob.test1 <- predict(step1_kcv.final, newdata = key.dummy(logit.test1), type = "response")
+kcv.pred.test1 <- ifelse(kcv.prob.test1 > 0.11, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(kcv.pred.test1), as.factor(logit.test1$popular), positive = "1")
+```
+
+
+
+### Variable Selection: All possible regression
+
+```{r}
+glmulti.out1 <- glmulti(popular ~ ., data = logit.train1,
+                           level = 1,               # No interaction considered
+            method = "h",            # Exhaustive approach
+            crit = "aic",            # AIC as criteria
+            confsetsize = 5,         # Keep 5 best models
+            plotty = F, report = F,  # No plot or interim reports
+            fitfunction = "glm",     # lm function
+            family = binomial)       # binomial to run logistic regression 
+#glmulti.out1@formulas
+```
+
+view summary of top model
+```{r}
+summary(glmulti.out1@objects[[1]])
+```
+
+Store model
+```{r}
+allreg.logit1 <- glmulti.out1@objects[[1]]
+```
+
+```{r}
+#search for best cutoff
+allreg.out1 <- opt.cut.func(allreg.logit1, logit.valid1)
+opt.cut.plot(allreg.out1)
+allreg.out1$cutoff[which.min(allreg.out1$ssdiff.vec)]
+allreg.out1.cut1 <- allreg.out1$cutoff[which.max(allreg.out1$kappa.vec)]
+allreg.out1.cut1
+```
+
+fit final model to combo of training and validation
+```{r}
+glmulti.out1 <- glmulti(popular ~ ., data = all.train1,
+                           level = 1,               # No interaction considered
+            method = "h",            # Exhaustive approach
+            crit = "aic",            # AIC as criteria
+            confsetsize = 5,         # Keep 5 best models
+            plotty = F, report = F,  # No plot or interim reports
+            fitfunction = "glm",     # lm function
+            family = binomial)       # binomial to run logistic regression 
+#glmulti.out1@formulas
+summary(glmulti.out1@objects[[1]])
+```
+
+store final model
+```{r}
+allreg.logit1.final <- glmulti.out1@objects[[1]]
+```
+
+Predictions with 0.5 as the cut off
+```{r}
+allreg.prob.test1 <- predict(allreg.logit1.final, newdata = logit.test1, type = "response")
+allreg.pred.test1 <- ifelse(allreg.prob.test1 > 0.5, 1, 0) # using standard cutoff 0.5
+confusionMatrix(as.factor(allreg.pred.test1), as.factor(logit.test1$popular), positive = "1")
+```
+
+Predictions where cut off is the best kappa
+```{r}
+allreg.prob.test1 <- predict(allreg.logit1.final, newdata = logit.test1, type = "response")
+allreg.pred.test1 <- ifelse(allreg.prob.test1 > allreg.out1.cut1, 1, 0) # using optimal cutoff 0.17
+confusionMatrix(as.factor(allreg.pred.test1), as.factor(logit.test1$popular), positive = "1")
+```
+
+Predictions where cut off is the best balance of sensitivity and specificity
+```{r}
+allreg.prob.test1 <- predict(allreg.logit1.final, newdata = logit.test1, type = "response")
+allreg.pred.test1 <- ifelse(allreg.prob.test1 > 0.11, 1, 0) # using optimal cutoff 
+confusionMatrix(as.factor(allreg.pred.test1), as.factor(logit.test1$popular), positive = "1")
+```
