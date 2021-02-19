@@ -80,6 +80,30 @@ opt.cut.func <- function(model, data){
   return(list(cutoff = cutoff, sensitivity.vec = sensitivity.vec, specificity.vec = specificity.vec, ssdiff.vec = ssdiff.vec, kappa.vec = kappa.vec))
 }
 
+reg.opt.cut.func <-  function(model, data){
+  cutoff <- seq(0, 1, 0.01)
+
+  # create three empty vectors of same length
+  sensitivity.vec <- rep(NA, length(cutoff))
+  specificity.vec <- rep(NA, length(cutoff))
+  ssdiff.vec <- rep(NA, length(cutoff))
+  kappa.vec <- rep(NA, length(cutoff))
+
+  # For loop.
+  for(i in 1:length(cutoff)){
+    pred.prob.val <- predict(model, s=model$bestTune, data, type = "prob")
+    pred.y.val <- as.factor(ifelse(pred.prob.val[,2] > cutoff[i], 1, 0)) 
+    # warning messages galore because the probability of a value actually being popular is SO LOW
+    c <- confusionMatrix(pred.y.val, data$popular, 
+                        positive = "1")
+    sensitivity.vec[i] <- c$byClass["Sensitivity"]
+    specificity.vec[i] <- c$byClass["Specificity"]
+    ssdiff.vec[i] <- abs(sensitivity.vec[i] - specificity.vec[i])
+    kappa.vec[i] <- c$overall["Kappa"]
+  }
+  return(list(cutoff = cutoff, sensitivity.vec = sensitivity.vec, specificity.vec = specificity.vec, ssdiff.vec = ssdiff.vec, kappa.vec = kappa.vec))
+}
+
 opt.cut.plot <- function(opt.out){
   plot(opt.out$cutoff, opt.out$sensitivity.vec,xlab = "cutoff", type = "l", col = "blue")
   lines(opt.out$cutoff, opt.out$specificity.vec, type = "l", col = "green")
@@ -160,6 +184,11 @@ train1 <- kpop1[smpl1,]
 test1 <- kpop1[-smpl1,]
 ```
 
+
+
+## For Songs with Mode 0
+
+### Full Multiple Linear Regression
 fit a multiple linear regression model
 ```{r}
 ml0 <- lm(popularity ~. , data = train0)
@@ -196,16 +225,22 @@ yhat.mlr = predict(ml0.sqrt, newdata = test0 %>% mutate(popularity = popularity^
 # RMSE for test data
 error.mlr <- yhat.mlr - test0$popularity^0.5
 rmse.mlr <- sqrt(mean(error.mlr^2))
-rmse.mlr
+data.frame(
+  RMSE = RMSE(yhat.mlr, test0$popularity^0.5),
+  R2 = R2(yhat.mlr, test0$popularity^0.5)
+)
 ```
 
 Much improved!
 
-# Variable selection: Stewpise (10 fold cv)
+
+
+
+### Variable Selection: Stepwise 10 fold cross validation
 ```{r}
 set.seed(123)
 train_control <- trainControl(method = "cv", 
-                              number = 5) 
+                              number = 10) 
 bye <- capture.output(mlr.step_kcv <- train(popularity ~. , data = train0 %>% mutate(popularity = popularity^0.5),  
                  method = "lmStepAIC", trControl = train_control)) 
 print(mlr.step_kcv)
@@ -219,10 +254,203 @@ yhat.step_kcv = predict(mlr.step_kcv$finalModel, newdata=key.dummy(test0) %>% mu
 # RMSE for test data
 error.step_kcv <- yhat.step_kcv - test0$popularity^0.5
 rmse.step_kcv <- sqrt(mean(error.step_kcv^2))
-rmse.step_kcv
+data.frame(
+  RMSE = RMSE(yhat.step_kcv, test0$popularity^0.5),
+  R2 = R2(yhat.step_kcv, test0$popularity^0.5)
+)
 ```
 
 Both of the models have RMSE scores of around 2. This isn't terrible since the range of the transformed popularity scores is 0-10.
+
+### Regularized Regression: Ridge
+```{r}
+lm.ridge0 <- train(popularity ~. , data = train0 %>% mutate(popularity = popularity^0.5), method = "glmnet",
+                      trControl = train_control, 
+                      tuneGrid = expand.grid(alpha = 0,lambda = seq(0.001,0.1,by = 0.001)))
+#Best Tuning Parameter
+lm.ridge0$bestTune
+# best coefficient
+lm.ridge0.model <- coef(lm.ridge0$finalModel, lm.ridge0$bestTune$lambda)
+lm.ridge0.model
+```
+
+```{r}
+# prediction on test data
+yhat.ridge0 = predict(lm.ridge0, s=lm.ridge0$bestTune,newdata=test0%>% mutate(popularity = popularity^0.5))
+# RMSE for test data
+data.frame(
+  RMSE = RMSE(yhat.ridge0, test0$popularity^0.5),
+  R2 = R2(yhat.ridge0, test0$popularity^0.5)
+)
+```
+
+### Regularized Regression: Lasso
+```{r}
+lm.lasso0 <- train(popularity ~. , data = train0 %>% mutate(popularity = popularity^0.5), method = "glmnet",
+                      trControl = train_control, 
+                      tuneGrid = expand.grid(alpha = 1,lambda = seq(0.001,0.1,by = 0.001)))
+#Best Tuning Parameter
+lm.lasso0$bestTune
+# best coefficient
+lm.lasso0.model <- coef(lm.lasso0$finalModel, lm.lasso0$bestTune$lambda)
+lm.lasso0.model
+```
+
+
+```{r}
+# prediction on test data
+yhat.lasso0 = predict(lm.lasso0, s=lm.lasso0$bestTune,newdata=test0%>% mutate(popularity = popularity^0.5))
+# RMSE for test data
+error.lasso0 <- yhat.lasso0 - test0$popularity^0.5
+rmse.lasso0 <- sqrt(mean(error.lasso0^2))
+data.frame(
+  RMSE = RMSE(yhat.lasso0, test0$popularity^0.5),
+  R2 = R2(yhat.lasso0, test0$popularity^0.5)
+)
+```
+
+### Regularized Regression: Elastic Net
+```
+lm.enet0 <- train(popularity ~. , data = train0 %>% mutate(popularity = popularity^0.5), method = "glmnet",
+                      family = "binomial", trControl = train_control, 
+                      tuneGrid = expand.grid(alpha = seq(0,1,by = 0.05),lambda = seq(0.001,0.1,by = 0.001)))
+# best parameter
+lm.enet0$bestTune
+# best coefficient
+lm.enet0.model <- coef(lm.enet0$finalModel, lm.enet0$bestTune$lambda)
+lm.enet0.model
+```
+
+```
+# prediction on test data
+yhat.enet0 = predict(lm.enet0, s=lm.enet0$bestTune,newdata=test0%>% mutate(popularity = popularity^0.5))
+# RMSE for test data
+error.enet0 <- yhat.enet0 - test0$popularity^0.5
+rmse.enet0 <- sqrt(mean(error.enet0^2))
+data.frame(
+  RMSE = RMSE(yhat.enet0, test0$popularity^0.5),
+  R2 = R2(yhat.enet0, test0$popularity^0.5)
+)
+```
+
+## For songs with Mode 1
+
+### Full Multiple linear model
+```{r}
+ml1.sqrt <- lm(popularity ~. , data = train1 %>% mutate(popularity = popularity^0.5))
+summary(ml1.sqrt)
+```
+
+prediction on test data
+```{r}
+# prediction on test data
+yhat.mlr = predict(ml1.sqrt, newdata = test1 %>% mutate(popularity = popularity^0.5))
+# RMSE for test data
+error.mlr <- yhat.mlr - test1$popularity^0.5
+rmse.mlr <- sqrt(mean(error.mlr^2))
+data.frame(
+  RMSE = RMSE(yhat.mlr, test1$popularity^0.5),
+  R2 = R2(yhat.mlr, test1$popularity^0.5)
+)
+```
+
+
+### Variable Selection: Stepwise 10 fold cross validation
+```{r}
+set.seed(123)
+train_control <- trainControl(method = "cv", 
+                              number = 10) 
+bye <- capture.output(mlr.step_kcv <- train(popularity ~. , data = train1 %>% mutate(popularity = popularity^0.5),  
+                 method = "lmStepAIC", trControl = train_control)) 
+print(mlr.step_kcv)
+mlr.step_kcv$finalModel 
+```
+
+prediction on test data
+```{r}
+# prediction on test data
+yhat.step_kcv = predict(mlr.step_kcv$finalModel, newdata=key.dummy(test1) %>% mutate(popularity = popularity^0.5))
+# RMSE for test data
+error.step_kcv <- yhat.step_kcv - test1$popularity^0.5
+rmse.step_kcv <- sqrt(mean(error.step_kcv^2))
+data.frame(
+  RMSE = RMSE(yhat.step_kcv, test1$popularity^0.5),
+  R2 = R2(yhat.step_kcv, test1$popularity^0.5)
+)
+```
+
+### Regularized Regression: Ridge
+```{r}
+lm.ridge1 <- train(popularity ~. , data = train1 %>% mutate(popularity = popularity^0.5), method = "glmnet",
+                      trControl = train_control, 
+                      tuneGrid = expand.grid(alpha = 0,lambda = seq(0.001,0.1,by = 0.001)))
+#Best Tuning Parameter
+lm.ridge1$bestTune
+# best coefficient
+lm.ridge1.model <- coef(lm.ridge1$finalModel, lm.ridge1$bestTune$lambda)
+lm.ridge1.model
+```
+
+```{r}
+# prediction on test data
+yhat.ridge1 = predict(lm.ridge1, s=lm.ridge1$bestTune,newdata=test1%>% mutate(popularity = popularity^0.5))
+# RMSE for test data
+data.frame(
+  RMSE = RMSE(yhat.ridge1, test1$popularity^0.5),
+  R2 = R2(yhat.ridge1, test1$popularity^0.5)
+)
+```
+
+
+### Regularized Regression: Lasso
+```{r}
+lm.lasso1 <- train(popularity ~. , data = train1 %>% mutate(popularity = popularity^0.5), method = "glmnet",
+                      trControl = train_control, 
+                      tuneGrid = expand.grid(alpha = 1,lambda = seq(0.001,0.1,by = 0.001)))
+#Best Tuning Parameter
+lm.lasso1$bestTune
+# best coefficient
+lm.lasso1.model <- coef(lm.lasso1$finalModel, lm.lasso1$bestTune$lambda)
+lm.lasso1.model
+```
+
+
+```{r}
+# prediction on test data
+yhat.lasso1 = predict(lm.lasso1, s=lm.lasso1$bestTune,newdata=test1%>% mutate(popularity = popularity^0.5))
+# RMSE for test data
+error.lasso1 <- yhat.lasso1 - test1$popularity^0.5
+rmse.lasso1 <- sqrt(mean(error.lasso1^2))
+data.frame(
+  RMSE = RMSE(yhat.lasso1, test1$popularity^0.5),
+  R2 = R2(yhat.lasso1, test1$popularity^0.5)
+)
+```
+
+### Regularized Regression: Elastic Net
+```
+lm.enet1 <- train(popularity ~. , data = train1 %>% mutate(popularity = popularity^0.5), method = "glmnet",
+                      family = "binomial", trControl = train_control, 
+                      tuneGrid = expand.grid(alpha = seq(0,1,by = 0.05),lambda = seq(0.001,0.1,by = 0.001)))
+# best parameter
+lm.enet1$bestTune
+# best coefficient
+lm.enet1.model <- coef(lm.enet1$finalModel, lm.enet1$bestTune$lambda)
+lm.enet1.model
+```
+
+```
+# prediction on test data
+yhat.enet1 = predict(lm.enet1, s=lm.enet1$bestTune,newdata=test1%>% mutate(popularity = popularity^0.5))
+# RMSE for test data
+error.enet1 <- yhat.enet1 - test1$popularity^0.5
+rmse.enet1 <- sqrt(mean(error.enet1^2))
+data.frame(
+  RMSE = RMSE(yhat.enet1, test1$popularity^0.5),
+  R2 = R2(yhat.enet1, test1$popularity^0.5)
+)
+```
+
 
 # Logistic (classification approach)
 
@@ -505,6 +733,122 @@ confusionMatrix(as.factor(allreg.pred.test0), as.factor(logit.test0$popular), po
 ```
 
 
+### Regularized Regression: Ridge 10 fold Cross Validation
+```{r}
+ridge0 <- train(popular ~ ., data = logit.train0, method = "glmnet",
+                      family = "binomial", trControl = train_control, 
+                      tuneGrid = expand.grid(alpha = 0,lambda = seq(0.001,0.1,by = 0.001)))
+#best tuning parameter
+ridge0$bestTune
+ridge0.model <- coef(ridge0$finalModel, ridge0$bestTune$lambda)
+ridge0.model
+```
+
+Search for best cutoff using validation set
+```{r}
+ridge0.out <- reg.opt.cut.func(ridge0, logit.valid0)
+opt.cut.plot(ridge0.out)
+# cut off by kappa
+ridge0.out$cutoff[which.max(ridge0.out$kappa.vec)]
+ridge0.out$cutoff[which.min(ridge0.out$ssdiff.vec)]
+```
+
+
+create final model
+```{r}
+ridge0 <- train(popular ~ ., data = all.train0, method = "glmnet",
+                      family = "binomial", trControl = train_control, 
+                      tuneGrid = expand.grid(alpha = 0,lambda = seq(0.001,0.1,by = 0.001)))
+#best tuning parameter
+ridge0$bestTune
+ridge0.model <- coef(ridge0$finalModel, ridge0$bestTune$lambda)
+ridge0.model
+```
+
+predict and evaluate on the test set where cutoff is at 0.5
+```{r}
+prob.ridge0 <- predict(ridge0, s = ridge0$bestTune, logit.test0, type = "prob")
+pred.ridge0 <- ifelse(prob.ridge0[,2] > 0.50, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(pred.ridge0), as.factor(logit.test0$popular), 
+                positive = "1")
+```
+
+predict and evaluate on the test set where cutoff is at 0.12 corresponding to optimal kappa
+```{r}
+prob.ridg0 <- predict(ridge0, s = ridge0bestTune, logit.test0, type = "prob")
+pred.ridge0 <- ifelse(prob.ridge0[,2] > 0.12, 1, 0) # using cutoff = 0.13
+confusionMatrix(as.factor(pred.ridge0), as.factor(logit.test0$popular), 
+                positive = "1")
+```
+
+
+predict and evaluate on the test set where cutoff is at 0.14 corresponding to optimal sensitivity and specificity balance
+```{r}
+prob.ridg0 <- predict(ridge0, s = ridge0bestTune, logit.test0, type = "prob")
+pred.ridge0 <- ifelse(prob.ridge0[,2] > 0.14, 1, 0) # using cutoff = 0.14
+confusionMatrix(as.factor(pred.ridge0), as.factor(logit.test0$popular), 
+                positive = "1")
+```
+
+### Regularized Regression: Elastic Net 10 fold Cross Validation
+```{r}
+enet0 <- train(popular ~ ., data = logit.train0, method = "glmnet",
+                      family = "binomial", trControl = train_control, 
+                      tuneGrid = expand.grid(alpha = seq(0,1,by = 0.05),lambda = seq(0.001,0.1,by = 0.001)))
+# best parameter
+enet0$bestTune
+# best coefficient
+enet0.model <- coef(enet0$finalModel, enet0$bestTune$lambda)
+enet0.model
+```
+
+search for best cutoff with validation set
+```{r}
+enet0.out <- reg.opt.cut.func(enet0, logit.valid0)
+opt.cut.plot(enet0.out)
+# cut off by kappa
+enet0.out$cutoff[which.max(enet0.out$kappa.vec)]
+enet0.out$cutoff[which.min(enet0.out$ssdiff.vec)]
+```
+
+create final model on train and validation
+```{r}
+enet0 <- train(popular ~ ., data = all.train0, method = "glmnet",
+                      family = "binomial", trControl = train_control, 
+                      tuneGrid = expand.grid(alpha = seq(0,1,by = 0.05),lambda = seq(0.001,0.1,by = 0.001)))
+# best parameter
+enet0$bestTune
+# best coefficient
+enet0.model <- coef(enet0$finalModel, enet0$bestTune$lambda)
+enet0.model
+```
+
+predict and evaluate on the test set where cutoff is at 0.5
+```{r}
+prob.enet0 <- predict(enet0, s = enet0$bestTune, logit.test0, type = "prob")
+pred.enet0 <- ifelse(prob.enet0[,2] > 0.50, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(pred.enet0), as.factor(logit.test0$popular), 
+                positive = "1")
+```
+
+predict and evaluate on the test set where cutoff is at 0.12 corresponding to optimal kappa
+```{r}
+prob.enet0 <- predict(enet0, s = enet0$bestTune, logit.test0, type = "prob")
+pred.enet0 <- ifelse(prob.enet0[,2] > 0.12, 1, 0) # using cutoff = 0.13
+confusionMatrix(as.factor(pred.enet0), as.factor(logit.test0$popular), 
+                positive = "1")
+```
+
+predict and evaluate on the test set where cutoff is at 0.14 corresponding to optimal balance of sensitivity and specificity
+```{r}
+prob.enet0 <- predict(enet0, s = enet0$bestTune, logit.test0, type = "prob")
+pred.enet0 <- ifelse(prob.enet0[,2] > 0.14, 1, 0) # using cutoff = 0.13
+confusionMatrix(as.factor(pred.enet0), as.factor(logit.test0$popular), 
+                positive = "1")
+```
+
+
+
 ## Mode 1 popularity
 
 ### Full Logistic Model: train/valid/test
@@ -686,4 +1030,146 @@ Predictions where cut off is the best balance of sensitivity and specificity
 allreg.prob.test1 <- predict(allreg.logit1.final, newdata = logit.test1, type = "response")
 allreg.pred.test1 <- ifelse(allreg.prob.test1 > 0.11, 1, 0) # using optimal cutoff 
 confusionMatrix(as.factor(allreg.pred.test1), as.factor(logit.test1$popular), positive = "1")
+```
+
+
+
+
+
+
+### Regularized Regression: Ridge 10 fold Cross Validation
+```{r}
+ridge1 <- train(popular ~ ., data = logit.train1, method = "glmnet",
+                      family = "binomial", trControl = train_control, 
+                      tuneGrid = expand.grid(alpha = 0,lambda = seq(0.001,0.1,by = 0.001)))
+#best tuning parameter
+ridge1$bestTune
+ridge1.model <- coef(ridge1$finalModel, ridge1$bestTune$lambda)
+ridge1.model
+```
+
+Search for best cutoff using validation set
+```{r}
+ridge1.out <- reg.opt.cut.func(ridge1, logit.valid1)
+opt.cut.plot(ridge1.out)
+# cut off by kappa
+ridge1.out$cutoff[which.max(ridge1.out$kappa.vec)]
+ridge1.out$cutoff[which.min(ridge1.out$ssdiff.vec)]
+```
+
+create final model
+```{r}
+ridge1 <- train(popular ~ ., data = all.train1, method = "glmnet",
+                      family = "binomial", trControl = train_control, 
+                      tuneGrid = expand.grid(alpha = 0,lambda = seq(0.001,0.1,by = 0.001)))
+#best tuning parameter
+ridge1$bestTune
+ridge1.model <- coef(ridge1$finalModel, ridge1$bestTune$lambda)
+ridge1.model
+```
+
+predict and evaluate on the test set where cutoff is at 0.5
+```{r}
+prob.ridge1 <- predict(ridge1, s = ridge1$bestTune, logit.test1, type = "prob")
+pred.ridge1 <- ifelse(prob.ridge1[,2] > 0.50, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(pred.ridge1), as.factor(logit.test1$popular), 
+                positive = "1")
+```
+
+predict and evaluate on the test set where cutoff is at 0.13 corresponding to optimal kappa
+```{r}
+prob.ridge1 <- predict(ridge1, s = ridge1$bestTune, logit.test1, type = "prob")
+pred.ridge1 <- ifelse(prob.ridge1[,2] > 0.13, 1, 0) # using cutoff = 0.13
+confusionMatrix(as.factor(pred.ridge1), as.factor(logit.test1$popular), 
+                positive = "1")
+```
+
+predict and evaluate on the test set where cutoff is at 0.11 corresponding to optimal balance of sensitivity and specificity
+```{r}
+prob.ridge1 <- predict(ridge1, s = ridge1$bestTune, logit.test1, type = "prob")
+pred.ridge1 <- ifelse(prob.ridge1[,2] > 0.11, 1, 0) # using cutoff = 0.13
+confusionMatrix(as.factor(pred.ridge1), as.factor(logit.test1$popular), 
+                positive = "1")
+```
+
+
+
+### Regularized Regression: Lasso 10 fold Cross Validation (not kosher, returns with a model of just the intercept)
+```
+lasso1 <- train(popular ~ ., data = logit.train1, method = "glmnet",
+                      family = "binomial", trControl = train_control, 
+                      tuneGrid = expand.grid(alpha = 1,lambda = seq(0.001,0.1,by = 0.001)))
+# best parameter
+lasso1$bestTune
+# best coefficient
+lasso1.model <- coef(lasso1$finalModel, lasso1$bestTune$lambda)
+lasso1.model
+```
+
+Search for best cutoff using validation set
+```
+lasso1.out <- reg.opt.cut.func(lasso1, logit.valid1)
+opt.cut.plot(lasso1.out)
+# cut off by kappa
+lasso1.out$cutoff[which.max(lasso1.out$kappa.vec)]
+lasso1.out$cutoff[which.min(lasso1.out$ssdiff.vec)]
+
+```
+
+
+### Regularized Regression: Elastic Net 10 fold Cross Validation
+```{r}
+enet1 <- train(popular ~ ., data = logit.train1, method = "glmnet",
+                      family = "binomial", trControl = train_control, 
+                      tuneGrid = expand.grid(alpha = seq(0,1,by = 0.05),lambda = seq(0.001,0.1,by = 0.001)))
+# best parameter
+enet1$bestTune
+# best coefficient
+enet1.model <- coef(enet1$finalModel, enet1$bestTune$lambda)
+enet1.model
+```
+
+search for best cutoff with validation set
+```{r}
+enet1.out <- reg.opt.cut.func(enet1, logit.valid1)
+opt.cut.plot(enet1.out)
+# cut off by kappa
+enet1.out$cutoff[which.max(enet1.out$kappa.vec)]
+enet1.out$cutoff[which.min(enet1.out$ssdiff.vec)]
+```
+
+create final model on train and validation
+```{r}
+enet1 <- train(popular ~ ., data = all.train1, method = "glmnet",
+                      family = "binomial", trControl = train_control, 
+                      tuneGrid = expand.grid(alpha = seq(0,1,by = 0.05),lambda = seq(0.001,0.1,by = 0.001)))
+# best parameter
+enet1$bestTune
+# best coefficient
+enet1.model <- coef(enet1$finalModel, enet1$bestTune$lambda)
+enet1.model
+```
+
+predict and evaluate on the test set where cutoff is at 0.5
+```{r}
+prob.enet1 <- predict(enet1, s = enet1$bestTune, logit.test1, type = "prob")
+pred.enet1 <- ifelse(prob.enet1[,2] > 0.50, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(pred.enet1), as.factor(logit.test1$popular), 
+                positive = "1")
+```
+
+predict and evaluate on the test set where cutoff is at 0.13 corresponding to optimal kappa
+```{r}
+prob.enet1 <- predict(enet1, s = enet1$bestTune, logit.test1, type = "prob")
+pred.enet1 <- ifelse(prob.enet1[,2] > 0.13, 1, 0) # using cutoff = 0.13
+confusionMatrix(as.factor(pred.enet1), as.factor(logit.test1$popular), 
+                positive = "1")
+```
+
+predict and evaluate on the test set where cutoff is at 0.11 corresponding to optimal balance of sensitivity and specificity
+```{r}
+prob.enet1 <- predict(enet1, s = enet1$bestTune, logit.test1, type = "prob")
+pred.enet1 <- ifelse(prob.enet1[,2] > 0.11, 1, 0) # using cutoff = 0.13
+confusionMatrix(as.factor(pred.enet1), as.factor(logit.test1$popular), 
+                positive = "1")
 ```
