@@ -2,7 +2,9 @@
 title: "Predict Popularity"
 author: "Mary Solomon"
 date: "2/11/2021"
-output: html_document
+output: 
+  html_document:
+    toc: true
 ---
 
 ```{r setup, include=FALSE}
@@ -22,96 +24,7 @@ library(glmulti)# for all possible regressions approach LOGISTIC
 
 global functions (convert key to dummy)
 ```{r}
-key.dummy <- function(x){
-  x <- x %>% mutate(key1 = ifelse(x$key == 1, 1, 0),
-              key2 = ifelse(x$key == 2, 1, 0),
-              key3 = ifelse(x$key == 3, 1, 0),
-              key4 = ifelse(x$key == 4, 1, 0),
-              key5 = ifelse(x$key == 5, 1, 0),
-              key6 = ifelse(x$key == 6, 1, 0),
-              key7 = ifelse(x$key == 7, 1, 0),
-              key8 = ifelse(x$key == 8, 1, 0),
-              key9 = ifelse(x$key == 9, 1, 0),
-              key10 = ifelse(x$key == 10, 1, 0),
-              key11 = ifelse(x$key == 11, 1, 0)) %>% select(-key)
-    
-  x
-}
-
-#train/valid/test function from data mining class:
-partition.3 <- function(data, prop.train, prop.val){
-  # select a random sample of size = prop.train % of total records
-  selected1 <- sample(1:nrow(data), round(nrow(data)*prop.train), replace = FALSE) 
-  # create training data which has prop.train % of total records
-  data.train <- data[selected1,]
-  # select a random sample of size = prop.val % of the total records
-  rest <- setdiff(1:nrow(data), selected1)
-  selected2 <- sample(rest, round(nrow(data)*prop.val), replace = FALSE) 
-  # create validation data which has prop.val % of total records
-  data.val <- data[selected2,]
-  # create testing data with the remaining records
-  data.test <- data[setdiff(rest, selected2),]
-  return(list(data.train=data.train, data.test=data.test, data.val=data.val))
-}
-
-#creates plot for optimal cut off value
-opt.cut.func <- function(model, data){
-  # create a vector for cutoff values
-  cutoff <- seq(0, 1, 0.01)
-
-  # create three empty vectors of same length
-  sensitivity.vec <- rep(NA, length(cutoff))
-  specificity.vec <- rep(NA, length(cutoff))
-  ssdiff.vec <- rep(NA, length(cutoff))
-  kappa.vec <- rep(NA, length(cutoff))
-
-# For loop.
-  for(i in 1:length(cutoff)){
-    pred.prob.val <- predict(model, newdata = data, type = "response")
-    pred.y.val <- as.factor(ifelse(pred.prob.val > cutoff[i], 1, 0)) 
-    # warning messages galore because the probability of a value actually being popular is SO LOW
-    c <- confusionMatrix(pred.y.val, data$popular, 
-                        positive = "1")
-    sensitivity.vec[i] <- c$byClass["Sensitivity"]
-    specificity.vec[i] <- c$byClass["Specificity"]
-    ssdiff.vec[i] <- abs(sensitivity.vec[i] - specificity.vec[i])
-    kappa.vec[i] <- c$overall["Kappa"]
-  }
-  return(list(cutoff = cutoff, sensitivity.vec = sensitivity.vec, specificity.vec = specificity.vec, ssdiff.vec = ssdiff.vec, kappa.vec = kappa.vec))
-}
-
-reg.opt.cut.func <-  function(model, data){
-  cutoff <- seq(0, 1, 0.01)
-
-  # create three empty vectors of same length
-  sensitivity.vec <- rep(NA, length(cutoff))
-  specificity.vec <- rep(NA, length(cutoff))
-  ssdiff.vec <- rep(NA, length(cutoff))
-  kappa.vec <- rep(NA, length(cutoff))
-
-  # For loop.
-  for(i in 1:length(cutoff)){
-    pred.prob.val <- predict(model, s=model$bestTune, data, type = "prob")
-    pred.y.val <- as.factor(ifelse(pred.prob.val[,2] > cutoff[i], 1, 0)) 
-    # warning messages galore because the probability of a value actually being popular is SO LOW
-    c <- confusionMatrix(pred.y.val, data$popular, 
-                        positive = "1")
-    sensitivity.vec[i] <- c$byClass["Sensitivity"]
-    specificity.vec[i] <- c$byClass["Specificity"]
-    ssdiff.vec[i] <- abs(sensitivity.vec[i] - specificity.vec[i])
-    kappa.vec[i] <- c$overall["Kappa"]
-  }
-  return(list(cutoff = cutoff, sensitivity.vec = sensitivity.vec, specificity.vec = specificity.vec, ssdiff.vec = ssdiff.vec, kappa.vec = kappa.vec))
-}
-
-opt.cut.plot <- function(opt.out){
-  plot(opt.out$cutoff, opt.out$sensitivity.vec,xlab = "cutoff", type = "l", col = "blue")
-  lines(opt.out$cutoff, opt.out$specificity.vec, type = "l", col = "green")
-  lines(opt.out$cutoff, opt.out$kappa.vec, type = "l", col = "red")
-  legend( x="right", legend=c("Sensitivity","Specificity", "Kappa"),
-        col=c("blue","green","red"), lty = 1, lwd=1)
-  
-}
+source("thesis_functions.R")
 ```
 
 
@@ -490,67 +403,10 @@ all.train1 <- rbind(logit.train1, logit.valid1)
 
 ## Mode 0 popularity
 
-### Full Logistic Model: train/test
-
-fitting logistic model using combo of train/test, finding optimal model using training data.
-```
-# Fit logistic model on training data
-og.logit.model0 <- glm(popular ~ ., family=binomial(link='logit'),data= og.logit.train0)
-
-# create a vector for cutoff values
-cutoff <- seq(0, 1, 0.05)
-
-# create three empty vectors of same length
-sensitivity.vec <- rep(NA, length(cutoff))
-specificity.vec <- rep(NA, length(cutoff))
-kappa.vec <- rep(NA, length(cutoff))
-
-# For loop.
-for(i in 1:length(cutoff)){
-  pred.prob.val <- predict(og.logit.model0, newdata = og.logit.train0, type = "response")
-  pred.y.val <- as.factor(ifelse(pred.prob.val > cutoff[i], 1, 0)) 
-  # warning messages galore because the probability of a value actually being popular is SO LOW
-  c <- confusionMatrix(pred.y.val, og.logit.train0$popular, 
-                       positive = "1")
-  sensitivity.vec[i] <- c$byClass["Sensitivity"]
-  specificity.vec[i] <- c$byClass["Specificity"]
-  kappa.vec[i] <- c$overall["Kappa"]
-}
-
-plot(cutoff, sensitivity.vec,xlab = "cutoff", type = "l", col = "blue")
-lines(cutoff, specificity.vec, type = "l", col = "green")
-lines(cutoff, kappa.vec, type = "l", col = "red")
-legend( x="right", legend=c("Sensitivity","Specificity", "Kappa"),
-        col=c("blue","green","red"), lty = 1, lwd=1)
-
-#ideal cut off value
-opt.cut <- cutoff[which.max(kappa.vec)]
-opt.cut
-```
-
-
-Evaluate performance on test
-
-Using just og cut off
-```
-og.prob.test <- predict(og.logit.model0, newdata = og.logit.test0, type = "response")
-og.pred.test <- ifelse(og.prob.test > 0.5, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(og.pred.test), as.factor(og.logit.test0$popular), positive = "1")
-```
-
-Using optimal cutoff.
-```
-og.prob.test <- predict(og.logit.model0, newdata = og.logit.test0, type = "response")
-og.pred.test <- ifelse(og.prob.test > opt.cut, 1, 0) # using cutoff = 0.15
-confusionMatrix(as.factor(og.pred.test), as.factor(og.logit.test0$popular), positive = "1")
-```
-
-
-
 ### Full Logistic Model: train/valid/test
 
 fitting logistic model using combo of train/valid/test, finding optimal model using training data.
-```{r}
+```{r, warning = FALSE}
 # Fit logistic model on training data
 v.logit.model0 <- glm(popular ~ ., family=binomial(link='logit'),data= logit.train0)
 
@@ -617,7 +473,7 @@ confusionMatrix(as.factor(kcv.pred.test0), as.factor(logit.test0$popular), posit
 ```
 
 Find optimal cut off value:
-```{r}
+```{r, warning = FALSE}
 #search for best cutoff
 kcv.out0 <- opt.cut.func(step0_kcv, key.dummy(logit.valid0))
 opt.cut.plot(kcv.out0)
@@ -681,7 +537,7 @@ Store model
 allreg.logit0 <- glmulti.out0@objects[[1]]
 ```
 
-```{r}
+```{r, warning = FALSE}
 #search for best cutoff
 allreg.out0 <- opt.cut.func(allreg.logit0, logit.valid0)
 opt.cut.plot(allreg.out0)
@@ -745,7 +601,7 @@ ridge0.model
 ```
 
 Search for best cutoff using validation set
-```{r}
+```{r, warning = FALSE}
 ridge0.out <- reg.opt.cut.func(ridge0, logit.valid0)
 opt.cut.plot(ridge0.out)
 # cut off by kappa
@@ -803,7 +659,7 @@ enet0.model
 ```
 
 search for best cutoff with validation set
-```{r}
+```{r, warning = FALSE}
 enet0.out <- reg.opt.cut.func(enet0, logit.valid0)
 opt.cut.plot(enet0.out)
 # cut off by kappa
@@ -854,7 +710,7 @@ confusionMatrix(as.factor(pred.enet0), as.factor(logit.test0$popular),
 ### Full Logistic Model: train/valid/test
 
 fitting logistic model using combo of train/valid/test, finding optimal model using training data.
-```{r}
+```{r, warning = FALSE}
 # Fit logistic model on training data
 v.logit.model1 <- glm(popular ~ ., family=binomial(link='logit'),data= logit.train1)
 
@@ -915,7 +771,7 @@ step1_kcv <- step1_kcv$finalModel
 step1_kcv
 ```
 
-```{r}
+```{r, warning = FALSE}
 #search for best cutoff
 kcv.out1 <- opt.cut.func(step1_kcv, key.dummy(logit.valid1))
 opt.cut.plot(kcv.out1)
@@ -983,7 +839,7 @@ Store model
 allreg.logit1 <- glmulti.out1@objects[[1]]
 ```
 
-```{r}
+```{r, warning = FALSE}
 #search for best cutoff
 allreg.out1 <- opt.cut.func(allreg.logit1, logit.valid1)
 opt.cut.plot(allreg.out1)
@@ -1049,7 +905,7 @@ ridge1.model
 ```
 
 Search for best cutoff using validation set
-```{r}
+```{r, warning = FALSE}
 ridge1.out <- reg.opt.cut.func(ridge1, logit.valid1)
 opt.cut.plot(ridge1.out)
 # cut off by kappa
@@ -1130,7 +986,7 @@ enet1.model
 ```
 
 search for best cutoff with validation set
-```{r}
+```{r, warning = FALSE}
 enet1.out <- reg.opt.cut.func(enet1, logit.valid1)
 opt.cut.plot(enet1.out)
 # cut off by kappa

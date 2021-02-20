@@ -16,7 +16,13 @@ library(stringr)
 library(scales) #for formatting with percentage signs
 library(nnet) #for multinomial regression
 library(caret)
-library(car) #for vif function
+library(car) #for vif function and boxcox transformation
+```
+
+
+Load the functions
+```{r}
+source("thesis_functions.R")
 ```
 
 
@@ -110,9 +116,39 @@ car::vif(ml0)
 
 
 
+Overall, the current model does not meet the assumptions of the linear model. We need to make a transformation on the response variable to achieve normality of the residuals
+```{r}
+boxcox(ml0,lambda = seq(1.7, 3, 0.1), plotit = TRUE)
+```
+
+Optimal transformation is for $\lambda = 2.3$
+
+```{r}
+hist(bc.transform(data$months, 2.3))
+```
 
 
 
+
+```{r}
+ml0.bc <- lm(bc.transform(months, 2.3) ~. , data = train0)
+summary(ml0.bc)
+```
+
+check diagnostic plots
+```{r}
+plot(ml0.bc)
+```
+
+normality has improved but nothing else ...
+
+```{r}
+yhat.ml0.bc = predict(ml0.bc, newdata = test0 %>% mutate(months = bc.transform(test0$months, 2.3)))
+data.frame(
+  RMSE = RMSE(yhat.ml0.bc, bc.transform(test0$months, 2.3)),
+  R2 = R2(yhat.ml0.bc, bc.transform(test0$months, 2.3))
+)
+```
 
 
 ### Multiple linear regression for mode 1 songs
