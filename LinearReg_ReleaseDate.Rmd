@@ -17,12 +17,26 @@ library(scales) #for formatting with percentage signs
 library(nnet) #for multinomial regression
 library(caret)
 library(car) #for vif function and boxcox transformation
+library(MASS) #boxcox transformation
 ```
 
 
 Load the functions
 ```{r}
 source("thesis_functions.R")
+dhist.plot <- function(d, v, vname){
+  ggplot(d, aes(x=v)) + 
+  geom_histogram(aes(y = stat(density)), bins = 30, fill = "white", col = "black") +
+  stat_function(
+    fun = dnorm, 
+    args = list(mean = mean(d$v), sd = sd(d$v)), 
+    lwd = 1, 
+    col = 'red'
+  ) +
+  # xlab(vname) + ylab("Density") +
+  # ggtitle(paste(vname, "Distribution")) +
+  theme_bw()
+}
 ```
 
 
@@ -43,26 +57,84 @@ data$months = 12*(year(data$release_date) - ref.year) + month(data$release_date)
 #View(select(data, Artist, song_name, release_date, months))
 ```
 
+# Assessing normality of the Response Variable: Month of release date.
 
 check out distribution of the months 
 ```{r}
-hist(data$months)
+#dhist.plot(data, months, "Month Released")
+ggplot(data, aes(x=months)) +
+  geom_histogram(aes(y = stat(density)), bins = 30, fill = "white", col = "black") +
+  stat_function(
+    fun = dnorm, 
+    args = list(mean = mean(data$months), sd = sd(data$months)), 
+    lwd = 1, 
+    col = 'red'
+  ) +
+  xlab("Month Released") + ylab("Density") +
+  ggtitle(paste("Month Released", "Distribution")) +
+  theme_bw()
 summary(data$months)
 ```
 
-try to find a transformation to normalize
+try to find a transformation to normalize. As we can see the distribution of months is severely skewed to the left. 
+
+A common distribution towards normality for moderately skewed data is : $log((max(y)+1) - y)$, since the max number of months is 349, the transformation would be : $log(350 - y)$
 ```{r}
-hist(log(360-data$months))
+ggplot(data, aes(x=log(350-data$months))) +
+  geom_histogram(aes(y = stat(density)), bins = 30, fill = "white", col = "black") +
+  stat_function(
+    fun = dnorm, 
+    args = list(mean = mean(log(350-data$months)), sd = sd(log(350-data$months))), 
+    lwd = 1, 
+    col = 'red'
+  ) +
+  xlab("Month Released : log(350 - y))") + ylab("Density") +
+  ggtitle(paste("Month Released : log(350 - y))", "Distribution")) +
+  theme_bw()
+summary(data$months)
 ```
+
+Another common transformation for moderate skewed data is a square root approach: $\sqrt{((max(y)+1) - y)}$ = $\sqrt{(350 - y)}$
+```{r}
+ggplot(data, aes(x=sqrt(350-data$months))) +
+  geom_histogram(aes(y = stat(density)), bins = 30, fill = "white", col = "black") +
+  stat_function(
+    fun = dnorm, 
+    args = list(mean = mean(sqrt(350-data$months)), sd = sd(sqrt(350-data$months))), 
+    lwd = 1, 
+    col = 'red'
+  ) +
+  xlab("Month Released : sqrt(350 - y))") + ylab("Density") +
+  ggtitle(paste("Month Released : sqrt(350 - y))", "Distribution")) +
+  theme_bw()
+summary(data$months)
+```
+
+Lastly, a common transformation for severely negatively skewed data takes an inverse approach: $\frac{1}{(max(y)+1) - y)}$ = $\frac{1}{(350 - y)}$
+```{r}
+ggplot(data, aes(x=1/(350-data$months))) +
+  geom_histogram(aes(y = stat(density)), bins = 30, fill = "white", col = "black") +
+  stat_function(
+    fun = dnorm, 
+    args = list(mean = mean(1/(350-data$months)), sd = sd(1/(350-data$months))), 
+    lwd = 1, 
+    col = 'red'
+  ) +
+  xlab("Month Released : 1/(350 - y))") + ylab("Density") +
+  ggtitle(paste("Month Released : 1/(350 - y))", "Distribution")) +
+  theme_bw()
+summary(data$months)
+```
+
 
 
 
 # splitting into training and test data.
 Create Training (75%) and Test data (25%) to train classification models on.
 ```{r}
-kpop <- select(data, months, popularity, duration, acousticness, danceability, energy, instrumentalness, key, loudness, mode, speechiness, tempo, valence)
-kpop0 <- kpop %>% filter(mode == 0)%>% select(-mode)
-kpop1 <- kpop %>% filter(mode == 1) %>% select(-mode)
+kpop <- dplyr::select(data, months, popularity, duration, acousticness, danceability, energy, instrumentalness, key, loudness, mode, speechiness, tempo, valence)
+kpop0 <- kpop %>% dplyr::filter(mode == 0) %>% dplyr::select(-mode)
+kpop1 <- kpop %>% dplyr::filter(mode == 1) %>% dplyr::select(-mode)
 
 ### Kpop mode 0 train and test
 smpl.size0 <- floor(0.75*nrow(kpop0))
@@ -115,8 +187,19 @@ car::vif(ml0)
 ```
 
 
-
 Overall, the current model does not meet the assumptions of the linear model. We need to make a transformation on the response variable to achieve normality of the residuals
+
+```{r}
+yhat.ml0 = predict(ml0, newdata = test0)
+data.frame(
+  RMSE = RMSE(yhat.ml0, test0$months),
+  R2 = R2(yhat.ml0, test0$months)
+)
+```
+
+
+
+### MLR: Box Cox Transformation
 ```{r}
 boxcox(ml0,lambda = seq(1.7, 3, 0.1), plotit = TRUE)
 ```
@@ -151,4 +234,62 @@ data.frame(
 ```
 
 
-### Multiple linear regression for mode 1 songs
+### MLR: log(360 - y) Transformation
+```{r}
+hist(log(360-train0$months))
+summary(log(360-train0$months))
+```
+
+
+```{r}
+ml0.log360 <- lm(log(360-train0$months) ~. , data = train0)
+summary(ml0.log360)
+```
+
+
+check diagnostic plots
+```{r}
+plot(ml0.log360)
+```
+
+Predictions and performance diagnostics
+```{r}
+yhat.ml0.log360 = predict(ml0.log360, newdata = test0 %>% mutate(months = log(360 - test0$months)))
+data.frame(
+  RMSE = RMSE(yhat.ml0.log360, log(360 - test0$months)),
+  R2 = R2(yhat.ml0.log360, log(360 - test0$months))
+)
+```
+
+
+
+### MLR: sqrt(350 - y) Transformation
+```{r}
+hist(sqrt(350-train0$months))
+summary(sqrt(350-train0$months))
+```
+
+
+```{r}
+ml0.sqrt350 <- lm(sqrt(350-train0$months) ~. , data = train0)
+summary(ml0.sqrt350)
+```
+
+
+check diagnostic plots
+```{r}
+plot(ml0.sqrt350)
+```
+
+Predictions and performance diagnostics
+```{r}
+yhat.ml0.sqrt350 = predict(ml0.sqrt350, newdata = test0 %>% dplyr::mutate(months = sqrt(350-test0$months)))
+data.frame(
+  RMSE = RMSE(yhat.ml0.sqrt350, sqrt(350-test0$months)),
+  R2 = R2(yhat.ml0.sqrt350, sqrt(350-test0$months))
+)
+```
+
+## Multiple linear regression for mode 1 songs
+
+
