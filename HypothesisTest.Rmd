@@ -61,7 +61,7 @@ data$bg <- as.factor(ifelse(data$ArtistType == "group" & data$ArtistGender == "m
 ```{r}
 # songs per old vs new gen
 round(table(data$oldgen)/nrow(data),3)
-# songs per 
+# songs per boygroup/girlgroup
 round(table(data$bg)/nrow(data),3)
 ```
 

@@ -27,12 +27,12 @@ colnames(data)
 # Clustering (unsupervised)
 ```{r}
 mode1 <- data %>% 
-  filter(mode == 1) %>%
-  select(popularity, duration, acousticness, danceability, energy, 
+  dplyr::filter(mode == 1) %>%
+  dplyr::select(popularity, duration, acousticness, danceability, energy, 
          instrumentalness, key, loudness, speechiness, tempo, valence)
 mode0 <- data %>% 
-  filter(mode == 0) %>%
-  select(popularity, duration, acousticness, danceability, energy, 
+  dplyr::filter(mode == 0) %>%
+  dplyr::select(popularity, duration, acousticness, danceability, energy, 
          instrumentalness, key, loudness, speechiness, tempo, valence)
 ```
 The previous section aims to determine what kind of model we can build in order to predict which generation a kpop song is from based on audio/song features alone. However, could there be an alternative way to group the songs in the kpop genre based on audio/song features? Kpop Generations are grouped by the time and evolution of the kpop genre. By excluding time period, cultural trends, catchy visuals, dances, and only focusing on the audio features of the songs, what will the groups be defined by and how will it differ from the characteristics of the kpop generations observed in previous chapters?
@@ -54,8 +54,8 @@ PCA is a dimension reduction technique that defines uncorrelated linear combinat
 
 standardized PCA
 ```{r}
-pca <- prcomp(mode1, scale=TRUE)
-t(pca$rotation)
+pca1 <- prcomp(mode1, scale=TRUE)
+t(pca1$rotation)
 ```
 
 For clearer interpretation, we can express the principal components as linear combinations of the standardized value of each variable. The first 6 PCs are expressed below rounded to 3 decimals: 
@@ -88,29 +88,29 @@ INTERPRETATION OF THE PCs:
 
 biplot
 ```{r}
-biplot(pca, scale = 0, xlabs=rep("·", nrow(mode1)))
+biplot(pca1, scale = 0, xlabs=rep("·", nrow(mode1)))
 ```
 
 
 examine amount of variance explained to choose optimal principal components
 ```{r}
-pca.var = pca$sdev^2
-pve = pca.var/sum(pca.var)
-cve = cumsum(pve)
-pca.var.explained <- data.frame("Variance" = pca.var, 
-                                "Proportion_Variation" = pve, 
-                                "Cummalitve_Proportion_Variation"= cve, 
+pca1.var = pca1$sdev^2
+pve1 = pca1.var/sum(pca1.var)
+cve1 = cumsum(pve1)
+pca1.var.explained <- data.frame("Variance" = pca1.var, 
+                                "Proportion_Variation" = pve1, 
+                                "Cummalitve_Proportion_Variation"= cve1, 
                                 "PC" = factor(c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6", "PC7",
                                          "PC8", "PC9", "PC10", "PC11"), 
                                          levels = c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6", "PC7",
                                          "PC8", "PC9", "PC10", "PC11")))
-pca.var.explained
+pca1.var.explained
 ```
 
 
 
 ```{r}
-pca.var.explained %>%
+pca1.var.explained %>%
   ggplot(aes(x=PC,y=Proportion_Variation, group=1))+
   ylab("Proportion of Variance Explained") +
   geom_point(size=3)+
@@ -127,8 +127,8 @@ pca.var.explained %>%
 
 standardized PCA
 ```{r}
-pca <- prcomp(mode0, scale=TRUE)
-t(pca$rotation)
+pca0 <- prcomp(mode0, scale=TRUE)
+t(pca0$rotation)
 ```
 
 
@@ -163,29 +163,29 @@ INTERPRETATION OF THE PCs:
 
 biplot
 ```{r}
-biplot(pca, scale = 0, xlabs=rep("·", nrow(mode0)))
+biplot(pca0, scale = 0, xlabs=rep("·", nrow(mode0)))
 ```
 
 
 examine amount of variance explained to choose optimal principal components
 ```{r}
-pca.var = pca$sdev^2
-pve = pca.var/sum(pca.var)
-cve = cumsum(pve)
-pca.var.explained <- data.frame("Variance" = pca.var, 
-                                "Proportion_Variation" = pve, 
-                                "Cummalitve_Proportion_Variation"= cve, 
+pca0.var = pca0$sdev^2
+pve0 = pca0.var/sum(pca0.var)
+cve0 = cumsum(pve0)
+pca0.var.explained <- data.frame("Variance" = pca0.var, 
+                                "Proportion_Variation" = pve0, 
+                                "Cummalitve_Proportion_Variation"= cve0, 
                                 "PC" = factor(c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6", "PC7",
                                          "PC8", "PC9", "PC10", "PC11"), 
                                          levels = c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6", "PC7",
                                          "PC8", "PC9", "PC10", "PC11")))
-pca.var.explained
+pca0.var.explained
 ```
 
 
 
 ```{r}
-pca.var.explained %>%
+pca0.var.explained %>%
   ggplot(aes(x=PC,y=Proportion_Variation, group=1))+
   ylab("Proportion of Variance Explained") +
   geom_point(size=3)+
@@ -197,16 +197,18 @@ pca.var.explained %>%
 
 
 
-## Clustering on PCA ##
-
-```
-pc1n2 <- data.frame(pca$x[,1:2])
+## Clustering on PCA: Kmeans clustering ##
+ 
+### for songs where mode = 0
+Choosing number of groups (K) via elbow method
+```{r}
+pc0_1to5 <- data.frame(pca0$x[,1:5])
 set.seed(123)
 #compute total within cluster sum of square
 wss <- function(k) {
-  kmeans(pc1n2, k, iter.max = 1000, nstart = 25, algorithm = "Lloyd" )$tot.withinss
+  kmeans(pc0_1to5, k, iter.max = 1000, nstart = 25, algorithm = "Hartigan-Wong")$tot.withinss
 }
-k.vals <- 1:10
+k.vals <- 1:15
 wss_values <- map_dbl(k.vals, wss)
 
 plot(k.vals, wss_values,
@@ -215,12 +217,51 @@ plot(k.vals, wss_values,
        ylab="Total within-clusters sum of squares")
 ```
 
-
+silhouette method
+```{r}
+library(factoextra)
+fviz_nbclust(pc0_1to5, kmeans, method="silhouette")
 ```
+
+
+visualize the two clusters
+```{r}
 set.seed(123)
-k <- kmeans(pc1n2, 5, iter.max = 1000, nstart = 25, algorithm = "Lloyd")
-pc1n2$clusters <- as.factor(k$cluster)
-ggplot(pc1n2, aes(PC1, PC2, color = clusters)) + geom_point() + 
+k <- kmeans(pc0_1to5, 2, iter.max = 1000, nstart = 25, algorithm = "Hartigan-Wong")
+pc0_1to5$clusters <- as.factor(k$cluster)
+ggplot(pc0_1to5, aes(PC1, PC2, color = clusters)) + geom_point() + 
+  labs(title = "K-means Cluster on Principal Components", x = "PC1", y = "PC2") +
+  theme_bw()
+```
+
+### for songs where mode = 1
+Choosing number of groups (K) via elbow method
+```{r}
+pc1_1to5 <- data.frame(pca1$x[,1:5])
+set.seed(123)
+#compute total within cluster sum of square
+wss <- function(k) {
+  kmeans(pc1_1to5, k, iter.max = 1000, nstart = 25, algorithm = "Hartigan-Wong")$tot.withinss
+}
+k.vals <- 1:15
+wss_values <- map_dbl(k.vals, wss)
+
+plot(k.vals, wss_values,
+       type="b", pch = 19, frame = FALSE, 
+       xlab="Number of clusters K",
+       ylab="Total within-clusters sum of squares")
+```
+
+silhouette method
+```{r}
+fviz_nbclust(pc1_1to5, kmeans, method="silhouette")
+```
+
+```{r}
+set.seed(123)
+k <- kmeans(pc1_1to5, 2, iter.max = 1000, nstart = 25, algorithm = "Hartigan-Wong")
+pc1_1to5$clusters <- as.factor(k$cluster)
+ggplot(pc1_1to5, aes(PC1, PC2, color = clusters)) + geom_point() + 
   labs(title = "K-means Cluster on Principal Components", x = "PC1", y = "PC2") +
   theme_bw()
 ```

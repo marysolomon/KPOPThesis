@@ -1,7 +1,7 @@
 
 ### Function to create the dummy variables for the key category 
 key.dummy <- function(x){
-  x <- x %>% mutate(key1 = ifelse(x$key == 1, 1, 0),
+  x <- x %>% dplyr::mutate(key1 = ifelse(x$key == 1, 1, 0),
                     key2 = ifelse(x$key == 2, 1, 0),
                     key3 = ifelse(x$key == 3, 1, 0),
                     key4 = ifelse(x$key == 4, 1, 0),
@@ -11,7 +11,7 @@ key.dummy <- function(x){
                     key8 = ifelse(x$key == 8, 1, 0),
                     key9 = ifelse(x$key == 9, 1, 0),
                     key10 = ifelse(x$key == 10, 1, 0),
-                    key11 = ifelse(x$key == 11, 1, 0)) %>% select(-key)
+                    key11 = ifelse(x$key == 11, 1, 0)) %>% dplyr::select(-key)
   
   x
 }

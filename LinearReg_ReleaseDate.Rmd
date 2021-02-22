@@ -3,6 +3,8 @@ title: 'Linear Regression: Release Date'
 author: "Mary Solomon"
 date: "2/15/2021"
 output: html_document
+editor_options: 
+  chunk_output_type: inline
 ---
 
 ```{r setup, include=FALSE}
@@ -18,6 +20,8 @@ library(nnet) #for multinomial regression
 library(caret)
 library(car) #for vif function and boxcox transformation
 library(MASS) #boxcox transformation
+library(leaps) # for all possible regressions approach LINEAR
+library(moments) # for calculating skewness
 ```
 
 
@@ -57,7 +61,24 @@ data$months = 12*(year(data$release_date) - ref.year) + month(data$release_date)
 #View(select(data, Artist, song_name, release_date, months))
 ```
 
+Testing how to transform back from a log function ... this works :D  
+```{r}
+data$months[1:10]
+log.trans <- log(360-data$months);log.trans[1:10]
+back.trans <- (exp(log.trans) - 360) / -1;back.trans[1:10]
+```
+
+
 # Assessing normality of the Response Variable: Month of release date.
+
+### original months value
+
+Summary of the data to gain an understanding of the range.
+```{r}
+summary(data$months)
+```
+
+
 
 check out distribution of the months 
 ```{r}
@@ -73,12 +94,31 @@ ggplot(data, aes(x=months)) +
   xlab("Month Released") + ylab("Density") +
   ggtitle(paste("Month Released", "Distribution")) +
   theme_bw()
-summary(data$months)
 ```
+
+
+```{r}
+#produce normal qqplot to assess normality
+qqnorm(data$months, pch = 1, frame = FALSE)
+qqline(data$months, col = "red", lwd = 2)
+#Skewness score
+skewness(data$months)
+```
+
+
 
 try to find a transformation to normalize. As we can see the distribution of months is severely skewed to the left. 
 
-A common distribution towards normality for moderately skewed data is : $log((max(y)+1) - y)$, since the max number of months is 349, the transformation would be : $log(350 - y)$
+### log transform for moderately negative skewed data
+A common distribution towards normality for moderately skewed data is : $log(max(y+1) - y)$, since the max number of months is 349, the transformation would be : $log(350 - y)$
+
+summary of the data under this transformation
+```{r}
+summary(log(350-data$months))
+```
+
+Already by looking at the 5 number summary it is evidence that there exists skewness isnce the median is much closer to the max than the min. 
+
 ```{r}
 ggplot(data, aes(x=log(350-data$months))) +
   geom_histogram(aes(y = stat(density)), bins = 30, fill = "white", col = "black") +
@@ -91,10 +131,65 @@ ggplot(data, aes(x=log(350-data$months))) +
   xlab("Month Released : log(350 - y))") + ylab("Density") +
   ggtitle(paste("Month Released : log(350 - y))", "Distribution")) +
   theme_bw()
-summary(data$months)
 ```
 
-Another common transformation for moderate skewed data is a square root approach: $\sqrt{((max(y)+1) - y)}$ = $\sqrt{(350 - y)}$
+```{r}
+#produce normal qqplot to assess normality
+qqnorm(log(350-data$months), pch = 1, frame = FALSE)
+qqline(log(350-data$months), col = "red", lwd = 2)
+#Skewness score
+skewness(log(350-data$months))
+```
+
+
+
+The distribution looks more normal, but still has noticeable issues of skewness. Therefore, the transformation has not been successful in achieving normality as the observations deviate to much from the normal QQ line.
+
+
+Since there still exists issues of skewness, we will tweak the standard transformation of negative skewness to this alternative: $log(360 - y)$
+
+summary of the data under this transformation
+```{r}
+summary(log(360-data$months))
+```
+Notice that the maximum and minimum value are still very similar to before, however the minimum has increased with this change and now the median is at a more central location than before.
+
+```{r}
+ggplot(data, aes(x=log(360-data$months))) +
+  geom_histogram(aes(y = stat(density)), bins = 30, fill = "white", col = "black") +
+  stat_function(
+    fun = dnorm, 
+    args = list(mean = mean(log(360-data$months)), sd = sd(log(360-data$months))), 
+    lwd = 1, 
+    col = 'red'
+  ) +
+  xlab("Month Released : log(360 - y))") + ylab("Density") +
+  ggtitle(paste("Month Released : log(360 - y))", "Distribution")) +
+  theme_bw()
+```
+
+
+```{r}
+#produce normal qqplot to assess normality
+qqnorm(log(360-data$months), pch = 1, frame = FALSE)
+qqline(log(360-data$months), col = "red", lwd = 2)
+#calculate skewness
+skewness(log(360-data$months))
+```
+
+
+
+The distribution of months has greatly improved and looks roughly normal. Furthermore, the normal qqplot shows great improvement 
+
+
+### square root transform for moderately negative skewed data
+
+```{r}
+summary(sqrt(350-data$months))
+```
+
+
+Another common transformation for moderate skewed data is a square root approach: $\sqrt{max(y+1) - y}$ = $\sqrt{(350 - y)}$
 ```{r}
 ggplot(data, aes(x=sqrt(350-data$months))) +
   geom_histogram(aes(y = stat(density)), bins = 30, fill = "white", col = "black") +
@@ -107,9 +202,21 @@ ggplot(data, aes(x=sqrt(350-data$months))) +
   xlab("Month Released : sqrt(350 - y))") + ylab("Density") +
   ggtitle(paste("Month Released : sqrt(350 - y))", "Distribution")) +
   theme_bw()
-summary(data$months)
 ```
 
+```{r}
+#produce normal qqplot to assess normality
+qqnorm(sqrt(350-data$months), pch = 1, frame = FALSE)
+qqline(sqrt(350-data$months), col = "red", lwd = 2)
+#calculate skewness
+skewness(sqrt(350-data$months))
+```
+
+It is still somewhat positively skewed, but pretty good!
+
+
+
+### Inverse transform for severely negative skewed data
 Lastly, a common transformation for severely negatively skewed data takes an inverse approach: $\frac{1}{(max(y)+1) - y)}$ = $\frac{1}{(350 - y)}$
 ```{r}
 ggplot(data, aes(x=1/(350-data$months))) +
@@ -123,9 +230,9 @@ ggplot(data, aes(x=1/(350-data$months))) +
   xlab("Month Released : 1/(350 - y))") + ylab("Density") +
   ggtitle(paste("Month Released : 1/(350 - y))", "Distribution")) +
   theme_bw()
-summary(data$months)
 ```
 
+This is a terrible idea. no.
 
 
 
@@ -153,7 +260,7 @@ test1 <- kpop1[-smpl1,]
 
 
 
-### Multiple linear regression for mode 0 songs
+# Assessing performance of the transformations on Multiple linear regression for mode 0 songs
 ```{r}
 ml0 <- lm(months ~. , data = train0)
 summary(ml0)
@@ -207,6 +314,7 @@ boxcox(ml0,lambda = seq(1.7, 3, 0.1), plotit = TRUE)
 Optimal transformation is for $\lambda = 2.3$
 
 ```{r}
+summary(bc.transform(data$months, 2.3))
 hist(bc.transform(data$months, 2.3))
 ```
 
@@ -290,6 +398,417 @@ data.frame(
 )
 ```
 
-## Multiple linear regression for mode 1 songs
+# Applying the log(360 - y) transform to all data
+```{r}
+train0$months <- log(360 - train0$months)
+test0$months <- log(360 - test0$months)
+
+train1$months <- log(360 - train1$months)
+test1$months <- log(360 - test1$months)
+```
 
 
+
+# Multiple linear regression for mode 0 songs 
+
+## Full Multiple Linear Regression 
+```{r}
+mlr0 <- lm(months ~. , data = train0)
+```
+
+assess model assumptions
+```{r}
+plot(mlr0)
+```
+
+view model
+```{r}
+summary(mlr0)
+```
+
+All variables except Key1, Key2, Key3, Kdy5, Key6, Key7, and Key8 are significant to the model in predicting the month of song release.
+
+The Full Multiple Linear Regression model for mode 0 songs is written below with coefficients rounded to the thousandths.
+$$
+log(360 - \hat{months}) = 2.739 - 0.022{popularity} + 0.194{duration} - 0.240{acousticness} 
+\\ + 0.424{danceability} +  0.572{energy} - 0.848{instrumentalness} 
+\\ - 0.013{key1} + 0.016{key2} + 0.035{key3} + 0.118{key4} + 0.017{key5} + 0.051{key6}
+\\ - 0.087{key7}  -0.056{key8} +  0.109{key9} + 0.126{key10} + 0.101{key11}
+\\ - 0.087{loudness} - 0.330{speechiness} + 0.001{tempo} + 0.324{valence}
+$$
+
+```{r}
+# prediction on test data
+yhat.mlr0 = predict(mlr0, newdata=test0)
+# RMSE for test data
+error.mlr0 <- yhat.mlr0 - test0$months
+rmse.mlr0 <- sqrt(mean(error.mlr0^2))
+data.frame(
+  RMSE = RMSE(yhat.mlr0, test0$months),
+  R2 = R2(yhat.mlr0, test0$months)
+)
+```
+
+
+## Variable Selection: Stepwise 10 fold Cross Validation
+```{r}
+set.seed(123)
+train_control <- trainControl(method = "cv", 
+                              number = 10) 
+bye <- capture.output(mlr.step_kcv0 <- train(months ~. , data = train0,  
+                 method = "lmStepAIC", trControl = train_control)) 
+print(mlr.step_kcv0)
+mlr.step_kcv0$finalModel
+```
+
+The Stepwise Multiple Linear Regression model for mode 0 songs is written below with coefficients rounded to the thousandths.
+$$
+log(360 - \hat{months}) = 2.732 - 0.022{popularity} + 0.193{duration} - 0.241{acousticness} 
+\\ + 0.425{danceability} +  0.572{energy} - 0.852{instrumentalness} 
+\\ + 0.125{key4} + 0.057{key6}
+\\ +  0.115{key9} + 0.133{key10} + 0.107{key11}
+\\ - 0.087{loudness} - 0.328{speechiness} + 0.001{tempo} + 0.324{valence}
+$$
+
+Compared to the full multiple linear regression model, the stepwise regression model omits the variables: Key1, Key2, Key3, Key5, Key7, and Key8. 
+
+
+prediction on test data
+```{r}
+# prediction on test data
+yhat.step_kcv0 = predict(mlr.step_kcv0$finalModel, newdata=key.dummy(test0))
+# RMSE for test data
+error.step_kcv0 <- yhat.step_kcv0 - test0$months
+rmse.step_kcv0 <- sqrt(mean(error.step_kcv0^2))
+data.frame(
+  RMSE = RMSE(yhat.step_kcv0, test0$months),
+  R2 = R2(yhat.step_kcv0, test0$months)
+)
+```
+
+## Variable Selection: All Subsets Regression (Not using K-folds CV)
+```{r}
+allreg.models0 <- regsubsets(months ~., data = train0, nvmax = 21)
+summary(allreg.models0)
+```
+
+Assess models
+```{r}
+allreg.res0 <- summary(allreg.models0)
+allreg.compare0 <- data.frame(model = c(1:21),
+                              Adj.R2 = allreg.res0$adjr2,
+                              CP = allreg.res0$cp)
+allreg.compare0
+```
+
+The model with the smallest CP value and greatest Adjusted R2 value is model number 15.
+```{r}
+mlr.allreg0 <- lm(months ~ popularity +duration +acousticness +danceability +energy +instrumentalness+
+  key4+key6+key9 +key10 +key11 +loudness +speechiness+ tempo +valence, data = key.dummy(train0))
+summary(mlr.allreg0)
+```
+
+
+prediction on test data
+```{r}
+# prediction on test data
+yhat.allreg0 = predict(mlr.allreg0, newdata=key.dummy(test0))
+# RMSE for test data
+# error.allreg0 <- yhat.allreg0 - test0$months
+# rmse.allreg0 <- sqrt(mean(error.allreg0^2))
+data.frame(
+  RMSE = RMSE(yhat.allreg0, test0$months),
+  R2 = R2(yhat.allreg0, test0$months)
+)
+```
+
+## Regularized Regression: Ridge
+```{r}
+lm.ridge0 <- train(months ~. , data = train0, method = "glmnet",
+                      trControl = train_control, 
+                      tuneGrid = expand.grid(alpha = 0,lambda = seq(0.001,0.1,by = 0.001)))
+#Best Tuning Parameter
+lm.ridge0$bestTune
+# best coefficient
+lm.ridge0.model <- coef(lm.ridge0$finalModel, lm.ridge0$bestTune$lambda)
+lm.ridge0.model
+```
+
+The Ridge Multiple Linear Regression model for mode 0 songs is written below with coefficients rounded to the thousandths.
+$$
+log(360 - \hat{months}) = 2.866 - 0.021{popularity} + 0.190{duration} - 0.245{acousticness} 
+\\ + 0.413{danceability} +  0.482{energy} - 0.749{instrumentalness} 
+\\ - 0.034{key1} - 0.006{key2} + 0.008{key3} + 0.095{key4} - 0.007{key5} + 0.023{key6}
+\\ - 0.063{key7} - 0.075{key8} + 0.082{key9} + 0.099{key10} + 0.078{key11}
+\\ - 0.080{loudness} - 0.308{speechiness} + 0.001{tempo} + 0.323{valence}
+$$
+
+```{r}
+# prediction on test data
+yhat.ridge0 = predict(lm.ridge0, s=lm.ridge0$bestTune,newdata=test0)
+# RMSE for test data
+data.frame(
+  RMSE = RMSE(yhat.ridge0, test0$months),
+  R2 = R2(yhat.ridge0, test0$months)
+)
+```
+
+
+## Regularized Regression: Lasso
+```{r}
+lm.lasso0 <- train(months ~. , data = train0, method = "glmnet",
+                      trControl = train_control, 
+                      tuneGrid = expand.grid(alpha = 1,lambda = seq(0.001,0.1,by = 0.001)))
+#Best Tuning Parameter
+lm.lasso0$bestTune
+# best coefficient
+lm.lasso0.model <- coef(lm.lasso0$finalModel, lm.lasso0$bestTune$lambda)
+lm.lasso0.model
+```
+
+The Lasso Multiple Linear Regression model for mode 0 songs is written below with coefficients rounded to the thousandths.
+$$
+log(360 - \hat{months}) = 2.837 - 0.022{popularity} + 0.191{duration} - 0.240{acousticness} 
+\\ + 0.409{danceability} + 0.533{energy} - 0.808{instrumentalness} 
+\\ - 0.027{key1} + 0.004{key3} + 0.092{key4} + 0.024{key6}
+\\ - 0.056{key7} - 0.068{key8} + 0.082{key9} + 0.099{key10} + 0.077{key11}
+\\ - 0.084{loudness} - 0.280{speechiness} + 0.001{tempo} + 0.321{valence}
+$$
+
+Compared to the full model, the variables key2 and key 5 are not kept in the model.
+
+
+```{r}
+# prediction on test data
+yhat.lasso0 = predict(lm.lasso0, s=lm.lasso0$bestTune,newdata=test0)
+# RMSE for test data
+error.lasso0 <- yhat.lasso0 - test0$months
+rmse.lasso0 <- sqrt(mean(error.lasso0^2))
+data.frame(
+  RMSE = RMSE(yhat.lasso0, test0$months),
+  R2 = R2(yhat.lasso0, test0$months)
+)
+```
+
+
+## Deciding on the best model
+
+```{r}
+results0 <- data.frame(Model = c("FullMLR", "Stepwise", "AllSubsets","Ridge", "Lasso"),
+                       RMSE = c(0.5976752 , 0.5980156, 0.5980156,0.5981751,0.5975859),
+                       R2 = c(0.3932124, 0.3925419, 0.3925419,0.3921513,0.3932411))
+results0
+```
+
+Lasso Provides the best model
+
+
+
+$$
+log(360 - \hat{months}) = 2.837 - 0.022{popularity} + 0.191{duration} - 0.240{acousticness} 
+\\ + 0.409{danceability} + 0.533{energy} - 0.808{instrumentalness} 
+\\ - 0.027{key1} + 0.004{key4} + 0.092{key4} + 0.024{key6}
+\\ - 0.056{key7} - 0.068{key8} + 0.082{key9} + 0.099{key10} + 0.077{key11}
+\\ - 0.084{loudness} - 0.280{speechiness} + 0.001{tempo} + 0.321{valence}
+$$
+
+# Multiple linear regression for mode 1 songs 
+
+## Full Multiple Linear Regression 
+```{r}
+mlr1 <- lm(months ~. , data = train1)
+```
+
+assess model assumptions
+```{r}
+plot(mlr1)
+```
+
+view model
+```{r}
+summary(mlr1)
+```
+
+The Full Multiple Linear Regression model for mode 1 songs is written below with coefficients rounded to the thousandths.
+$$
+log(360 - \hat{months}) = 2.990 - 0.020{popularity} + 0.125{duration} - 0.127{acousticness} 
+\\ + 0.631{danceability} +  0.383{energy} - 0.771{instrumentalness} 
+\\ + 0.084{key1} + 0.029{key2} + 0.020{key3} + 0.068{key4} + 0.075{key5} + 0.096{key6}
+\\ + 0.102{key7} + 0.119{key8} + 0.012{key9} + 0.081{key10} + 0.046{key11}
+\\ - 0.076{loudness} - 0.180{speechiness} + 0.001{tempo} + 0.294{valence}
+$$
+
+```{r}
+# prediction on test data
+yhat.mlr1 = predict(mlr1, newdata=test1)
+# RMSE for test data
+error.mlr1 <- yhat.mlr1 - test1$months
+rmse.mlr1 <- sqrt(mean(error.mlr1^2))
+data.frame(
+  RMSE = RMSE(yhat.mlr1, test1$months),
+  R2 = R2(yhat.mlr1, test1$months)
+)
+```
+
+## Variable Selection: Stepwise 10 fold Cross Validation
+```{r}
+set.seed(123)
+train_control <- trainControl(method = "cv", 
+                              number = 10) 
+bye <- capture.output(mlr.step_kcv1 <- train(months ~. , data = train1,  
+                 method = "lmStepAIC", trControl = train_control)) 
+print(mlr.step_kcv1)
+mlr.step_kcv1$finalModel
+```
+
+The Multiple Linear Regression model resulting from stepwise 10 fold cross validation for mode 1 songs is written below with coefficients rounded to the thousandths.
+$$
+log(360 - \hat{months}) = 3.020 - 0.020{popularity} + 0.127{duration} - 0.124{acousticness} 
+\\ + 0.630{danceability} +  0.357{energy} - 0.765{instrumentalness} + 0.062{key1} 
+\\ + 0.053{key5} + 0.073{key6} + 0.079{key7} + 0.096{key8} + 0.060{key10} 
+\\ - 0.074{loudness}   + 0.001{tempo} + 0.289{valence}
+$$
+
+Compared to the full multiple linear regression model, the stewise multiple regression leaves out the dummy variables of Key2, key3, key4, key11 and speechiness.
+
+prediction on test data
+```{r}
+# prediction on test data
+yhat.step_kcv1 = predict(mlr.step_kcv1$finalModel, newdata=key.dummy(test1))
+# RMSE for test data
+error.step_kcv1 <- yhat.step_kcv1 - test1$months
+rmse.step_kcv1 <- sqrt(mean(error.step_kcv1^2))
+data.frame(
+  RMSE = RMSE(yhat.step_kcv1, test1$months),
+  R2 = R2(yhat.step_kcv1, test1$months)
+)
+```
+
+## Variable Selection: All Subsets Regression (Not using K-folds CV)
+```{r}
+allreg.models1 <- regsubsets(months ~., data = train1, nvmax = 21)
+summary(allreg.models1)
+```
+
+
+```{r}
+allreg.res1 <- summary(allreg.models1)
+allreg.compare1 <- data.frame(model = c(1:21),
+                              Adj.R2 = allreg.res1$adjr2,
+                              CP = allreg.res1$cp)
+allreg.compare1
+```
+
+
+The model with the smallest CP value and greatest Adjusted R2 value is model number 15.
+```{r}
+mlr.allreg1 <- lm(months ~ popularity +duration +acousticness +danceability +energy +instrumentalness+
+  key1+key5 +key6 +key7 +key8+loudness + tempo +valence, data = key.dummy(train1))
+summary(mlr.allreg1)
+```
+
+
+prediction on test data
+```{r}
+# prediction on test data
+yhat.allreg1 = predict(mlr.allreg1, newdata=key.dummy(test1))
+# RMSE for test data
+# error.allreg0 <- yhat.allreg0 - test0$months
+# rmse.allreg0 <- sqrt(mean(error.allreg0^2))
+data.frame(
+  RMSE = RMSE(yhat.allreg1, test1$months),
+  R2 = R2(yhat.allreg1, test1$months)
+)
+```
+
+## Regularized Regression: Ridge
+```{r}
+lm.ridge1 <- train(months ~. , data = train1, method = "glmnet",
+                      trControl = train_control, 
+                      tuneGrid = expand.grid(alpha = 0,lambda = seq(0.001,0.1,by = 0.001)))
+#Best Tuning Parameter
+lm.ridge1$bestTune
+# best coefficient
+lm.ridge1.model <- coef(lm.ridge1$finalModel, lm.ridge1$bestTune$lambda)
+lm.ridge1.model
+```
+
+
+The Ridge Multiple Linear Regression model for mode 1 songs is written below with coefficients rounded to the thousandths.
+$$
+log(360 - \hat{months}) = 3.143 - 0.019{popularity} + 0.122{duration} - 0.142{acousticness} 
+\\ + 0.597{danceability} +  0.279{energy} - 0.690{instrumentalness} 
+\\ + 0.066{key1} + 0.012{key2} + 0.001{key3} + 0.050{key4} + 0.056{key5} + 0.077{key6}
+\\ + 0.081{key7} + 0.096{key8} - 0.005{key9} + 0.065{key10} + 0.028{key11}
+\\ - 0.068{loudness} - 0.158{speechiness} + 0.001{tempo} + 0.297{valence}
+$$
+
+The ridge model keeps all variables, therefore, there have been none removed for the model. However, the ridge model does aim to reduce all coefficients closer to zero. 
+
+```{r}
+# prediction on test data
+yhat.ridge1 = predict(lm.ridge1, s=lm.ridge1$bestTune,newdata=test1)
+# RMSE for test data
+data.frame(
+  RMSE = RMSE(yhat.ridge1, test1$months),
+  R2 = R2(yhat.ridge1, test1$months)
+)
+```
+
+
+## Regularized Regression: Lasso
+```{r}
+lm.lasso1 <- train(months ~. , data = train1, method = "glmnet",
+                      trControl = train_control, 
+                      tuneGrid = expand.grid(alpha = 1,lambda = seq(0.001,0.1,by = 0.001)))
+#Best Tuning Parameter
+lm.lasso1$bestTune
+# best coefficient
+lm.lasso1.model <- coef(lm.lasso1$finalModel, lm.lasso1$bestTune$lambda)
+lm.lasso1.model
+```
+
+The Lasso Multiple Linear Regression model for mode 1 songs is written below with coefficients rounded to the thousandths.
+$$
+log(360 - \hat{months}) = 3.055 - 0.020{popularity} + 0.123{duration} - 0.127{acousticness} 
+\\ + 0.622{danceability} +  0.354{energy} - 0.750{instrumentalness} 
+\\ + 0.066{key1} + 0.010{key2} + 0.047{key4} + 0.055{key5} + 0.077{key6}
+\\ + 0.084{key7} + 0.0997{key8} + 0.061{key10} + 0.027{key11}
+\\ - 0.073{loudness} - 0.148{speechiness} + 0.001{tempo} + 0.291{valence}
+$$
+
+Compared to the full model, the Lasso model omits dummy variables Key3 and Key9
+
+```{r}
+# prediction on test data
+yhat.lasso1 = predict(lm.lasso1, s=lm.lasso1$bestTune,newdata=test1)
+# RMSE for test data
+error.lasso1 <- yhat.lasso1 - test1$months
+rmse.lasso1 <- sqrt(mean(error.lasso1^2))
+data.frame(
+  RMSE = RMSE(yhat.lasso1, test1$months),
+  R2 = R2(yhat.lasso1, test1$months)
+)
+```
+
+
+## Determining Best Model and Interpreting.
+
+```{r}
+results1 <- data.frame(Model = c("FullMLR", "Stepwise", "AllSubsets","Ridge", "Lasso"),
+                       RMSE = c(0.6078257, 0.6070693,0.6071187,0.607864,0.6073883),
+                       R2 = c(0.3312429, 0.3329448, 0.3328339,0.332307,0.3322821))
+results1
+```
+
+Stepwise regression is the best model.
+```{r}
+summary(mlr.step_kcv1$finalModel)
+```
+
+$$
+log(360 - \hat{months}) = 3.020 - 0.020{popularity} + 0.127{duration} - 0.124{acousticness} 
+\\ + 0.630{danceability} +  0.357{energy} - 0.765{instrumentalness} + 0.062{key1} 
+\\ + 0.053{key5} + 0.073{key6} + 0.079{key7} + 0.096{key8} + 0.060{key10} 
+\\ - 0.074{loudness}   + 0.001{tempo} + 0.289{valence}
+$$
