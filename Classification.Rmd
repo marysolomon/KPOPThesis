@@ -413,6 +413,7 @@ ridge0.model.final <- coef(ridge0.final$finalModel, ridge0.final$bestTune$lambda
 ridge0.model.final
 ```
 
+
 predict and evaluate on the test set where cutoff is at 0.5
 ```{r}
 prob.ridge0 <- predict(ridge0.final, s = ridge0.final$bestTune, test0, type = "prob")
@@ -561,55 +562,73 @@ confusionMatrix(as.factor(pred.enet0), as.factor(test0$oldgen),
 
 Full Logistic model
 $$
-log(\frac{\hat \pi}{1 - \hat \pi}) = -0.223 - 0.073x_{Popularity} + 0.521x_{Duration} - 1.398x_{Acousticness} - 0.594x_{Danceability} 
-\\ - 0.587x_{Energy} - 2.510x_{Instrumentalness} - 0.107x_{Key1} - 0.136x_{Key2} 
-\\ + 0.582x_{Key3} + 0.283x_{Key4} + 0.247x_{Key5} + 0.218x_{Key6} - 0.441x_{Key7} 
-\\ + 0.213x_{Key8} + 0.333x_{Key9} + 0.391x_{Key10} + 0.184x_{Key11} - 0.204x_{Loudness}
-\\ -1.954x_{Speechiness} + 0.003x_{Tempo} + 1.376x_{Valence}
+log(\frac{\hat \pi}{1 - \hat \pi}) = -0.453 - 0.074x_{Popularity} + 0.532x_{Duration} - 1.280x_{Acousticness} - 0.715x_{Danceability} 
+\\ - 0.227x_{Energy} - 2.790x_{Instrumentalness} - 0.301x_{Key1} - 0.242x_{Key2} 
+\\ + 0.540x_{Key3} + 0.308x_{Key4} + 0.253x_{Key5} + 0.148x_{Key6} - 0.498x_{Key7} 
+\\ + 0.194x_{Key8} + 0.270x_{Key9} + 0.307x_{Key10} + 0.075x_{Key11} - 0.236x_{Loudness}
+\\ -2.170x_{Speechiness} + 0.003x_{Tempo} + 1.359x_{Valence}
 $$
 
 Stepwise Logistic Model:
-In comparison to the full model, energy and danceability are not included
+In comparison to the full model, the variable energy is not included
 $$
-log(\frac{\hat \pi}{1 - \hat \pi}) = -1.219 - 0.073x_{Popularity} + 0.534x_{Duration} - 1.187x_{Acousticness} 
-\\ -2.515x_{Instrumentalness} - 0.092x_{Key1} - 0.125x_{Key2} 
-\\ + 0.598x_{Key3} + 0.275x_{Key4} + 0.254x_{Key5} + 0.233x_{Key6} - 0.435x_{Key7} 
-\\ + 0.225x_{Key8} + 0.338x_{Key9} + 0.395x_{Key10} + 0.186x_{Key11} - 0.225x_{Loudness}
-\\ -2.006x_{Speechiness} + 0.004x_{Tempo} + 1.184x_{Valence}
+log(\frac{\hat \pi}{1 - \hat \pi}) = -0.684 - 0.074_{Popularity} + 0.534_{Duration} - 1.221_{Acousticness} 
+\\ - 0.695_{Danceability} - 2.807_{Instrumentalness} - 0.298_{Key1} - 0.240_{Key2} 
+\\ + 0.545_{Key3} + 0.308x_{Key4} + 0.256x_{Key5} + 0.153_{Key6} - 0.497_{Key7} 
+\\ + 0.197_{Key8} + 0.271_{Key9} + 0.310_{Key10} + 0.076_{Key11} - 0.246_{Loudness}
+\\ - 2.214_{Speechiness} + 0.004_{Tempo} + 1.331_{Valence}
 $$
 
 Stepwise 10kcv Logistic Model
-compared to The full model, energy, danceability, Key1, key2, and key8 are not included in this model. Code would not run predictions on the test data so I don't have fair performance metrics for this model
+compared to The full model, energy, key3 - key6, key9 - key11, and Tempo are not included in this model. 
 $$
-log(\frac{\hat \pi}{1 - \hat \pi}) = -1.251 - 0.072x_{Popularity} + 0.538x_{Duration} - 1.172x_{Acousticness} 
-\\ -2.520x_{Instrumentalness} 
-\\ + 0.610x_{Key3} + 0.287x_{Key4} + 0.267x_{Key5} + 0.246x_{Key6} - 0.422x_{Key7} 
-\\ 0.351x_{Key9} + 0.408x_{Key10} + 0.199x_{Key11} - 0.226x_{Loudness}
-\\ -2.000x_{Speechiness} + 0.004x_{Tempo} + 1.196x_{Valence}
+log(\frac{\hat \pi}{1 - \hat \pi}) = -0.480 - 0.074_{Popularity} + 0.532_{Duration} - 1.216_{Acousticness} 
+\\ - 0.672_{Danceability} -2.807_{Instrumentalness} - 0.503_{Key1} - 0.445_{Key2}
+\\  - 0.702_{Key7} - 0.245_{Loudness} - 2.207x_{Speechiness} + 1.319x_{Valence}
 $$
 
 All Possible Regressions Model
-Danceability and energy are not included in this model
+Compared to the full model, Energy is not included in this model
 $$
-log(\frac{\hat \pi}{1 - \hat \pi}) = -1.219 - 0.073x_{Popularity} + 0.534x_{Duration} - 1.187x_{Acousticness} 
-\\ - 2.515x_{Instrumentalness} - 0.092x_{Key1} - 0.125x_{Key2} 
-\\ + 0.598x_{Key3} + 0.275x_{Key4} + 0.254x_{Key5} + 0.233x_{Key6} - 0.435x_{Key7} 
-\\ + 0.225x_{Key8} + 0.338x_{Key9} + 0.395x_{Key10} + 0.186x_{Key11} - 0.225x_{Loudness}
-\\ -2.006x_{Speechiness} + 0.004x_{Tempo} + 1.184x_{Valence}
+log(\frac{\hat \pi}{1 - \hat \pi}) = -0.684 - 0.074x_{Popularity} + 0.532x_{Duration} - 1.221x_{Acousticness} 
+\\ -0.695_{Duration} - 2.807x_{Instrumentalness} - 0.298x_{Key1} - 0.240x_{Key2} 
+\\ + 0.545x_{Key3} + 0.308x_{Key4} + 0.256x_{Key5} + 0.153x_{Key6} - 0.497x_{Key7} 
+\\ + 0.197x_{Key8} + 0.271x_{Key9} + 0.310x_{Key10} + 0.076x_{Key11} - 0.245x_{Loudness}
+\\ -2.214x_{Speechiness} + 0.003x_{Tempo} + 1.331x_{Valence}
+$$
+
+Ridge 10 fold Cross Validation model
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = -0.343 - 0.060{Popularity} + 0.458{Duration} - 0.943{Acousticness} - 0.253{Danceability} 
+\\ - 0.227{Energy} - 1.829{Instrumentalness} - 0.200{Key1} - 0.163{Key2} 
+\\ + 0.321{Key3} + 0.184{Key4} + 0.090{Key5} + 0.035{Key6} - 0.491{Key7} 
+\\ + 0.118{Key8} + 0.186{Key9} + 0.171{Key10} + 0.041{Key11} - 0.167{Loudness}
+\\ -1.472{Speechiness} + 0.002{Tempo} + 0.980{Valence}
+$$
+
+Lass0 10 fold Cross Validation model
+Compared to the full model, this one leaves out the variables of Key6, Key 8, and Key 11
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = -0.341 - 0.071{Popularity} + 0.499{Duration} - 1.013{Acousticness} - 0.234{Danceability} 
+\\ - 0.027{Energy} - 2.298{Instrumentalness} - 0.254{Key1} - 0.182{Key2} 
+\\ + 0.260{Key3} + 0.067{Key4} + 0.007{Key5} - 0.595{Key7} 
+\\ + 0.087{Key9} + 0.076{Key10} - 0.120{Loudness}
+\\ - 1.362{Speechiness} + 0.001{Tempo} + 1.025{Valence}
 $$
 
 Performance metrics
 ```{r}
-mode0.results <- data.frame(Model = c("Full", "Step", "Step 10kCV", "AllReg"),
-                            AIC = c(3408.5, 3407, 3403, 3407),
-                            Accuracy = c(0.7682, 0.7682, 0.7665, 0.7682),
-                            Kappa = c(0.4902, 0.4902, 0.4864, 0.4902),
-                            Sensitivity = c(0.8531, 0.8531, 0.8517, 0.8531),
-                            Specificity = c(0.6244, 0.6244, 0.6221, 0.6244))
+mode0.results <- data.frame(Model = c("Full", "Step", "Step 10CV", "AllReg", "Ridge 10CV", "Lasso 10CV", "ElasticNet 10CV"),
+                            cutoff = c(0.65, 0.64, 0.65, 0.64, 0.64, 0.65, 0.65), #optimal balance between sensitivity and specificity
+                            #AIC = c(3815.2, 3813.4, 3804, 3813.4, NA, NA, NA),
+                            Accuracy = c(0.7175, 0.7247, 0.7218, 0.7247, 0.7218, 0.729, 0.7247),
+                            Kappa = c(0.4222, 0.4342, 0.432, 0.4342, 0.4298, 0.4455, 0.4378),
+                            Sensitivity = c(0.7196, 0.7336 , 0.7196, 0.7336, 0.7266, 0.7290, 0.7220),
+                            Specificity = c(0.7143, 0.7106, 0.7253, 0.7106, 0.7143, 0.7289, 0.7289))
 mode0.results
 ```
 
-All models have exactly the same results. unsure about the cross validation approach however, due to technical difficulties.
+All models have VERY similar results. Therefore, one could argue that each would work as equally as well as one another. Based on the analysis done with this sample, the best model would be the Lasso model, as it has the highest accuracy score, as well as the sensitivity and specifity scores simultaneously having fairly high rates. 
 
 
 ## Logistic Where mode = 1
@@ -1099,51 +1118,75 @@ confusionMatrix(as.factor(pred.enet1), as.factor(test1$oldgen),
 
 Full Logistic model
 $$
-log(\frac{\hat \pi}{1 - \hat \pi}) = 0.852 - 0.080{Popularity} + 0.481{Duration} - 0.893{Acousticness} - 0.645{Danceability} 
-\\ - 0.453{Energy} - 2.408{Instrumentalness} + 0.461{Key1} + 0.065{Key2} 
-\\ - 0.095{Key3} -0.164{Key4} + 0.246{Key5} + 0.317{Key6} + 0.192{Key7} 
-\\ + 0.280{Key8} -0.040{Key9} + 0.133{Key10} + 0.259{Key11} - 0.146{Loudness}
-\\ -0.760{Speechiness} - 0.0003{Tempo} + 0.740{Valence}
+log(\frac{\hat \pi}{1 - \hat \pi}) = 0.783 - 0.079{Popularity} + 0.512{Duration} - 0.882{Acousticness} - 0.665{Danceability} 
+\\ - 0.537{Energy} - 2.471{Instrumentalness} + 0.415{Key1} - 0.002{Key2} 
+\\ - 0.149{Key3} - 0.280{Key4} + 0.217{Key5} + 0.280{Key6} + 0.161{Key7} 
+\\ + 0.185{Key8} - 0.006{Key9} + 0.071{Key10} + 0.094{Key11} - 0.154{Loudness}
+\\ - 0.792{Speechiness} - 0.0002{Tempo} + 0.742{Valence}
 $$
 
 Stepwise Logistic Model
-Compared to the full model, the stepwise logistic model does not have tempo or energy in the model
+Compared to the full model, the stepwise logistic model does not have Tempo or Energy in the model
 $$
-log(\frac{\hat \pi}{1 - \hat \pi}) = 0.346 - 0.080{Popularity} + 0.484Duration - 0.770{Acousticness} - 0.600{Danceability} 
-\\ - 2.439{Instrumentalness} + 0.462{Key1} + 0.065{Key2} 
-\\ - 0.093{Key3} -0.161{Key4} + 0.250{Key5} + 0.313{Key6} + 0.194{Key7} 
-\\ + 0.282{Key8} -0.035{Key9} + 0.131{Key10} + 0.259{Key11} - 0.146{Loudness}
-\\ -0.928{Speechiness} + 0.672{Valence}
+log(\frac{\hat \pi}{1 - \hat \pi}) = 0.226 - 0.079{Popularity} + 0.515Duration - 0.739{Acousticness} - 0.632{Danceability} 
+\\ - 2.516{Instrumentalness} + 0.415{Key1} - 0.002{Key2} 
+\\ - 0.147{Key3} - 0.279{Key4} + 0.222{Key5} + 0.276{Key6} + 0.162{Key7} 
+\\ + 0.187{Key8} - 0.002{Key9} + 0.072{Key10} + 0.094{Key11} - 0.178{Loudness}
+\\ - 0.980{Speechiness} + 0.668{Valence}
 $$
 
 Stepwise 10kcv Logistic Model
-Energy, key2, key3, key4, key 9, key 10, and tempo not included.
+Energy, Key2, Key3, Key9, Key10, Key11 and Tempo not included.
 Code has issues running this model through prediction due to the dummy variables :(
 $$
-log(\frac{\hat \pi}{1 - \hat \pi}) = 0.322 - 0.080{Popularity} + 0.486{Duration} - 0.782{Acousticness} - 0.579{Danceability} 
-\\ - 2.420{Instrumentalness} + 0.462{Key1}
-\\ + 0.252{Key5} + 0.314{Key6} + 0.194{Key7} 
-\\ + 0.283{Key8} + 0.261{Key11} - 0.167{Loudness}
-\\ -0.909{Speechiness} + 0.673{Valence}
+log(\frac{\hat \pi}{1 - \hat \pi}) = 0.233 - 0.079{Popularity} + 0.513{Duration} - 0.743{Acousticness} - 0.621{Danceability} 
+\\ - 2.524{Instrumentalness} + 0.406{Key1} - 0.287{Key4} + 0.214{Key5} 
+\\ + 0.268{Key6} + 0.154{Key7} + 0.179{Key8} - 0.178{Loudness}
+\\ - 0.992{Speechiness} + 0.674{Valence}
 $$
 
 All Possible Regressions Model
+Compared to the Full model, the one resulting from All possible Regressions omits Energy and Tempo
 $$
-log(\frac{\hat \pi}{1 - \hat \pi}) = 0.346 - 0.080{Popularity} + 0.484Duration - 0.770{Acousticness} - 0.600{Danceability} 
-\\ - 2.439{Instrumentalness} + 0.462{Key1} + 0.065{Key2} 
-\\ - 0.093{Key3} -0.161{Key4} + 0.250{Key5} + 0.313{Key6} + 0.194{Key7} 
-\\ + 0.282{Key8} -0.036{Key9} + 0.131{Key10} + 0.259{Key11} - 0.167{Loudness}
-\\ -0.928{Speechiness} + 0.672{Valence}
+log(\frac{\hat \pi}{1 - \hat \pi}) = 0.226 - 0.079{Popularity} + 0.515Duration - 0.739{Acousticness} - 0.632{Danceability} 
+\\ - 2.516{Instrumentalness} + 0.415{Key1} - 0.002{Key2} 
+\\ - 0.147{Key3} - 0.279{Key4} + 0.222{Key5} + 0.276{Key6} + 0.162{Key7} 
+\\ + 0.187{Key8} - 0.002{Key9} + 0.072{Key10} + 0.094{Key11} - 0.178{Loudness}
+\\ - 0.980{Speechiness} + 0.668{Valence}
+$$
+
+Ridge 10 Fold Cross Validation Logistic model
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 0.554 - 0.064{Popularity} + 0.433{Duration} - 0.578{Acousticness} - 0.373{Danceability} 
+\\ - 0.332{Energy} - 1.686{Instrumentalness} + 0.268{Key1} - 0.062{Key2} 
+\\ - 0.204{Key3} - 0.261{Key4} + 0.127{Key5} + 0.170{Key6} + 0.063{Key7} 
+\\ + 0.078{Key8} - 0.065{Key9} + 0.026{Key10} + 0.015{Key11} - 0.120{Loudness}
+\\ - 0.907{Speechiness} - 0.0001{Tempo} + 0.521{Valence}
+$$
+
+Lasso 10 Fold Cross Validation Logistic model
+Compared to the full logistic model the lasso model does not include the variables Danceability, Energy, Key2, Key3, Key5 - Key11, Speechiness, and Tempo.
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 0.928 - 0.075{Popularity} + 0.354{Duration} - 0.195{Acousticness}
+\\ - 1.169{Instrumentalness} + 0.173{Key1} - 0.002{Key4} - 0.081{Loudness} + 0.098{Valence}
+$$
+
+Elastic Net 10 Fold Cross Validation Logistic model
+Compared to the full logistic model the lasso model does not include the variables Danceability, Energy, Key2, Key3, Key5 - Key11, Speechiness, and Tempo.
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 0.915 - 0.072{Popularity} + 0.360{Duration} - 0.106{Acousticness}
+\\ - 1.08{Instrumentalness} + 0.117{Key1} - 0.063{Key4} - 0.073{Loudness} + 0.010{Valence}
 $$
 
 Performance metrics
 ```{r}
-mode1.results <- data.frame(Model = c("Full", "Step", "Step 10kCV", "AllReg"),
-                            AIC = c(5243.3, 5240.5, 5233, 5240.5),
-                            Accuracy = c(0.776, 0.776, 0.776, 0.7682),
-                            Kappa = c(0.4952, 0.4956, 0.4956, 0.4902),
-                            Sensitivity = c(0.8685, 0.8677, 0.8677, 0.8531),
-                            Specificity = c(0.6098, 0.6113, 0.6113, 0.6244))
+mode1.results <- data.frame(Model = c("Full", "Step", "Step 10CV", "AllReg", "Ridge 10CV", "Lasso 10CV", "ElasticNet 10CV"),
+                            cutoff = c(0.66, 0.66, 0.66, 0.66, 0.65, 0.66, 0.66), #Best balance between sensitivity and specificity
+                            AIC = c(5936.1, 5934, 5925, 5934, NA, NA, NA),
+                            Accuracy = c(0.7575, 0.7566, 0.7557, 0.7566, 0.7566, 0.7520, 0.752),
+                            Kappa = c(0.5006, 0.4995, 0.4974, 0.4995, 0.4985, 0.4894, 0.4894),
+                            Sensitivity = c(0.7507, 0.7478, 0.7478, 0.7478, 0.7507, 0.7464, 0.7464),
+                            Specificity = c(0.7689, 0.7713, 0.7689, 0.7713, 0.7664, 0.7616, 0.7616))
 mode1.results
 ```
 

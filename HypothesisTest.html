@@ -257,6 +257,22 @@ colnames(data)</code></pre>
 <p>For this section, we are going to perform hypothesis tests to compare audio features based on different groups. We will do so one audio feature at a time based on attributes such as Artist Gen, Artist Gender, Artist Type.</p>
 <p>First let's see the breakdown of number of observations in each gorup.</p>
 <pre class="r"><code>#songs per kpop generation
+table(data$ArtistGen)/nrow(data)</code></pre>
+<pre><code>## 
+##          1          2          3          4 
+## 0.16525142 0.46345321 0.31526807 0.05602731</code></pre>
+<pre class="r"><code>#songs per gender of artist
+table(data$ArtistGender)/nrow(data)</code></pre>
+<pre><code>## 
+##       coed     female       male 
+## 0.01415251 0.39019314 0.59565435</code></pre>
+<pre class="r"><code>#songs per Artist Type (group v solo)
+table(data$ArtistType)/nrow(data)</code></pre>
+<pre><code>## 
+##     group      solo 
+## 0.8432401 0.1567599</code></pre>
+<p>Breakdown of proportions of observations in each group</p>
+<pre class="r"><code>#songs per kpop generation
 round(table(data$ArtistGen)/nrow(data),3)</code></pre>
 <pre><code>## 
 ##     1     2     3     4 
@@ -271,22 +287,16 @@ round(table(data$ArtistType)/nrow(data), 3)</code></pre>
 <pre><code>## 
 ## group  solo 
 ## 0.843 0.157</code></pre>
-<p>The groups are in very unequal balance making a very uneven comparison. Instead of comparing all generations, split into old and new. Instead of comparing gendered groups to one another or</p>
-<pre class="r"><code>#1 is old gen 0 is new generation
+<p>The groups are in very unequal balance making a very uneven comparison. The Kruskal Wallis and Mann Whitney Wilcoxon tests are robust to uneven group sizes. As long as there is a large enough sample in each group, it is okay to have uneven group sizes. While 4th generation and soloists make up a much smaller proportion of the data in their attribute comparisons, the sample sizes are both large enough. However, for the case of coed artists, there are only 12 songs in the entire dataset, making the sample size too small for analysis.</p>
+<pre><code>#1 is old gen 0 is new generation
 data$oldgen &lt;- as.factor(ifelse(data$ArtistGen == 1 | data$ArtistGen == 2, 1, 0))
 # 1 is boy groups and 2 is girl groups, 0 is all others.
 data$bg &lt;- as.factor(ifelse(data$ArtistType == &quot;group&quot; &amp; data$ArtistGender == &quot;male&quot;, 1, 
                             ifelse(data$ArtistType == &quot;group&quot; &amp; data$ArtistGender == &quot;female&quot;, 2, 0)))</code></pre>
-<pre class="r"><code># songs per old vs new gen
-round(table(data$oldgen)/nrow(data),3)</code></pre>
-<pre><code>## 
-##     0     1 
-## 0.371 0.629</code></pre>
-<pre class="r"><code># songs per 
+<pre><code># songs per old vs new gen
+round(table(data$oldgen)/nrow(data),3)
+# songs per boygroup/girlgroup
 round(table(data$bg)/nrow(data),3)</code></pre>
-<pre><code>## 
-##     0     1     2 
-## 0.171 0.539 0.290</code></pre>
 <div id="hypothesis-testing-across-kpop-generations" class="section level1">
 <h1>Hypothesis testing across kpop generations</h1>
 <pre class="r"><code>## all generations
@@ -295,9 +305,9 @@ gen2 &lt;- filter(data, ArtistGen == 2)
 gen3 &lt;- filter(data, ArtistGen == 3)
 gen4 &lt;- filter(data, ArtistGen == 4)
 
-## Reducing the groups
-oldgen &lt;- filter(data, oldgen == 1)
-newgen &lt;- filter(data, oldgen == 0)</code></pre>
+# ## Reducing the groups
+# oldgen &lt;- filter(data, oldgen == 1)
+# newgen &lt;- filter(data, oldgen == 0)</code></pre>
 <div id="popularity-difference-by-generations" class="section level3">
 <h3>Popularity Difference by Generations</h3>
 <p>All four gens</p>
@@ -308,13 +318,7 @@ newgen &lt;- filter(data, oldgen == 0)</code></pre>
 ## data:  list(gen1$popularity, gen2$popularity, gen3$popularity, gen4$popularity)
 ## Kruskal-Wallis chi-squared = 4079.2, df = 3, p-value &lt; 2.2e-16</code></pre>
 <p>Reduced to two generations</p>
-<pre class="r"><code>wilcox.test(oldgen$popularity, newgen$popularity, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
-<pre><code>## 
-##  Wilcoxon rank sum test with continuity correction
-## 
-## data:  oldgen$popularity and newgen$popularity
-## W = 6040782, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+<pre><code>wilcox.test(oldgen$popularity, newgen$popularity, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 </div>
 <div id="duration-difference-by-generations" class="section level3">
 <h3>Duration Difference by Generations</h3>
@@ -326,13 +330,7 @@ newgen &lt;- filter(data, oldgen == 0)</code></pre>
 ## data:  list(gen1$duration, gen2$duration, gen3$duration, gen4$duration)
 ## Kruskal-Wallis chi-squared = 749.45, df = 3, p-value &lt; 2.2e-16</code></pre>
 <p>Reduced to two generations</p>
-<pre class="r"><code>wilcox.test(oldgen$duration, newgen$duration, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
-<pre><code>## 
-##  Wilcoxon rank sum test with continuity correction
-## 
-## data:  oldgen$duration and newgen$duration
-## W = 20927662, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+<pre><code>wilcox.test(oldgen$duration, newgen$duration, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 </div>
 <div id="acousticness-difference-by-generations" class="section level3">
 <h3>Acousticness Difference by Generations</h3>
@@ -344,13 +342,7 @@ newgen &lt;- filter(data, oldgen == 0)</code></pre>
 ## data:  list(gen1$acousticness, gen2$acousticness, gen3$acousticness,     gen4$acousticness)
 ## Kruskal-Wallis chi-squared = 81.984, df = 3, p-value &lt; 2.2e-16</code></pre>
 <p>Reduced to two generations</p>
-<pre class="r"><code>wilcox.test(oldgen$acousticness, newgen$acousticness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
-<pre><code>## 
-##  Wilcoxon rank sum test with continuity correction
-## 
-## data:  oldgen$acousticness and newgen$acousticness
-## W = 15863215, p-value = 1.011e-07
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+<pre><code>wilcox.test(oldgen$acousticness, newgen$acousticness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 </div>
 <div id="danceability-difference-by-generations" class="section level3">
 <h3>Danceability Difference by Generations</h3>
@@ -362,13 +354,7 @@ newgen &lt;- filter(data, oldgen == 0)</code></pre>
 ## data:  list(gen1$danceability, gen2$danceability, gen3$danceability,     gen4$danceability)
 ## Kruskal-Wallis chi-squared = 184.52, df = 3, p-value &lt; 2.2e-16</code></pre>
 <p>Reduced to two generations</p>
-<pre class="r"><code>wilcox.test(oldgen$danceability, newgen$danceability, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
-<pre><code>## 
-##  Wilcoxon rank sum test with continuity correction
-## 
-## data:  oldgen$danceability and newgen$danceability
-## W = 16985386, p-value = 0.4316
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+<pre><code>wilcox.test(oldgen$danceability, newgen$danceability, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 </div>
 <div id="energy-difference-by-generations" class="section level3">
 <h3>Energy Difference by Generations</h3>
@@ -380,13 +366,7 @@ newgen &lt;- filter(data, oldgen == 0)</code></pre>
 ## data:  list(gen1$energy, gen2$energy, gen3$energy, gen4$energy)
 ## Kruskal-Wallis chi-squared = 28.023, df = 3, p-value = 3.591e-06</code></pre>
 <p>Reduced to two generations</p>
-<pre class="r"><code>wilcox.test(oldgen$energy, newgen$energy, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
-<pre><code>## 
-##  Wilcoxon rank sum test with continuity correction
-## 
-## data:  oldgen$energy and newgen$energy
-## W = 16283594, p-value = 0.002403
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+<pre><code>wilcox.test(oldgen$energy, newgen$energy, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 </div>
 <div id="instrumentalness-difference-by-generations" class="section level3">
 <h3>Instrumentalness Difference by Generations</h3>
@@ -398,13 +378,7 @@ newgen &lt;- filter(data, oldgen == 0)</code></pre>
 ## data:  list(gen1$instrumentalness, gen2$instrumentalness, gen3$instrumentalness,     gen4$instrumentalness)
 ## Kruskal-Wallis chi-squared = 681.01, df = 3, p-value &lt; 2.2e-16</code></pre>
 <p>Reduced to two generations</p>
-<pre class="r"><code>wilcox.test(oldgen$instrumentalness, newgen$instrumentalness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
-<pre><code>## 
-##  Wilcoxon rank sum test with continuity correction
-## 
-## data:  oldgen$instrumentalness and newgen$instrumentalness
-## W = 19175246, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+<pre><code>wilcox.test(oldgen$instrumentalness, newgen$instrumentalness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 </div>
 <div id="speechiness-difference-by-generations" class="section level3">
 <h3>Speechiness Difference by Generations</h3>
@@ -416,13 +390,7 @@ newgen &lt;- filter(data, oldgen == 0)</code></pre>
 ## data:  list(gen1$speechiness, gen2$speechiness, gen3$speechiness, gen4$speechiness)
 ## Kruskal-Wallis chi-squared = 258.18, df = 3, p-value &lt; 2.2e-16</code></pre>
 <p>Reduced to two generations</p>
-<pre class="r"><code>wilcox.test(oldgen$speechiness, newgen$speechiness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
-<pre><code>## 
-##  Wilcoxon rank sum test with continuity correction
-## 
-## data:  oldgen$speechiness and newgen$speechiness
-## W = 14149640, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+<pre><code>wilcox.test(oldgen$speechiness, newgen$speechiness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 </div>
 <div id="speechiness-difference-by-generations-1" class="section level3">
 <h3>Speechiness Difference by Generations</h3>
@@ -434,13 +402,7 @@ newgen &lt;- filter(data, oldgen == 0)</code></pre>
 ## data:  list(gen1$speechiness, gen2$speechiness, gen3$speechiness, gen4$speechiness)
 ## Kruskal-Wallis chi-squared = 258.18, df = 3, p-value &lt; 2.2e-16</code></pre>
 <p>Reduced to two generations</p>
-<pre class="r"><code>wilcox.test(oldgen$speechiness, newgen$speechiness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
-<pre><code>## 
-##  Wilcoxon rank sum test with continuity correction
-## 
-## data:  oldgen$speechiness and newgen$speechiness
-## W = 14149640, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+<pre><code>wilcox.test(oldgen$speechiness, newgen$speechiness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 </div>
 <div id="loudness-difference-by-generations" class="section level3">
 <h3>Loudness Difference by Generations</h3>
@@ -452,13 +414,7 @@ newgen &lt;- filter(data, oldgen == 0)</code></pre>
 ## data:  list(gen1$loudness, gen2$loudness, gen3$loudness, gen4$loudness)
 ## Kruskal-Wallis chi-squared = 681.81, df = 3, p-value &lt; 2.2e-16</code></pre>
 <p>Reduced to two generations</p>
-<pre class="r"><code>wilcox.test(oldgen$loudness, newgen$loudness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
-<pre><code>## 
-##  Wilcoxon rank sum test with continuity correction
-## 
-## data:  oldgen$loudness and newgen$loudness
-## W = 13550621, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+<pre><code>wilcox.test(oldgen$loudness, newgen$loudness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 </div>
 <div id="tempo-difference-by-generations" class="section level3">
 <h3>Tempo Difference by Generations</h3>
@@ -470,13 +426,7 @@ newgen &lt;- filter(data, oldgen == 0)</code></pre>
 ## data:  list(gen1$tempo, gen2$tempo, gen3$tempo, gen4$tempo)
 ## Kruskal-Wallis chi-squared = 36.012, df = 3, p-value = 7.444e-08</code></pre>
 <p>Reduced to two generations</p>
-<pre class="r"><code>wilcox.test(oldgen$tempo, newgen$tempo, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
-<pre><code>## 
-##  Wilcoxon rank sum test with continuity correction
-## 
-## data:  oldgen$tempo and newgen$tempo
-## W = 17111448, p-value = 0.1407
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+<pre><code>wilcox.test(oldgen$tempo, newgen$tempo, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 </div>
 <div id="valence-difference-by-generations" class="section level3">
 <h3>Valence Difference by Generations</h3>
@@ -488,109 +438,113 @@ newgen &lt;- filter(data, oldgen == 0)</code></pre>
 ## data:  list(gen1$valence, gen2$valence, gen3$valence, gen4$valence)
 ## Kruskal-Wallis chi-squared = 92.884, df = 3, p-value &lt; 2.2e-16</code></pre>
 <p>Reduced to two generations</p>
-<pre class="r"><code>wilcox.test(oldgen$valence, newgen$valence, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
-<pre><code>## 
-##  Wilcoxon rank sum test with continuity correction
-## 
-## data:  oldgen$valence and newgen$valence
-## W = 17923190, p-value = 3.777e-09
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+<pre><code>wilcox.test(oldgen$valence, newgen$valence, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 </div>
 </div>
 <div id="hypothesis-comparing-malefemalecoed-kpop-artists" class="section level1">
 <h1>Hypothesis comparing male/female/coed kpop artists</h1>
-<pre class="r"><code>coed &lt;- filter(data, ArtistGender == &quot;coed&quot;)
+<pre class="r"><code>#coed &lt;- filter(data, ArtistGender == &quot;coed&quot;)
 female &lt;- filter(data, ArtistGender == &quot;female&quot;)
 male &lt;- filter(data, ArtistGender == &quot;male&quot;)</code></pre>
 <div id="popularity-difference-by-artist-gender" class="section level3">
 <h3>Popularity Difference by Artist Gender</h3>
-<pre class="r"><code>kruskal.test(list(coed$popularity, female$popularity, male$popularity))</code></pre>
+<pre class="r"><code>wilcox.test(female$popularity, male$popularity, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 <pre><code>## 
-##  Kruskal-Wallis rank sum test
+##  Wilcoxon rank sum test with continuity correction
 ## 
-## data:  list(coed$popularity, female$popularity, male$popularity)
-## Kruskal-Wallis chi-squared = 7.5936, df = 2, p-value = 0.02244</code></pre>
+## data:  female$popularity and male$popularity
+## W = 17269160, p-value = 0.00584
+## alternative hypothesis: true location shift is not equal to 0</code></pre>
 </div>
 <div id="duration-difference-by-artist-gender" class="section level3">
 <h3>Duration Difference by Artist Gender</h3>
-<pre class="r"><code>kruskal.test(list(coed$duration, female$duration, male$duration))</code></pre>
+<pre class="r"><code>wilcox.test(female$duration, male$duration, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 <pre><code>## 
-##  Kruskal-Wallis rank sum test
+##  Wilcoxon rank sum test with continuity correction
 ## 
-## data:  list(coed$duration, female$duration, male$duration)
-## Kruskal-Wallis chi-squared = 101.42, df = 2, p-value &lt; 2.2e-16</code></pre>
+## data:  female$duration and male$duration
+## W = 15023888, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0</code></pre>
 </div>
 <div id="acousticness-difference-by-artist-gender" class="section level3">
 <h3>Acousticness Difference by Artist Gender</h3>
-<pre class="r"><code>kruskal.test(list(coed$acousticness, female$acousticness, male$acousticness))</code></pre>
+<pre class="r"><code>wilcox.test(female$acousticness, male$acousticness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 <pre><code>## 
-##  Kruskal-Wallis rank sum test
+##  Wilcoxon rank sum test with continuity correction
 ## 
-## data:  list(coed$acousticness, female$acousticness, male$acousticness)
-## Kruskal-Wallis chi-squared = 150.71, df = 2, p-value &lt; 2.2e-16</code></pre>
+## data:  female$acousticness and male$acousticness
+## W = 18778150, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0</code></pre>
 </div>
 <div id="danceability-difference-by-artist-gender" class="section level3">
 <h3>Danceability Difference by Artist Gender</h3>
-<pre class="r"><code>kruskal.test(list(coed$danceability, female$danceability, male$danceability))</code></pre>
+<pre class="r"><code>wilcox.test(female$danceability, male$danceability, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 <pre><code>## 
-##  Kruskal-Wallis rank sum test
+##  Wilcoxon rank sum test with continuity correction
 ## 
-## data:  list(coed$danceability, female$danceability, male$danceability)
-## Kruskal-Wallis chi-squared = 166.74, df = 2, p-value &lt; 2.2e-16</code></pre>
+## data:  female$danceability and male$danceability
+## W = 18947920, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0</code></pre>
 </div>
 <div id="energy-difference-by-artist-gender" class="section level3">
 <h3>Energy Difference by Artist Gender</h3>
-<pre class="r"><code>kruskal.test(list(coed$energy, female$energy, male$energy))</code></pre>
+<pre class="r"><code>wilcox.test(female$energy, male$energy, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 <pre><code>## 
-##  Kruskal-Wallis rank sum test
+##  Wilcoxon rank sum test with continuity correction
 ## 
-## data:  list(coed$energy, female$energy, male$energy)
-## Kruskal-Wallis chi-squared = 27.586, df = 2, p-value = 1.023e-06</code></pre>
+## data:  female$energy and male$energy
+## W = 17019986, p-value = 0.1656
+## alternative hypothesis: true location shift is not equal to 0</code></pre>
 </div>
 <div id="instrumentalness-difference-by-artist-gender" class="section level3">
 <h3>Instrumentalness Difference by Artist Gender</h3>
-<pre class="r"><code>kruskal.test(list(coed$instrumentalness, female$instrumentalness, male$instrumentalness))</code></pre>
+<pre class="r"><code>wilcox.test(female$instrumentalness, male$instrumentalness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 <pre><code>## 
-##  Kruskal-Wallis rank sum test
+##  Wilcoxon rank sum test with continuity correction
 ## 
-## data:  list(coed$instrumentalness, female$instrumentalness, male$instrumentalness)
-## Kruskal-Wallis chi-squared = 473.33, df = 2, p-value &lt; 2.2e-16</code></pre>
+## data:  female$instrumentalness and male$instrumentalness
+## W = 19834072, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0</code></pre>
 </div>
 <div id="speechiness-difference-by-artist-gender" class="section level3">
 <h3>Speechiness Difference by Artist Gender</h3>
-<pre class="r"><code>kruskal.test(list(coed$speechiness, female$speechiness, male$speechiness))</code></pre>
+<pre class="r"><code>wilcox.test(female$speechiness, male$speechiness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 <pre><code>## 
-##  Kruskal-Wallis rank sum test
+##  Wilcoxon rank sum test with continuity correction
 ## 
-## data:  list(coed$speechiness, female$speechiness, male$speechiness)
-## Kruskal-Wallis chi-squared = 31.047, df = 2, p-value = 1.813e-07</code></pre>
+## data:  female$speechiness and male$speechiness
+## W = 15815847, p-value = 1.674e-07
+## alternative hypothesis: true location shift is not equal to 0</code></pre>
 </div>
 <div id="loudness-difference-by-artist-gender" class="section level3">
 <h3>Loudness Difference by Artist Gender</h3>
-<pre class="r"><code>kruskal.test(list(coed$loudness, female$loudness, male$loudness))</code></pre>
+<pre class="r"><code>wilcox.test(female$loudness, male$loudness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 <pre><code>## 
-##  Kruskal-Wallis rank sum test
+##  Wilcoxon rank sum test with continuity correction
 ## 
-## data:  list(coed$loudness, female$loudness, male$loudness)
-## Kruskal-Wallis chi-squared = 172.4, df = 2, p-value &lt; 2.2e-16</code></pre>
+## data:  female$loudness and male$loudness
+## W = 19152022, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0</code></pre>
 </div>
 <div id="tempo-difference-by-artist-gender" class="section level3">
 <h3>Tempo Difference by Artist Gender</h3>
-<pre class="r"><code>kruskal.test(list(coed$tempo, female$tempo, male$tempo))</code></pre>
+<pre class="r"><code>wilcox.test(female$tempo, male$tempo, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 <pre><code>## 
-##  Kruskal-Wallis rank sum test
+##  Wilcoxon rank sum test with continuity correction
 ## 
-## data:  list(coed$tempo, female$tempo, male$tempo)
-## Kruskal-Wallis chi-squared = 17.353, df = 2, p-value = 0.0001706</code></pre>
+## data:  female$tempo and male$tempo
+## W = 17524256, p-value = 3.205e-05
+## alternative hypothesis: true location shift is not equal to 0</code></pre>
 </div>
 <div id="valence-difference-by-artist-gender" class="section level3">
 <h3>Valence Difference by Artist Gender</h3>
-<pre class="r"><code>kruskal.test(list(coed$valence, female$valence, male$valence))</code></pre>
+<pre class="r"><code>wilcox.test(female$valence, male$valence, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 <pre><code>## 
-##  Kruskal-Wallis rank sum test
+##  Wilcoxon rank sum test with continuity correction
 ## 
-## data:  list(coed$valence, female$valence, male$valence)
-## Kruskal-Wallis chi-squared = 55.265, df = 2, p-value = 9.983e-13</code></pre>
+## data:  female$valence and male$valence
+## W = 18084946, p-value = 4.475e-13
+## alternative hypothesis: true location shift is not equal to 0</code></pre>
 </div>
 </div>
 <div id="hypothesis-testing-between-kpop-artist-types-group-or-solo" class="section level1">
