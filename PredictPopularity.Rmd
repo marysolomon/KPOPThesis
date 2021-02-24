@@ -379,7 +379,7 @@ logit.kpop1 <- kpop.logit %>% filter(mode == 1) %>% select(-mode)
 # smpl0 <- sample(nrow(logit.kpop0), smpl.size0, replace = FALSE)
 # og.logit.train0 <- logit.kpop0[smpl0,]
 # og.logit.test0 <- logit.kpop0[-smpl0,]
-
+set.seed(123)
 p3 <- partition.3(logit.kpop0, 0.70, 0.15)
 logit.train0 <- p3$data.train
 logit.valid0 <- p3$data.val
@@ -392,7 +392,7 @@ all.train0 <- rbind(logit.train0, logit.valid0)
 # smpl1 <- sample(nrow(logit.kpop1), smpl.size1, replace = FALSE)
 # logit.train1 <- logit.kpop1[smpl1,]
 # logit.test1 <- logit.kpop1[-smpl1,]
-
+set.seed(123)
 p3 <- partition.3(logit.kpop1, 0.70, 0.15)
 logit.train1 <- p3$data.train
 logit.valid1 <- p3$data.val
@@ -432,17 +432,17 @@ confusionMatrix(as.factor(v.pred.test), as.factor(logit.test0$popular), positive
 
 
 
-predict on optimal cutoff (0.16)
+predict on optimal cutoff (0.18)
 ```{r}
 v.prob.test <- predict(v.logit.model0, newdata = logit.test0, type = "response")
-v.pred.test <- ifelse(v.prob.test > v.opt.cut0, 1, 0) # using cutoff = 0.16
+v.pred.test <- ifelse(v.prob.test > v.opt.cut0, 1, 0) # using cutoff = 0.18
 confusionMatrix(as.factor(v.pred.test), as.factor(logit.test0$popular), positive = "1")
 ```
 
-
+Predict on optimal balance between sensitivity and specificity (0.14)
 ```{r}
 v.prob.test <- predict(v.logit.model0, newdata = logit.test0, type = "response")
-v.pred.test <- ifelse(v.prob.test > 0.13, 1, 0) # using cutoff = 0.13
+v.pred.test <- ifelse(v.prob.test > 0.14, 1, 0) # using cutoff = 0.14
 confusionMatrix(as.factor(v.pred.test), as.factor(logit.test0$popular), positive = "1")
 ```
 
@@ -484,6 +484,7 @@ kcv.out0.cut0
 
 Fit final model (combo of train and validation)
 ```{r}
+set.seed(123)
 finalmeh <- capture.output(step0_kcv.final0 <- train(popular ~ ., data = all.train0, family = binomial(), 
                  method = "glmStepAIC", trControl = train_control, verbose = FALSE))
 step0_kcv.final0 <- step0_kcv.final0$finalModel
@@ -497,17 +498,17 @@ kcv.pred.test0 <- ifelse(kcv.prob.test0 > 0.5, 1, 0) # using cutoff = 0.5
 confusionMatrix(as.factor(kcv.pred.test0), as.factor(logit.test0$popular), positive = "1")
 ```
 
-predict on test using 0.16 cutoff 
+predict on test using optimal kappa, 0.17 cutoff 
 ```{r}
 kcv.prob.test0 <- predict(step0_kcv.final0, newdata = key.dummy(logit.test0), type = "response")
-kcv.pred.test0 <- ifelse(kcv.prob.test0 > 0.16, 1, 0) # using cutoff = 0.16
+kcv.pred.test0 <- ifelse(kcv.prob.test0 > 0.17, 1, 0) # using cutoff = 0.17
 confusionMatrix(as.factor(kcv.pred.test0), as.factor(logit.test0$popular), positive = "1")
 ```
 
-predict on test using 0.13 cutoff 
+predict on test using 0.14 cutoff, optimal balance between sensitivity and specificity 
 ```{r}
 kcv.prob.test0 <- predict(step0_kcv.final0, newdata = key.dummy(logit.test0), type = "response")
-kcv.pred.test0 <- ifelse(kcv.prob.test0 > 0.13, 1, 0) # using cutoff = 0.16
+kcv.pred.test0 <- ifelse(kcv.prob.test0 > 0.14, 1, 0) # using cutoff = 0.16
 confusionMatrix(as.factor(kcv.pred.test0), as.factor(logit.test0$popular), positive = "1")
 ```
 
@@ -515,6 +516,7 @@ confusionMatrix(as.factor(kcv.pred.test0), as.factor(logit.test0$popular), posit
 ### Variable Selection: All possible regression
 
 ```{r}
+set.seed(123)
 glmulti.out0 <- glmulti(popular ~ ., data = logit.train0,
                            level = 1,               # No interaction considered
             method = "h",            # Exhaustive approach
@@ -548,6 +550,7 @@ allreg.out0.cut0
 
 fit final model to combo of training and validation
 ```{r}
+set.seed(123)
 glmulti.out0 <- glmulti(popular ~ ., data = all.train0,
                            level = 1,               # No interaction considered
             method = "h",            # Exhaustive approach
@@ -573,24 +576,25 @@ confusionMatrix(as.factor(allreg.pred.test0), as.factor(logit.test0$popular), po
 ```
 
 
-Predictions where cut off is the best kappa
+Predictions where cut off yields the best kappa, 0.14 
 ```{r}
 allreg.prob.test0 <- predict(allreg.logit0.final, newdata = logit.test0, type = "response")
-allreg.pred.test0 <- ifelse(allreg.prob.test0 > allreg.out0.cut0, 1, 0) # using standard cutoff 0.5
+allreg.pred.test0 <- ifelse(allreg.prob.test0 > allreg.out0.cut0, 1, 0) # using cutoff 0.14
 confusionMatrix(as.factor(allreg.pred.test0), as.factor(logit.test0$popular), positive = "1")
 ```
 
 
-Predictions where cut off is the best balance of sensitivity and specificity
+Predictions where cut off is the best balance of sensitivity and specificity, 0.15
 ```{r}
 allreg.prob.test0 <- predict(allreg.logit0.final, newdata = logit.test0, type = "response")
-allreg.pred.test0 <- ifelse(allreg.prob.test0 > 0.14, 1, 0) # using standard cutoff 0.5
+allreg.pred.test0 <- ifelse(allreg.prob.test0 > 0.15, 1, 0) # using cutoff 0.15
 confusionMatrix(as.factor(allreg.pred.test0), as.factor(logit.test0$popular), positive = "1")
 ```
 
 
 ### Regularized Regression: Ridge 10 fold Cross Validation
 ```{r}
+set.seed(123)
 ridge0 <- train(popular ~ ., data = logit.train0, method = "glmnet",
                       family = "binomial", trControl = train_control, 
                       tuneGrid = expand.grid(alpha = 0,lambda = seq(0.001,0.1,by = 0.001)))
@@ -612,6 +616,7 @@ ridge0.out$cutoff[which.min(ridge0.out$ssdiff.vec)]
 
 create final model
 ```{r}
+set.seed(123)
 ridge0 <- train(popular ~ ., data = all.train0, method = "glmnet",
                       family = "binomial", trControl = train_control, 
                       tuneGrid = expand.grid(alpha = 0,lambda = seq(0.001,0.1,by = 0.001)))
@@ -629,10 +634,10 @@ confusionMatrix(as.factor(pred.ridge0), as.factor(logit.test0$popular),
                 positive = "1")
 ```
 
-predict and evaluate on the test set where cutoff is at 0.12 corresponding to optimal kappa
+predict and evaluate on the test set where cutoff is at 0.15 corresponding to optimal kappa
 ```{r}
 prob.ridg0 <- predict(ridge0, s = ridge0bestTune, logit.test0, type = "prob")
-pred.ridge0 <- ifelse(prob.ridge0[,2] > 0.12, 1, 0) # using cutoff = 0.13
+pred.ridge0 <- ifelse(prob.ridge0[,2] > 0.15, 1, 0) # using cutoff = 0.15
 confusionMatrix(as.factor(pred.ridge0), as.factor(logit.test0$popular), 
                 positive = "1")
 ```
@@ -648,6 +653,7 @@ confusionMatrix(as.factor(pred.ridge0), as.factor(logit.test0$popular),
 
 ### Regularized Regression: Elastic Net 10 fold Cross Validation
 ```{r}
+set.seed(123)
 enet0 <- train(popular ~ ., data = logit.train0, method = "glmnet",
                       family = "binomial", trControl = train_control, 
                       tuneGrid = expand.grid(alpha = seq(0,1,by = 0.05),lambda = seq(0.001,0.1,by = 0.001)))
@@ -669,6 +675,7 @@ enet0.out$cutoff[which.min(enet0.out$ssdiff.vec)]
 
 create final model on train and validation
 ```{r}
+set.seed(123)
 enet0 <- train(popular ~ ., data = all.train0, method = "glmnet",
                       family = "binomial", trControl = train_control, 
                       tuneGrid = expand.grid(alpha = seq(0,1,by = 0.05),lambda = seq(0.001,0.1,by = 0.001)))
@@ -687,10 +694,10 @@ confusionMatrix(as.factor(pred.enet0), as.factor(logit.test0$popular),
                 positive = "1")
 ```
 
-predict and evaluate on the test set where cutoff is at 0.12 corresponding to optimal kappa
+predict and evaluate on the test set where cutoff is at 0.15 corresponding to optimal kappa
 ```{r}
 prob.enet0 <- predict(enet0, s = enet0$bestTune, logit.test0, type = "prob")
-pred.enet0 <- ifelse(prob.enet0[,2] > 0.12, 1, 0) # using cutoff = 0.13
+pred.enet0 <- ifelse(prob.enet0[,2] > 0.15, 1, 0) # using cutoff = 0.15
 confusionMatrix(as.factor(pred.enet0), as.factor(logit.test0$popular), 
                 positive = "1")
 ```
@@ -698,7 +705,7 @@ confusionMatrix(as.factor(pred.enet0), as.factor(logit.test0$popular),
 predict and evaluate on the test set where cutoff is at 0.14 corresponding to optimal balance of sensitivity and specificity
 ```{r}
 prob.enet0 <- predict(enet0, s = enet0$bestTune, logit.test0, type = "prob")
-pred.enet0 <- ifelse(prob.enet0[,2] > 0.14, 1, 0) # using cutoff = 0.13
+pred.enet0 <- ifelse(prob.enet0[,2] > 0.14, 1, 0) # using cutoff = 0.14
 confusionMatrix(as.factor(pred.enet0), as.factor(logit.test0$popular), 
                 positive = "1")
 ```
@@ -736,15 +743,15 @@ v.pred.test1 <- ifelse(v.prob.test1 > 0.5, 1, 0) # using cutoff = 0.15
 confusionMatrix(as.factor(v.pred.test1), as.factor(logit.test1$popular), positive = "1")
 ```
 
-predict on test using optimal cutoff (kappa)
+predict on test using optimal cutoff (kappa), 0.15
 ```{r}
 v.prob.test1 <- predict(v.logit.model1, newdata = logit.test1, type = "response")
-v.pred.test1 <- ifelse(v.prob.test1 > v.opt.cut1, 1, 0) # using cutoff = 0.16
+v.pred.test1 <- ifelse(v.prob.test1 > v.opt.cut1, 1, 0) # using cutoff = 0.15
 confusionMatrix(as.factor(v.pred.test1), as.factor(logit.test1$popular), positive = "1")
 ```
 
 
-predict on test using optimal cutoff (sensitivity and specificity)
+predict on test using optimal cutoff (sensitivity and specificity), 0.11
 ```{r}
 v.prob.test1 <- predict(v.logit.model1, newdata = logit.test1, type = "response")
 v.pred.test1 <- ifelse(v.prob.test1 > 0.11, 1, 0) # using cutoff = 0.11
@@ -782,6 +789,7 @@ kcv.out1.cut1
 
 Fit final model (combo of train and validation)
 ```{r}
+set.seed(123)
 finalmeh <- capture.output(step1_kcv.final <- train(popular ~ ., data = all.train1, family = binomial(), 
                  method = "glmStepAIC", trControl = train_control, verbose = FALSE))
 ```
@@ -800,16 +808,17 @@ kcv.pred.test1 <- ifelse(kcv.prob.test1 > 0.5, 1, 0) # using cutoff = 0.5
 confusionMatrix(as.factor(kcv.pred.test1), as.factor(logit.test1$popular), positive = "1")
 ```
 
-
+Using cutoff 0.13 which yields optimal kappa
 ```{r}
 kcv.prob.test1 <- predict(step1_kcv.final, newdata = key.dummy(logit.test1), type = "response")
-kcv.pred.test1 <- ifelse(kcv.prob.test1 > kcv.out1.cut1, 1, 0) # using cutoff = 0.5
+kcv.pred.test1 <- ifelse(kcv.prob.test1 > kcv.out1.cut1, 1, 0) # using cutoff = 0.13
 confusionMatrix(as.factor(kcv.pred.test1), as.factor(logit.test1$popular), positive = "1")
 ```
 
+Using cut off 0.11 which yields the best balance between sensitivity and specificity.
 ```{r}
 kcv.prob.test1 <- predict(step1_kcv.final, newdata = key.dummy(logit.test1), type = "response")
-kcv.pred.test1 <- ifelse(kcv.prob.test1 > 0.11, 1, 0) # using cutoff = 0.5
+kcv.pred.test1 <- ifelse(kcv.prob.test1 > 0.11, 1, 0) # using cutoff = 0.11
 confusionMatrix(as.factor(kcv.pred.test1), as.factor(logit.test1$popular), positive = "1")
 ```
 
@@ -818,6 +827,7 @@ confusionMatrix(as.factor(kcv.pred.test1), as.factor(logit.test1$popular), posit
 ### Variable Selection: All possible regression
 
 ```{r}
+set.seed(123)
 glmulti.out1 <- glmulti(popular ~ ., data = logit.train1,
                            level = 1,               # No interaction considered
             method = "h",            # Exhaustive approach
@@ -850,6 +860,7 @@ allreg.out1.cut1
 
 fit final model to combo of training and validation
 ```{r}
+set.seed(123)
 glmulti.out1 <- glmulti(popular ~ ., data = all.train1,
                            level = 1,               # No interaction considered
             method = "h",            # Exhaustive approach
@@ -874,17 +885,17 @@ allreg.pred.test1 <- ifelse(allreg.prob.test1 > 0.5, 1, 0) # using standard cuto
 confusionMatrix(as.factor(allreg.pred.test1), as.factor(logit.test1$popular), positive = "1")
 ```
 
-Predictions where cut off is the best kappa
+Predictions where cut off is the best kappa, 0.16
 ```{r}
 allreg.prob.test1 <- predict(allreg.logit1.final, newdata = logit.test1, type = "response")
-allreg.pred.test1 <- ifelse(allreg.prob.test1 > allreg.out1.cut1, 1, 0) # using optimal cutoff 0.17
+allreg.pred.test1 <- ifelse(allreg.prob.test1 > allreg.out1.cut1, 1, 0) # using optimal cutoff 0.16
 confusionMatrix(as.factor(allreg.pred.test1), as.factor(logit.test1$popular), positive = "1")
 ```
 
-Predictions where cut off is the best balance of sensitivity and specificity
+Predictions where cut off is the best balance of sensitivity and specificity, 0.11
 ```{r}
 allreg.prob.test1 <- predict(allreg.logit1.final, newdata = logit.test1, type = "response")
-allreg.pred.test1 <- ifelse(allreg.prob.test1 > 0.11, 1, 0) # using optimal cutoff 
+allreg.pred.test1 <- ifelse(allreg.prob.test1 > 0.11, 1, 0) # using optimal cutoff  0.11
 confusionMatrix(as.factor(allreg.pred.test1), as.factor(logit.test1$popular), positive = "1")
 ```
 
@@ -895,6 +906,7 @@ confusionMatrix(as.factor(allreg.pred.test1), as.factor(logit.test1$popular), po
 
 ### Regularized Regression: Ridge 10 fold Cross Validation
 ```{r}
+set.seed(123)
 ridge1 <- train(popular ~ ., data = logit.train1, method = "glmnet",
                       family = "binomial", trControl = train_control, 
                       tuneGrid = expand.grid(alpha = 0,lambda = seq(0.001,0.1,by = 0.001)))
@@ -915,6 +927,7 @@ ridge1.out$cutoff[which.min(ridge1.out$ssdiff.vec)]
 
 create final model
 ```{r}
+set.seed(123)
 ridge1 <- train(popular ~ ., data = all.train1, method = "glmnet",
                       family = "binomial", trControl = train_control, 
                       tuneGrid = expand.grid(alpha = 0,lambda = seq(0.001,0.1,by = 0.001)))
@@ -932,10 +945,10 @@ confusionMatrix(as.factor(pred.ridge1), as.factor(logit.test1$popular),
                 positive = "1")
 ```
 
-predict and evaluate on the test set where cutoff is at 0.13 corresponding to optimal kappa
+predict and evaluate on the test set where cutoff is at 0.12 corresponding to optimal kappa
 ```{r}
 prob.ridge1 <- predict(ridge1, s = ridge1$bestTune, logit.test1, type = "prob")
-pred.ridge1 <- ifelse(prob.ridge1[,2] > 0.13, 1, 0) # using cutoff = 0.13
+pred.ridge1 <- ifelse(prob.ridge1[,2] > 0.12, 1, 0) # using cutoff = 0.12
 confusionMatrix(as.factor(pred.ridge1), as.factor(logit.test1$popular), 
                 positive = "1")
 ```
@@ -975,6 +988,7 @@ lasso1.out$cutoff[which.min(lasso1.out$ssdiff.vec)]
 
 ### Regularized Regression: Elastic Net 10 fold Cross Validation
 ```{r}
+set.seed(123)
 enet1 <- train(popular ~ ., data = logit.train1, method = "glmnet",
                       family = "binomial", trControl = train_control, 
                       tuneGrid = expand.grid(alpha = seq(0,1,by = 0.05),lambda = seq(0.001,0.1,by = 0.001)))
@@ -996,6 +1010,7 @@ enet1.out$cutoff[which.min(enet1.out$ssdiff.vec)]
 
 create final model on train and validation
 ```{r}
+set.seed(123)
 enet1 <- train(popular ~ ., data = all.train1, method = "glmnet",
                       family = "binomial", trControl = train_control, 
                       tuneGrid = expand.grid(alpha = seq(0,1,by = 0.05),lambda = seq(0.001,0.1,by = 0.001)))
@@ -1014,10 +1029,10 @@ confusionMatrix(as.factor(pred.enet1), as.factor(logit.test1$popular),
                 positive = "1")
 ```
 
-predict and evaluate on the test set where cutoff is at 0.13 corresponding to optimal kappa
+predict and evaluate on the test set where cutoff is at 0.12 corresponding to optimal kappa
 ```{r}
 prob.enet1 <- predict(enet1, s = enet1$bestTune, logit.test1, type = "prob")
-pred.enet1 <- ifelse(prob.enet1[,2] > 0.13, 1, 0) # using cutoff = 0.13
+pred.enet1 <- ifelse(prob.enet1[,2] > 0.12, 1, 0) # using cutoff = 0.12
 confusionMatrix(as.factor(pred.enet1), as.factor(logit.test1$popular), 
                 positive = "1")
 ```
