@@ -327,20 +327,20 @@ solo <- filter(data, ArtistType == "solo")
 ### Popularity Difference by Artist Type
 
 ```{r}
-wilcox.test(group$popularity, solo$popularity, paired = FALSE, alternative = "two.sided")
+wilcox.test(group$popularity, solo$popularity, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 ### Duration Difference by Artist Type
 
 ```{r}
-wilcox.test(group$duration, solo$duration, paired = FALSE, alternative = "two.sided")
+wilcox.test(group$duration, solo$duration, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
 ### Acousticness Difference by Artist Type
 
 ```{r}
-wilcox.test(group$acousticness, solo$acousticness, paired = FALSE, alternative = "two.sided")
+wilcox.test(group$acousticness, solo$acousticness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
@@ -348,49 +348,49 @@ wilcox.test(group$acousticness, solo$acousticness, paired = FALSE, alternative =
 ### Danceability Difference by Artist Type
 
 ```{r}
-wilcox.test(group$danceability, solo$danceability, paired = FALSE, alternative = "two.sided")
+wilcox.test(group$danceability, solo$danceability, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
 ### Energy Difference by Artist Type
 
 ```{r}
-wilcox.test(group$energy, solo$energy, paired = FALSE, alternative = "two.sided")
+wilcox.test(group$energy, solo$energy, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
 ### Instrumentalness Difference by Artist Type
 
 ```{r}
-wilcox.test(group$instrumentalness, solo$instrumentalness, paired = FALSE, alternative = "two.sided")
+wilcox.test(group$instrumentalness, solo$instrumentalness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
 ### Speechiness Difference by Artist Type
 
 ```{r}
-wilcox.test(group$speechiness, solo$speechiness, paired = FALSE, alternative = "two.sided")
+wilcox.test(group$speechiness, solo$speechiness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
 ### Loudness Difference by Artist Type
 
 ```{r}
-wilcox.test(group$loudness, solo$loudness, paired = FALSE, alternative = "two.sided")
+wilcox.test(group$loudness, solo$loudness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
 ### Tempo Difference by Artist Type
 
 ```{r}
-wilcox.test(group$tempo, solo$tempo, paired = FALSE, alternative = "two.sided")
+wilcox.test(group$tempo, solo$tempo, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
 ### Valence Difference by Artist Type
 
 ```{r}
-wilcox.test(group$valence, solo$valence, paired = FALSE, alternative = "two.sided")
+wilcox.test(group$valence, solo$valence, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
@@ -410,20 +410,20 @@ girl.group <- filter(data, ArtistType == "group" & ArtistGender == "female")
 ### Popularity Difference by Group Type
 
 ```{r}
-wilcox.test(boy.group$popularity, girl.group$popularity, paired = FALSE, alternative = "two.sided")
+wilcox.test(boy.group$popularity, girl.group$popularity, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 ### Duration Difference by Group Type
 
 ```{r}
-wilcox.test(boy.group$duration, girl.group$duration, paired = FALSE, alternative = "two.sided")
+wilcox.test(boy.group$duration, girl.group$duration, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
 ### Acousticness Difference by Group Type
 
 ```{r}
-wilcox.test(boy.group$acousticness, girl.group$acousticness, paired = FALSE, alternative = "two.sided")
+wilcox.test(boy.group$acousticness, girl.group$acousticness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
@@ -431,47 +431,47 @@ wilcox.test(boy.group$acousticness, girl.group$acousticness, paired = FALSE, alt
 ### Danceability Difference by Group Type
 
 ```{r}
-wilcox.test(boy.group$danceability, girl.group$danceability, paired = FALSE, alternative = "two.sided")
+wilcox.test(boy.group$danceability, girl.group$danceability, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
 ### Energy Difference by Group Type
 
 ```{r}
-wilcox.test(boy.group$energy, girl.group$energy, paired = FALSE, alternative = "two.sided")
+wilcox.test(boy.group$energy, girl.group$energy, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
 ### Instrumentalness Difference by Group Type
 
 ```{r}
-wilcox.test(boy.group$instrumentalness, girl.group$instrumentalness, paired = FALSE, alternative = "two.sided")
+wilcox.test(boy.group$instrumentalness, girl.group$instrumentalness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
 ### Speechiness Difference by Group Type
 
 ```{r}
-wilcox.test(boy.group$speechiness, girl.group$speechiness, paired = FALSE, alternative = "two.sided")
+wilcox.test(boy.group$speechiness, girl.group$speechiness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
 ### Loudness Difference by Group Type
 
 ```{r}
-wilcox.test(boy.group$loudness, girl.group$loudness, paired = FALSE, alternative = "two.sided")
+wilcox.test(boy.group$loudness, girl.group$loudness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
 ### Tempo Difference by Group Type
 
 ```{r}
-wilcox.test(boy.group$tempo, girl.group$tempo, paired = FALSE, alternative = "two.sided")
+wilcox.test(boy.group$tempo, girl.group$tempo, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
 ### Valence Difference by Group Type
 
 ```{r}
-wilcox.test(boy.group$valence, girl.group$valence, paired = FALSE, alternative = "two.sided")
+wilcox.test(boy.group$valence, girl.group$valence, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```

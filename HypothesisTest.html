@@ -554,103 +554,153 @@ group &lt;- filter(data, ArtistType == &quot;group&quot;)
 solo &lt;- filter(data, ArtistType == &quot;solo&quot;)</code></pre>
 <div id="popularity-difference-by-artist-type" class="section level3">
 <h3>Popularity Difference by Artist Type</h3>
-<pre class="r"><code>wilcox.test(group$popularity, solo$popularity, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(group$popularity, solo$popularity, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  group$popularity and solo$popularity
 ## W = 9236738, p-value = 0.03005
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  -1.999938e+00 -5.320767e-05
+## sample estimates:
+## difference in location 
+##             -0.9999869</code></pre>
 </div>
 <div id="duration-difference-by-artist-type" class="section level3">
 <h3>Duration Difference by Artist Type</h3>
-<pre class="r"><code>wilcox.test(group$duration, solo$duration, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(group$duration, solo$duration, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  group$duration and solo$duration
 ## W = 8820586, p-value = 2.21e-07
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  -0.08753883 -0.03953395
+## sample estimates:
+## difference in location 
+##            -0.06354772</code></pre>
 </div>
 <div id="acousticness-difference-by-artist-type" class="section level3">
 <h3>Acousticness Difference by Artist Type</h3>
-<pre class="r"><code>wilcox.test(group$acousticness, solo$acousticness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(group$acousticness, solo$acousticness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  group$acousticness and solo$acousticness
 ## W = 7796532, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  -0.05300053 -0.03538317
+## sample estimates:
+## difference in location 
+##            -0.04394832</code></pre>
 </div>
 <div id="danceability-difference-by-artist-type" class="section level3">
 <h3>Danceability Difference by Artist Type</h3>
-<pre class="r"><code>wilcox.test(group$danceability, solo$danceability, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(group$danceability, solo$danceability, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  group$danceability and solo$danceability
 ## W = 9778026, p-value = 0.08042
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  -0.000967768  0.011008498
+## sample estimates:
+## difference in location 
+##            0.005029811</code></pre>
 </div>
 <div id="energy-difference-by-artist-type" class="section level3">
 <h3>Energy Difference by Artist Type</h3>
-<pre class="r"><code>wilcox.test(group$energy, solo$energy, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(group$energy, solo$energy, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  group$energy and solo$energy
 ## W = 12570686, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  0.07899757 0.09498637
+## sample estimates:
+## difference in location 
+##             0.08696918</code></pre>
 </div>
 <div id="instrumentalness-difference-by-artist-type" class="section level3">
 <h3>Instrumentalness Difference by Artist Type</h3>
-<pre class="r"><code>wilcox.test(group$instrumentalness, solo$instrumentalness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(group$instrumentalness, solo$instrumentalness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  group$instrumentalness and solo$instrumentalness
 ## W = 8729034, p-value = 4.864e-14
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  -3.225573e-05 -4.457195e-05
+## sample estimates:
+## difference in location 
+##           -2.51446e-05</code></pre>
 </div>
 <div id="speechiness-difference-by-artist-type" class="section level3">
 <h3>Speechiness Difference by Artist Type</h3>
-<pre class="r"><code>wilcox.test(group$speechiness, solo$speechiness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(group$speechiness, solo$speechiness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  group$speechiness and solo$speechiness
 ## W = 10189583, p-value = 2.282e-06
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  0.001700548 0.004244932
+## sample estimates:
+## difference in location 
+##            0.002998676</code></pre>
 </div>
 <div id="loudness-difference-by-artist-type" class="section level3">
 <h3>Loudness Difference by Artist Type</h3>
-<pre class="r"><code>wilcox.test(group$loudness, solo$loudness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(group$loudness, solo$loudness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  group$loudness and solo$loudness
 ## W = 11851162, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  0.6829554 0.8619889
+## sample estimates:
+## difference in location 
+##              0.7720612</code></pre>
 </div>
 <div id="tempo-difference-by-artist-type" class="section level3">
 <h3>Tempo Difference by Artist Type</h3>
-<pre class="r"><code>wilcox.test(group$tempo, solo$tempo, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(group$tempo, solo$tempo, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  group$tempo and solo$tempo
 ## W = 10606602, p-value = 9.587e-15
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  3.931052 6.029029
+## sample estimates:
+## difference in location 
+##               4.984999</code></pre>
 </div>
 <div id="valence-difference-by-artist-type" class="section level3">
 <h3>Valence Difference by Artist Type</h3>
-<pre class="r"><code>wilcox.test(group$valence, solo$valence, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(group$valence, solo$valence, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  group$valence and solo$valence
 ## W = 10771683, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  0.04101360 0.06407435
+## sample estimates:
+## difference in location 
+##             0.05298886</code></pre>
 </div>
 </div>
 <div id="hypothesis-testing-between-kpop-group-types-girl-group-vs-boy-group" class="section level1">
@@ -661,103 +711,153 @@ boy.group &lt;- filter(data, ArtistType == &quot;group&quot; &amp; ArtistGender 
 girl.group &lt;- filter(data, ArtistType == &quot;group&quot; &amp; ArtistGender == &quot;female&quot;)</code></pre>
 <div id="popularity-difference-by-group-type" class="section level3">
 <h3>Popularity Difference by Group Type</h3>
-<pre class="r"><code>wilcox.test(boy.group$popularity, girl.group$popularity, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(boy.group$popularity, girl.group$popularity, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  boy.group$popularity and girl.group$popularity
 ## W = 10811556, p-value = 0.0006021
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  -1.9999586 -0.9999621
+## sample estimates:
+## difference in location 
+##              -1.000057</code></pre>
 </div>
 <div id="duration-difference-by-group-type" class="section level3">
 <h3>Duration Difference by Group Type</h3>
-<pre class="r"><code>wilcox.test(boy.group$duration, girl.group$duration, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(boy.group$duration, girl.group$duration, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  boy.group$duration and girl.group$duration
 ## W = 13174314, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  0.1066426 0.1417340
+## sample estimates:
+## difference in location 
+##              0.1241311</code></pre>
 </div>
 <div id="acousticness-difference-by-group-type" class="section level3">
 <h3>Acousticness Difference by Group Type</h3>
-<pre class="r"><code>wilcox.test(boy.group$acousticness, girl.group$acousticness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(boy.group$acousticness, girl.group$acousticness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  boy.group$acousticness and girl.group$acousticness
 ## W = 10248640, p-value = 4.57e-14
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  -0.01931052 -0.01079198
+## sample estimates:
+## difference in location 
+##            -0.01499702</code></pre>
 </div>
 <div id="danceability-difference-by-group-type" class="section level3">
 <h3>Danceability Difference by Group Type</h3>
-<pre class="r"><code>wilcox.test(boy.group$danceability, girl.group$danceability, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(boy.group$danceability, girl.group$danceability, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  boy.group$danceability and girl.group$danceability
 ## W = 9220526, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  -0.03801430 -0.02990294
+## sample estimates:
+## difference in location 
+##            -0.03403703</code></pre>
 </div>
 <div id="energy-difference-by-group-type" class="section level3">
 <h3>Energy Difference by Group Type</h3>
-<pre class="r"><code>wilcox.test(boy.group$energy, girl.group$energy, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(boy.group$energy, girl.group$energy, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  boy.group$energy and girl.group$energy
 ## W = 10402828, p-value = 1.391e-10
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  -0.02198319 -0.01194126
+## sample estimates:
+## difference in location 
+##            -0.01695425</code></pre>
 </div>
 <div id="instrumentalness-difference-by-group-type" class="section level3">
 <h3>Instrumentalness Difference by Group Type</h3>
-<pre class="r"><code>wilcox.test(boy.group$instrumentalness, girl.group$instrumentalness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(boy.group$instrumentalness, girl.group$instrumentalness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  boy.group$instrumentalness and girl.group$instrumentalness
 ## W = 9228350, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  -1.518201e-05 -2.257189e-05
+## sample estimates:
+## difference in location 
+##          -2.074156e-05</code></pre>
 </div>
 <div id="speechiness-difference-by-group-type" class="section level3">
 <h3>Speechiness Difference by Group Type</h3>
-<pre class="r"><code>wilcox.test(boy.group$speechiness, girl.group$speechiness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(boy.group$speechiness, girl.group$speechiness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  boy.group$speechiness and girl.group$speechiness
 ## W = 11578040, p-value = 0.02993
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  0.0001169902 0.0023156698
+## sample estimates:
+## difference in location 
+##            0.001232193</code></pre>
 </div>
 <div id="loudness-difference-by-group-type" class="section level3">
 <h3>Loudness Difference by Group Type</h3>
-<pre class="r"><code>wilcox.test(boy.group$loudness, girl.group$loudness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(boy.group$loudness, girl.group$loudness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  boy.group$loudness and girl.group$loudness
 ## W = 8889812, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  -0.6770170 -0.5419829
+## sample estimates:
+## difference in location 
+##             -0.6099901</code></pre>
 </div>
 <div id="tempo-difference-by-group-type" class="section level3">
 <h3>Tempo Difference by Group Type</h3>
-<pre class="r"><code>wilcox.test(boy.group$tempo, girl.group$tempo, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(boy.group$tempo, girl.group$tempo, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  boy.group$tempo and girl.group$tempo
 ## W = 10492012, p-value = 8.157e-09
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  -3.990048 -1.981069
+## sample estimates:
+## difference in location 
+##              -2.976016</code></pre>
 </div>
 <div id="valence-difference-by-group-type" class="section level3">
 <h3>Valence Difference by Group Type</h3>
-<pre class="r"><code>wilcox.test(boy.group$valence, girl.group$valence, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(boy.group$valence, girl.group$valence, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  boy.group$valence and girl.group$valence
 ## W = 9810082, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  -0.05800508 -0.04002576
+## sample estimates:
+## difference in location 
+##            -0.04903355</code></pre>
 </div>
 </div>
 
