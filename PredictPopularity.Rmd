@@ -421,7 +421,9 @@ v.opt.cut0
 Fit final model (combo of train and validation)
 ```{r}
 v.model.final <-  glm(popular ~ ., data=all.train0, family=binomial(link='logit'))
+summary(v.model.final)
 ```
+
 
 predict on test using 0.5 cutoff 
 ```{r}
@@ -432,7 +434,7 @@ confusionMatrix(as.factor(v.pred.test), as.factor(logit.test0$popular), positive
 
 
 
-predict on optimal cutoff (0.18)
+predict on optimal cutoff (0.18) for highest kappa
 ```{r}
 v.prob.test <- predict(v.logit.model0, newdata = logit.test0, type = "response")
 v.pred.test <- ifelse(v.prob.test > v.opt.cut0, 1, 0) # using cutoff = 0.18
@@ -463,6 +465,7 @@ meh <- capture.output(step0_kcv <- train(popular ~ ., data = logit.train0, famil
 ```{r}
 step0_kcv <- step0_kcv$finalModel
 step0_kcv
+summary(step0_kcv)
 ```
 
 
@@ -489,6 +492,7 @@ finalmeh <- capture.output(step0_kcv.final0 <- train(popular ~ ., data = all.tra
                  method = "glmStepAIC", trControl = train_control, verbose = FALSE))
 step0_kcv.final0 <- step0_kcv.final0$finalModel
 step0_kcv.final0
+summary(step0_kcv.final0)
 ```
 
 predict on test using 0.5 cutoff 
@@ -651,6 +655,58 @@ confusionMatrix(as.factor(pred.ridge0), as.factor(logit.test0$popular),
                 positive = "1")
 ```
 
+### Regularized Regression: Lasso 10 fold Cross Validation (not kosher, returns with a model of just the intercept)
+```{r}
+lasso0 <- train(popular ~ ., data = logit.train0, method = "glmnet",
+                      family = "binomial", trControl = train_control, 
+                      tuneGrid = expand.grid(alpha = 1,lambda = seq(0.001,0.1,by = 0.001)))
+# best parameter
+lasso0$bestTune
+# best coefficient
+lasso0.model <- coef(lasso0$finalModel, lasso0$bestTune$lambda)
+lasso0.model
+```
+
+Search for best cutoff using validation set
+```{r, warning = FALSE}
+lasso0.out <- reg.opt.cut.func(lasso0, logit.valid0)
+opt.cut.plot(lasso0.out)
+# cut off by kappa
+lasso0.out$cutoff[which.max(lasso0.out$kappa.vec)]
+lasso0.out$cutoff[which.min(lasso0.out$ssdiff.vec)]
+
+```
+
+
+```{r}
+lasso0.final <- train(popular ~ ., data = all.train0, method = "glmnet",
+                      family = "binomial", trControl = train_control, 
+                      tuneGrid = expand.grid(alpha = 1,lambda = seq(0.001,0.1,by = 0.001)))
+# best parameter
+lasso0.final$bestTune
+# best coefficient
+lasso0.model.final <- coef(lasso0.final$finalModel, lasso0.final$bestTune$lambda)
+lasso0.model.final
+```
+
+predict and evaluate on the test set where cutoff is at 0.5
+```{r}
+prob.lasso0 <- predict(lasso0.final, s = lasso0.final$bestTune, logit.test0, type = "prob")
+pred.lasso0 <- ifelse(prob.lasso0[,2] > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(pred.lasso0), as.factor(logit.test0$popular), 
+                positive = "1")
+```
+
+predict and evaluate on the test set where cutoff is at 0.11
+```{r}
+prob.lasso0 <- predict(lasso0.final, s = lasso0.final$bestTune, logit.test0, type = "prob")
+pred.lasso0 <- ifelse(prob.lasso0[,2] > 0.11, 1, 0) # using cutoff = 0.11
+confusionMatrix(as.factor(pred.lasso0), as.factor(logit.test0$popular), 
+                positive = "1")
+```
+
+
+
 ### Regularized Regression: Elastic Net 10 fold Cross Validation
 ```{r}
 set.seed(123)
@@ -710,6 +766,69 @@ confusionMatrix(as.factor(pred.enet0), as.factor(logit.test0$popular),
                 positive = "1")
 ```
 
+### Decide on the best logistic model for Mode 0 
+
+Full Logistic Model
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 5.059 - 0.520{Duration} - 1.472{Acousticness} + 0.311{Danceability} - 3.723{Energy} -2.809{Instrumentalness}
+\\
++ 0.111{Key1} - 0.088{Key2} + 0.772{Key3} - 0.327{Key4} + 0.180{Key5} + 0.314{Key6} + 0.175{Key7} + 0.218{Key8} + 0.032{Key9}
+\\
+\\
+\\
++ 0.152{Key10} + 0.059{Key11} + 0.350{Loudness} + 3.453{Speechiness} - 0.001{Tempo} -1.639{Valence}
+$$
+
+Stepwise 10 Fold Cross Validation
+Compared to the full logistic regression model, the stepwise model leaves out Danceability, Key1, Key2, Key5 - Key11, and Tempo.
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 5.377 - 0.526{Duration} - 1.525{Acousticness} - 3.860{Energy} - 2.739{Instrumentalness} 
+\\
+ + 0.639{Key3} - 0.443{Key4} + 0.351{Loudness} + 3.328{Speechiness} - 1.522{Valence}
+\\
+
+$$
+
+All Possible Regression
+Compared to the full Logistic model, the Model from All subsets regression leaves out the variables Danceability, all Key dummy variables, and Tempo.
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 5.369 - 0.516{Duration} - 1.537{Acousticness} - 3.955{Energy} - 2.722{Instrumentalness}
+\\
+ + 0.354{Loudness} + 3.278{Speechiness} - 1.445{Valence}
+
+$$ 
+
+Ridge 10 Fold Cross Validation
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 0.322 - 0.257{Duration} - 0.409{Acousticness} - 0.063{Danceability} - 0.607{Energy} - 0.839{Instrumentalness}
+\\
+0.013{Key1} - 0.091{Key2} + 0.401{Key3} - 0.198{Key4} + 0.054{Key5} + 0.142{Key6} + 0.037{Key7} + 0.030{Key8} - 0.042{Key9}
+\\
+\\
+\\
+0.034{Key10} - 0.034{Key11} + 0.084{Loudness} + 1.616{Speechiness} - 0.0003{Tempo} - 0.724{Valence}
+$$
+
+Elastic Net 10 Cross Validation
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 0.322 - 0.257{Duration} - 0.409{Acousticness} - 0.063{Deanceability} - 0.607{Energy} - 0.839{Instrumentalness}
+\\
+0.013{Key1} - 0.091{Key2} + 0.401{Key3} - 0.198{Key4} + 0.054{Key5} + 0.142{Key6} + 0.037{Key7} + 0.030{Key 8}
+\\ 
+- 0.041{Key9} + 0.034{Key10} - 0.034{Key11} + 0.084{Loudness} + 1.616{Speechiness} - 0.0003{Tempo} - 0.724{Valence}
+$$
+
+Diagnostic measures
+```{r}
+results.logit0 <- data.frame(model = c("Full", "Step 10CV", "All Subsets", "Ridge 10CV", "Elastic Net 10CV"),
+                             cutoff = c(0.14, 0.14, 0.14, 0.14, 0.14),
+                             AIC = c(2946, 2928, 2938.2, NA, NA),
+                             Accuracy =c(0.6205, 0.6362, 0.6505, 0.6405, 0.6405),
+                             Kappa = c(0.1013, 0.1007, 0.1269, 0.0901, 0.0901),
+                             Sensitivity = c(0.55319, 0.5213, 0.55319, 0.48936, 0.48936),
+                             Specificity = c(0.63097, 0.6540, 0.66557, 0.66392, 0.66392))
+```
+
 
 
 ## Mode 1 popularity
@@ -734,7 +853,10 @@ v.opt.cut1
 Fit final model (combo of train and validation)
 ```{r}
 v.model.final1 <-  glm(popular ~ ., data=all.train1, family=binomial(link='logit'))
+summary(v.model.final1)
 ```
+
+
 
 predict on test using 0.5 cutoff 
 ```{r}
@@ -776,6 +898,7 @@ meh <- capture.output(step1_kcv <- train(popular ~ ., data = logit.train1, famil
 ```{r}
 step1_kcv <- step1_kcv$finalModel
 step1_kcv
+summary(step1_kcv)
 ```
 
 ```{r, warning = FALSE}
@@ -797,6 +920,7 @@ finalmeh <- capture.output(step1_kcv.final <- train(popular ~ ., data = all.trai
 ```{r}
 step1_kcv.final <- step1_kcv.final$finalModel
 step1_kcv.final
+summary(step1_kcv.final)
 ```
 
 
@@ -903,7 +1027,6 @@ confusionMatrix(as.factor(allreg.pred.test1), as.factor(logit.test1$popular), po
 
 
 
-
 ### Regularized Regression: Ridge 10 fold Cross Validation
 ```{r}
 set.seed(123)
@@ -964,7 +1087,7 @@ confusionMatrix(as.factor(pred.ridge1), as.factor(logit.test1$popular),
 
 
 ### Regularized Regression: Lasso 10 fold Cross Validation (not kosher, returns with a model of just the intercept)
-```
+```{r}
 lasso1 <- train(popular ~ ., data = logit.train1, method = "glmnet",
                       family = "binomial", trControl = train_control, 
                       tuneGrid = expand.grid(alpha = 1,lambda = seq(0.001,0.1,by = 0.001)))
@@ -976,13 +1099,41 @@ lasso1.model
 ```
 
 Search for best cutoff using validation set
-```
+```{r}
 lasso1.out <- reg.opt.cut.func(lasso1, logit.valid1)
 opt.cut.plot(lasso1.out)
 # cut off by kappa
 lasso1.out$cutoff[which.max(lasso1.out$kappa.vec)]
 lasso1.out$cutoff[which.min(lasso1.out$ssdiff.vec)]
 
+```
+
+
+```{r}
+lasso1.final <- train(popular ~ ., data = all.train1, method = "glmnet",
+                      family = "binomial", trControl = train_control, 
+                      tuneGrid = expand.grid(alpha = 1,lambda = seq(0.001,0.1,by = 0.001)))
+# best parameter
+lasso1.final$bestTune
+# best coefficient
+lasso1.model.final <- coef(lasso1.final$finalModel, lasso1.final$bestTune$lambda)
+lasso1.model.final
+```
+
+predict and evaluate on the test set where cutoff is at 0.5
+```{r}
+prob.lasso1 <- predict(lasso1.final, s = lasso1.final$bestTune, logit.test1, type = "prob")
+pred.lasso1 <- ifelse(prob.lasso1[,2] > 0.5, 1, 0) # using cutoff = 0.5
+confusionMatrix(as.factor(pred.lasso1), as.factor(logit.test1$popular), 
+                positive = "1")
+```
+
+predict and evaluate on the test set where cutoff is at 0.11
+```{r}
+prob.lasso1 <- predict(lasso1.final, s = lasso1.final$bestTune, logit.test1, type = "prob")
+pred.lasso1 <- ifelse(prob.lasso1[,2] > 0.11, 1, 0) # using cutoff = 0.11
+confusionMatrix(as.factor(pred.lasso1), as.factor(logit.test1$popular), 
+                positive = "1")
 ```
 
 
@@ -1044,3 +1195,71 @@ pred.enet1 <- ifelse(prob.enet1[,2] > 0.11, 1, 0) # using cutoff = 0.13
 confusionMatrix(as.factor(pred.enet1), as.factor(logit.test1$popular), 
                 positive = "1")
 ```
+
+
+### Decide on the best logistic model for Mode 1 
+
+Full Logistic Model
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 3.198 - 0.468{Duration} - 0.747{Acousticness} + 0.935{Danceability} - 3.457{Energy} - 12.325{Instrumentalness}
+\\
++ 0.134{Key1} + 0.070{Key2} + 0.586{Key3} - 0.159{Key4} + 0.031{Key5} + 0.052{Key6} + 0.174{Key7} + 0.344{Key8} + 0.275{Key9}
+\\
+\\
+\\
+- 0.385{Key10} - 0.071{Key11} + 0.330{Loudness} + 4.734{Speechiness} + 0.003{Tempo} - 1.386{Valence}
+$$
+
+
+Stepwise 10 Fold Cross Validation
+Compared to the full Logistic model, the stepwise model does not include the variables Key1, Key2, Key4-Key7, Key9 and Key11.
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 3.280 - 0.465{Duration} - 0.777{Acousticness} + 0.976{Danceability} - 3.478{Energy} - 12.106{Instrumentalness} 
+\\
+ + 0.513{Key3} - 0.267{Key8} -0.460{Key10} + 0.333{Loudness} + 4.790{Speechiness} + 0.003{Tempo} - 1.411{Valence}
+\\
+$$
+
+All Possible Regression
+Compared to the full model, the All subsets regression model does not include any of the Key dummy variables.
+
+$$
+
+log(\frac{\hat \pi}{1 - \hat \pi}) = 3.289 - 0.461{Duration} - 0.750{Acousticness} + 0.942{Danceability} - 3.483{Energy} - 11.929{Instrumentalness}
+\\
+ + 0.333{Loudness} + 4.822{Speechiness} + 0.003{Tempo} - 1.406{Valence}
+
+$$ 
+
+Ridge 10 Fold Cross Validation
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = -1.031 - 0.202{Duration} - 0.103{Acousticness} + 0.159{Danceability} - 0.270{Energy} - 0.817{Instrumentalness}
+\\
++ 0.027{Key1} + 0.007{Key2} + 0.266{Key3} - 0.114{Key4} - 0.025{Key5} - 0.032{Key6} + 0.078{Key7} + 0.138{Key8} + 0.130{Key9}
+\\
+\\
+\\
+- 0.214{Key10} - 0.064{Key11} + 0.065{Loudness} + 2.178{Speechiness} + 0.002{Tempo} - 0.474{Valence}
+$$
+
+Elastic Net 10 Cross Validation
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = -1.031 - 0.202{Duration} - 0.103{Acousticness} + 0.159{Deanceability} - 0.270{Energy} - 0.817{Instrumentalness}
+\\
++ 0.027{Key1} + 0.007{Key2} + 0.266{Key3} - 0.114{Key4} - 0.025{Key5} - 0.032{Key6} + 0.078{Key7} + 0.138{Key 8}
+\\ 
++ 0.130{Key9} - 0.214{Key10} - 0.064{Key11} + 0.065{Loudness} + 2.178{Speechiness} + 0.002{Tempo} - 0.474{Valence}
+$$
+
+Diagnostic measures
+```{r}
+results.logit1 <- data.frame(model = c("Full", "Step 10CV", "All Subsets", "Ridge 10CV", "Elastic Net 10CV"),
+                             cutoff = c(0.11, 0.11, 0.11, 0.11, 0.11),
+                             AIC = c(4131.1, 4121, 4127.6, NA, NA),
+                             Accuracy =c(0.6167, 0.6013, 0.6022, 0.5758, 0.5758),
+                             Kappa = c(0.1018, 0.0857, 0.0893, 0.0962, 0.0962),
+                             Sensitivity = c(0.61947, 0.60177, 0.61062, 0.68142, 0.68142),
+                             Specificity = c(0.61640, 0.60121, 0.60121, 0.56377, 0.56377))
+results.logit1
+```
+
