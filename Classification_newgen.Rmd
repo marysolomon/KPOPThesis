@@ -105,6 +105,21 @@ logit0.final <- glm(newgen ~., data = all.train0, family = "binomial")
 summary(logit0.final)
 ```
 
+Full Logistic model
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 0.453 + 0.074x_{Popularity} - 0.009x_{Duration} + 1.280x_{Acousticness} + 0.715x_{Danceability} 
+\\ + 0.227x_{Energy} + 2.790x_{Instrumentalness} + 0.301x_{Key1} + 0.242x_{Key2} 
+\\ - 0.540x_{Key3} - 0.308x_{Key4} - 0.253x_{Key5} - 0.148x_{Key6} + 0.498x_{Key7} 
+\\ - 0.194x_{Key8} - 0.270x_{Key9} - 0.307x_{Key10} - 0.075x_{Key11} + 0.236x_{Loudness}
+\\ + 2.170x_{Speechiness} - 0.003x_{Tempo} - 1.359x_{Valence}
+$$
+
+The audio features in this model that increase the odds of being categorized as a new generation kpop song multiplicativley are Popularity, Acousticness, Danceability, Energy, Instrumentalness, Loudness, Speechiness and choosing Key1(C#/D-flat minor), Key2(D minor), Key7(G minor) instead of Key0 (C minor). The features that decrease the odds multiplicatively of being categorized as a new generation kpop song are Duration, Tempo, Valence and choosing Key3(D#/E-flat Minor), Key4(E minor), Key5(F Minor), Key6(F#/G-flat Minor), Key8 (G#/A-flat minor), Key9(A minor), Key10(A#/B-flat minor), Key11(B minor) instead of Key0(C).
+
+Only the variables Popularity, Duration, Acousticness, Instrumentalness, Key7(G minor), Loudness, Speechiness, and Valence are significant predictors in contributing to the log of odds for categorizing a song into the newer generations of kpop versus the older generation. 
+
+
+
 confusion matrix on the training data:
 ```
 logit.train0.pred <- logit0$fitted.values
@@ -123,20 +138,20 @@ confusionMatrix(as.factor(logit.test0.y), as.factor(test0$newgen),
                 positive = "1")
 ```
 
-confusion matrix on the test data using optimal cutoff based on kappa
+confusion matrix on the test data using optimal cutoff based on kappa (0.40)
 ```{r}
 #get predicted probabilities for the test data
 logit.test0.pred <- predict(logit0.final, newdata = test0, type = "response")
-logit.test0.y <- ifelse(logit.test0.pred > 0.60, 1, 0) # using cutoff = 0.60
+logit.test0.y <- ifelse(logit.test0.pred > 0.40, 1, 0) # using cutoff = 0.40
 confusionMatrix(as.factor(logit.test0.y), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
-confusion matrix on the test data using optimal cutoff based on sensitivity/specificty balance
+confusion matrix on the test data using optimal cutoff based on sensitivity/specificty balance (0.35)
 ```{r}
 #get predicted probabilities for the test data
 logit.test0.pred <- predict(logit0.final, newdata = test0, type = "response")
-logit.test0.y <- ifelse(logit.test0.pred > 0.65, 1, 0) # using cutoff = 0.65
+logit.test0.y <- ifelse(logit.test0.pred > 0.35, 1, 0) # using cutoff = 0.35
 confusionMatrix(as.factor(logit.test0.y), as.factor(test0$newgen), 
                 positive = "1")
 ```
@@ -176,6 +191,22 @@ formula(step0.final)
 summary(step0.final)
 ```
 
+Stepwise Logistic Model:    
+
+In comparison to the full model, the variable energy is not included. Otherwise, many of the coefficients are very similar to that of the full model. 
+
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 0.684 + 0.074_{Popularity} - 0.009_{Duration} + 1.221_{Acousticness} 
+\\ + 0.695_{Danceability} + 2.807_{Instrumentalness} + 0.298_{Key1} + 0.240_{Key2} 
+\\ - 0.545_{Key3} - 0.308x_{Key4} - 0.256x_{Key5} - 0.153_{Key6} + 0.497_{Key7} 
+\\ - 0.197_{Key8} - 0.271_{Key9} - 0.310_{Key10} - 0.076_{Key11} + 0.246_{Loudness}
+\\ + 2.214_{Speechiness} - 0.003_{Tempo} - 1.331_{Valence}
+$$
+
+The audio features in this model that increase the odds of being categorized as a new generation kpop song multiplicativley are Popularity, Acousticness, Danceability, Instrumentalness, Loudness, Speechiness and choosing Key1(C#/D-flat minor), Key2(D minor), Key7(G minor) instead of Key0 (C minor). The features that decrease the odds multiplicatively of being categorized as a new generation kpop song are Duration, Tempo, Valence and choosing Key3(D#/E-flat Minor), Key4(E minor), Key5(F Minor), Key6(F#/G-flat Minor), Key8 (G#/A-flat minor), Key9(A minor), Key10(A#/B-flat minor), Key11(B minor) instead of Key0(C).
+
+Only the variables Popularity, Duration, Acousticness, Instrumentalness, Key7(G minor), Loudness, Speechiness, and Valence are significant predictors in contributing to the log of odds for categorizing a song into the newer generations of kpop versus the older generation. These significant variables are the same as the full model.
+
 confusion matrix on the training data:
 ```
 step.train0.pred <- step0$fitted.values
@@ -194,20 +225,20 @@ confusionMatrix(as.factor(step.test0.y), as.factor(test0$newgen),
                 positive = "1")
 ```
 
-predict and evaluate on test using optimal cut off 0.54 for highest kappa
+predict and evaluate on test using optimal cut off 0.46 for highest kappa
 ```{r}
 #get predicted probabilities for the test data
 step.test0.pred <- predict(step0.final, newdata = test0, type = "response")
-step.test0.y <- ifelse(step.test0.pred > 0.54, 1, 0) # using cutoff = 0.54
+step.test0.y <- ifelse(step.test0.pred > 0.46, 1, 0) # using cutoff = 0.46
 confusionMatrix(as.factor(step.test0.y), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
-predict and evaluate on test using optimal cut off 0.63 for best sensitivity/specificity balance
+predict and evaluate on test using optimal cut off 0.36 for best sensitivity/specificity balance
 ```{r}
 #get predicted probabilities for the test data
 step.test0.pred <- predict(step0.final, newdata = test0, type = "response")
-step.test0.y <- ifelse(step.test0.pred > 0.64, 1, 0) # using cutoff = 0.64
+step.test0.y <- ifelse(step.test0.pred > 0.36, 1, 0) # using cutoff = 0.36
 confusionMatrix(as.factor(step.test0.y), as.factor(test0$newgen), 
                 positive = "1")
 ```
@@ -227,7 +258,7 @@ bye <- capture.output(step0_kcv <- train(newgen ~ ., data = train0, family = "bi
 
 ```{r}
 step0_kcv <- step0_kcv$finalModel
-step0_kcv
+summary(step0_kcv)
 ```
 
 
@@ -251,9 +282,22 @@ bye2 <- capture.output(step0_kcv.final <- train(newgen ~ ., data = all.train0, f
 
 ```{r}
 step0_kcv.final <- step0_kcv.final$finalModel
-step0_kcv.final
+summary(step0_kcv.final)
 ```
 
+
+Stepwise 10kcv Logistic Model:
+
+Compared to The full model, energy, key3 - key6, and key9 - key11 are not included in this model. 
+
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 0.480 + 0.074{Popularity} - 0.009{Duration} + 1.216{Acousticness} 
+\\ + 0.672{Danceability} + 2.807{Instrumentalness} + 0.503{Key1} + 0.445{Key2}
+\\ + 0.702{Key7} + 0.245{Loudness} + 2.207{Speechiness} - 0.003{Tempo} - 1.319{Valence}
+$$
+The audio features in this model that increase the odds of being categorized as a new generation kpop song multiplicativley are Popularity, Acousticness, Danceability, Instrumentalness, Loudness, Speechiness and choosing Key1(C#/D-flat minor), Key2(D minor), Key7(G minor) instead of Key0 (C minor). The features that decrease the odds multiplicatively of being categorized as a new generation kpop song are Duration, Tempo, and Valence.
+
+Almost all the variables in the model: Popularity, Duration, Acousticness, Instrumentalness, Key1(C#/D-flat minor), Key2(D minor), Key7(G minor), Loudness, Speechiness, and Valence are significant predictors in contributing to the log of odds for categorizing a song into the newer generations of kpop versus the older generation. Only the predictors Tempo and Danceability are not significant. 
 
 ```
 #get predicted probabilities for training data
@@ -272,20 +316,20 @@ confusionMatrix(as.factor(step_kcv.test0.y), as.factor(test0$newgen),
                 positive = "1")
 ```
 
-Get prediction and performance evaluation for optimal cut off 0.55 for highest kappa
+Get prediction and performance evaluation for optimal cut off 0.45 for highest kappa
 ```{r}
 #get predicted probabilities for the test data
 step_kcv.test0.pred <- predict(step0_kcv.final, newdata = key.dummy(test0), type = "response")
-step_kcv.test0.y <- ifelse(step_kcv.test0.pred > 0.55, 1, 0) # using cutoff = 0.55
+step_kcv.test0.y <- ifelse(step_kcv.test0.pred > 0.45, 1, 0) # using cutoff = 0.45
 confusionMatrix(as.factor(step_kcv.test0.y), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
-Get prediction and performance evaluation for optimal cut off 0.65 for best sensitivity/specificity balance
+Get prediction and performance evaluation for optimal cut off 0.35 for best sensitivity/specificity balance
 ```{r}
 #get predicted probabilities for the test data
 step_kcv.test0.pred <- predict(step0_kcv.final, newdata = key.dummy(test0), type = "response")
-step_kcv.test0.y <- ifelse(step_kcv.test0.pred > 0.65, 1, 0) # using cutoff = 0.65
+step_kcv.test0.y <- ifelse(step_kcv.test0.pred > 0.35, 1, 0) # using cutoff = 0.35
 confusionMatrix(as.factor(step_kcv.test0.y), as.factor(test0$newgen), 
                 positive = "1")
 ```
@@ -345,6 +389,23 @@ allreg.logit0.final <- glmulti.out0.final@objects[[1]]
 ```
 
 
+All Possible Regressions Model
+
+Compared to the full model, Energy is not included in this model. Besides this difference, the full logit model and this one resulting from the all subsets method are very similar.
+
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 0.684 + 0.074x_{Popularity} - 0.009x_{Duration} + 1.221x_{Acousticness} 
+\\ + 0.695_{Danceability} + 2.807x_{Instrumentalness} + 0.298x_{Key1} + 0.240x_{Key2} 
+\\ - 0.545x_{Key3} - 0.308x_{Key4} - 0.256x_{Key5} - 0.153x_{Key6} + 0.497x_{Key7} 
+\\ - 0.197x_{Key8} - 0.271x_{Key9} - 0.310x_{Key10} - 0.076x_{Key11} + 0.246x_{Loudness}
+\\ + 2.214x_{Speechiness} - 0.003x_{Tempo} - 1.331x_{Valence}
+$$
+
+The audio features in this model that increase the odds of being categorized as a new generation kpop song multiplicativley are Popularity, Acousticness, Danceability, Instrumentalness, Loudness, Speechiness and choosing Key1(C#/D-flat minor), Key2(D minor), Key7(G minor) instead of Key0 (C minor). The features that decrease the odds multiplicatively of being categorized as a new generation kpop song are Duration, Tempo, Valence and choosing Key3(D#/E-flat Minor), Key4(E minor), Key5(F Minor), Key6(F#/G-flat Minor), Key8 (G#/A-flat minor), Key9(A minor), Key10(A#/B-flat minor), Key11(B minor) instead of Key0(C).
+
+Only the variables Popularity, Duration, Acousticness, Instrumentalness, Key7(G minor), Loudness, Speechiness, and Valence are significant predictors in contributing to the log of odds for categorizing a song into the newer generations of kpop versus the older generation. 
+
+
 try fitting training data to results from all possible regression variable selection
 ```
 #get predicted probabilities for training data
@@ -362,19 +423,21 @@ confusionMatrix(as.factor(all.test0.y), as.factor(test0$newgen),
                 positive = "1")
 ```
 
-
+Using the cutoff that yields the optimal kappa (0.46)
 ```{r}
 #get predicted probabilities for the test data
 all.test0.pred <- predict(allreg.logit0.final, newdata = test0, type = "response")
-all.test0.y <- ifelse(all.test0.pred > 0.54, 1, 0) # using cutoff = 0.54
+all.test0.y <- ifelse(all.test0.pred > 0.46, 1, 0) # using cutoff = 0.46
 confusionMatrix(as.factor(all.test0.y), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
+
+Using the cutoff that yields the best balance between sensitivity/specificity (0.36)
 ```{r}
 #get predicted probabilities for the test data
 all.test0.pred <- predict(allreg.logit0.final, newdata = test0, type = "response")
-all.test0.y <- ifelse(all.test0.pred > 0.64, 1, 0) # using cutoff = 0.64
+all.test0.y <- ifelse(all.test0.pred > 0.36, 1, 0) # using cutoff = 0.36
 confusionMatrix(as.factor(all.test0.y), as.factor(test0$newgen), 
                 positive = "1")
 ```
@@ -414,6 +477,14 @@ ridge0.model.final <- coef(ridge0.final$finalModel, ridge0.final$bestTune$lambda
 ridge0.model.final
 ```
 
+Ridge 10 fold Cross Validation model
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 0.457 + 0.060{Popularity} - 0.008{Duration} + 0.904{Acousticness} + 0.281{Danceability} 
+\\ + 0.160{Energy} + 1.840{Instrumentalness} + 0.288{Key1} + 0.236{Key2} 
+\\ - 0.358{Key3} - 0.202{Key4} - 0.137{Key5} - 0.048{Key6} + 0.445{Key7} 
+\\ - 0.120{Key8} - 0.177{Key9} - 0.191{Key10} - 0.030{Key11} + 0.175{Loudness}
+\\ + 1.769{Speechiness} - 0.002{Tempo} - 1.020{Valence}
+$$
 
 predict and evaluate on the test set where cutoff is at 0.5
 ```{r}
@@ -423,18 +494,18 @@ confusionMatrix(as.factor(pred.ridge0), as.factor(test0$newgen),
                 positive = "1")
 ```
 
-predict and evaluate on the test set where cutoff is at 0.55 corresponding to optimal kappa
+predict and evaluate on the test set where cutoff is at 0.44 corresponding to optimal kappa
 ```{r}
 prob.ridge0 <- predict(ridge0.final, s = ridge0.final$bestTune, test0, type = "prob")
-pred.ridge0 <- ifelse(prob.ridge0[,2] > 0.55, 1, 0) # using cutoff = 0.55
+pred.ridge0 <- ifelse(prob.ridge0[,2] > 0.44, 1, 0) # using cutoff = 0.44
 confusionMatrix(as.factor(pred.ridge0), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
-predict and evaluate on the test set where cutoff is at 0.64 corresponding to optimal balance of sensitivity and specificity
+predict and evaluate on the test set where cutoff is at 0.37 corresponding to optimal balance of sensitivity and specificity
 ```{r}
 prob.ridge0 <- predict(ridge0.final, s = ridge0.final$bestTune, test0, type = "prob")
-pred.ridge0 <- ifelse(prob.ridge0[,2] > 0.64, 1, 0) # using cutoff = 0.64
+pred.ridge0 <- ifelse(prob.ridge0[,2] > 0.37, 1, 0) # using cutoff = 0.37
 confusionMatrix(as.factor(pred.ridge0), as.factor(test0$newgen), 
                 positive = "1")
 ```
@@ -474,6 +545,19 @@ lasso0.model.final <- coef(lasso0.final$finalModel, lasso0.final$bestTune$lambda
 lasso0.model.final
 ```
 
+
+Lasso 10 fold Cross Validation model:
+
+Compared to the full model, this one leaves out the variables of danceability, energy, Key4 - Key6, Key 8, and Key 11
+
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 0.149 + 0.070{Popularity} - 0.008{Duration} + 0.809{Acousticness} + 1.880{Instrumentalness}
+\\  
++ 0.204{Key1} + 0.103{Key2} - 0.139{Key3} + 0.526{Key7} - 0.008{Key9} - 0.0004{Key10}
+\\  
++ 0.170{Loudness} + 0.947{Speechiness} - 0.001{Tempo} - 0.834{Valence}
+$$
+
 predict and evaluate on the test set where cutoff is at 0.5
 ```{r}
 prob.lasso0 <- predict(lasso0.final, s = lasso0.final$bestTune, test0, type = "prob")
@@ -482,18 +566,18 @@ confusionMatrix(as.factor(pred.lasso0), as.factor(test0$newgen),
                 positive = "1")
 ```
 
-predict and evaluate on the test set where cutoff is at 0.58 corresponding to optimal kappa
+predict and evaluate on the test set where cutoff is at 0.47 corresponding to optimal kappa
 ```{r}
 prob.lasso0 <- predict(lasso0.final, s = lasso0.final$bestTune, test0, type = "prob")
-pred.lasso0 <- ifelse(prob.lasso0[,2] > 0.58, 1, 0) # using cutoff = 0.58
+pred.lasso0 <- ifelse(prob.lasso0[,2] > 0.47, 1, 0) # using cutoff = 0.47
 confusionMatrix(as.factor(pred.lasso0), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
-predict and evaluate on the test set where cutoff is at 0.65 corresponding to optimal balance of sensitivity and specificity
+predict and evaluate on the test set where cutoff is at 0.35 corresponding to optimal balance of sensitivity and specificity
 ```{r}
 prob.lasso0 <- predict(lasso0.final, s = lasso0.final$bestTune, test0, type = "prob")
-pred.lasso0 <- ifelse(prob.lasso0[,2] > 0.65, 1, 0) # using cutoff = 0.65
+pred.lasso0 <- ifelse(prob.lasso0[,2] > 0.35, 1, 0) # using cutoff = 0.35
 confusionMatrix(as.factor(pred.lasso0), as.factor(test0$newgen), 
                 positive = "1")
 ```
@@ -534,6 +618,19 @@ enet0.model.final <- coef(enet0.final$finalModel, enet0.final$bestTune$lambda)
 enet0.model.final
 ```
 
+
+Elastic Net 10 fold Cross Validation model:
+
+Compared to the full model, this one leaves out the variables of danceability, energy, Key4 - Key6, Key8, Key9, and Key11
+
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 0.116 + 0.070{Popularity} - 0.008{Duration} + 0.737{Acousticness} + 1.771{Instrumentalness}
+\\  
++ 0.305{Key1} + 0.174{Key2} - 0.129{Key3} + 0.454{Key7} - 0.0004{Key10}
+\\  
++ 0.170{Loudness} + 1.154{Speechiness} - 0.001{Tempo} -0.847{Valence}
+$$
+
 predict and evaluate on the test set where cutoff is at 0.5
 ```{r}
 prob.enet0 <- predict(enet0.final, s = enet0.final$bestTune, test0, type = "prob")
@@ -542,18 +639,18 @@ confusionMatrix(as.factor(pred.enet0), as.factor(test0$newgen),
                 positive = "1")
 ```
 
-predict and evaluate on the test set where cutoff is at 0.54 corresponding to optimal kappa
+predict and evaluate on the test set where cutoff is at 0.47 corresponding to optimal kappa
 ```{r}
 prob.enet0 <- predict(enet0.final, s = enet0.final$bestTune, test0, type = "prob")
-pred.enet0 <- ifelse(prob.enet0[,2] > 0.54, 1, 0) # using cutoff = 0.54
+pred.enet0 <- ifelse(prob.enet0[,2] > 0.47, 1, 0) # using cutoff = 0.47
 confusionMatrix(as.factor(pred.enet0), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
-predict and evaluate on the test set where cutoff is at 0.65 corresponding to optimal balance of sensitivity and specificity
+predict and evaluate on the test set where cutoff is at 0.35 corresponding to optimal balance of sensitivity and specificity
 ```{r}
 prob.enet0 <- predict(enet0.final, s = enet0.final$bestTune, test0, type = "prob")
-pred.enet0 <- ifelse(prob.enet0[,2] > 0.65, 1, 0) # using cutoff = 0.65
+pred.enet0 <- ifelse(prob.enet0[,2] > 0.35, 1, 0) # using cutoff = 0.35
 confusionMatrix(as.factor(pred.enet0), as.factor(test0$newgen), 
                 positive = "1")
 ```
@@ -561,75 +658,33 @@ confusionMatrix(as.factor(pred.enet0), as.factor(test0$newgen),
 
 ### Deciding on the best model for Mode 0 songs
 
-Full Logistic model
-$$
-log(\frac{\hat \pi}{1 - \hat \pi}) = -0.453 - 0.074x_{Popularity} + 0.532x_{Duration} - 1.280x_{Acousticness} - 0.715x_{Danceability} 
-\\ - 0.227x_{Energy} - 2.790x_{Instrumentalness} - 0.301x_{Key1} - 0.242x_{Key2} 
-\\ + 0.540x_{Key3} + 0.308x_{Key4} + 0.253x_{Key5} + 0.148x_{Key6} - 0.498x_{Key7} 
-\\ + 0.194x_{Key8} + 0.270x_{Key9} + 0.307x_{Key10} + 0.075x_{Key11} - 0.236x_{Loudness}
-\\ -2.170x_{Speechiness} + 0.003x_{Tempo} + 1.359x_{Valence}
-$$
-
-Stepwise Logistic Model:
-In comparison to the full model, the variable energy is not included
-$$
-log(\frac{\hat \pi}{1 - \hat \pi}) = -0.684 - 0.074_{Popularity} + 0.534_{Duration} - 1.221_{Acousticness} 
-\\ - 0.695_{Danceability} - 2.807_{Instrumentalness} - 0.298_{Key1} - 0.240_{Key2} 
-\\ + 0.545_{Key3} + 0.308x_{Key4} + 0.256x_{Key5} + 0.153_{Key6} - 0.497_{Key7} 
-\\ + 0.197_{Key8} + 0.271_{Key9} + 0.310_{Key10} + 0.076_{Key11} - 0.246_{Loudness}
-\\ - 2.214_{Speechiness} + 0.004_{Tempo} + 1.331_{Valence}
-$$
-
-Stepwise 10kcv Logistic Model
-compared to The full model, energy, key3 - key6, key9 - key11, and Tempo are not included in this model. 
-$$
-log(\frac{\hat \pi}{1 - \hat \pi}) = -0.480 - 0.074_{Popularity} + 0.532_{Duration} - 1.216_{Acousticness} 
-\\ - 0.672_{Danceability} -2.807_{Instrumentalness} - 0.503_{Key1} - 0.445_{Key2}
-\\  - 0.702_{Key7} - 0.245_{Loudness} - 2.207x_{Speechiness} + 1.319x_{Valence}
-$$
-
-All Possible Regressions Model
-Compared to the full model, Energy is not included in this model
-$$
-log(\frac{\hat \pi}{1 - \hat \pi}) = -0.684 - 0.074x_{Popularity} + 0.532x_{Duration} - 1.221x_{Acousticness} 
-\\ -0.695_{Duration} - 2.807x_{Instrumentalness} - 0.298x_{Key1} - 0.240x_{Key2} 
-\\ + 0.545x_{Key3} + 0.308x_{Key4} + 0.256x_{Key5} + 0.153x_{Key6} - 0.497x_{Key7} 
-\\ + 0.197x_{Key8} + 0.271x_{Key9} + 0.310x_{Key10} + 0.076x_{Key11} - 0.245x_{Loudness}
-\\ -2.214x_{Speechiness} + 0.003x_{Tempo} + 1.331x_{Valence}
-$$
-
-Ridge 10 fold Cross Validation model
-$$
-log(\frac{\hat \pi}{1 - \hat \pi}) = -0.343 - 0.060{Popularity} + 0.458{Duration} - 0.943{Acousticness} - 0.253{Danceability} 
-\\ - 0.227{Energy} - 1.829{Instrumentalness} - 0.200{Key1} - 0.163{Key2} 
-\\ + 0.321{Key3} + 0.184{Key4} + 0.090{Key5} + 0.035{Key6} - 0.491{Key7} 
-\\ + 0.118{Key8} + 0.186{Key9} + 0.171{Key10} + 0.041{Key11} - 0.167{Loudness}
-\\ -1.472{Speechiness} + 0.002{Tempo} + 0.980{Valence}
-$$
-
-Lass0 10 fold Cross Validation model
-Compared to the full model, this one leaves out the variables of Key6, Key 8, and Key 11
-$$
-log(\frac{\hat \pi}{1 - \hat \pi}) = -0.341 - 0.071{Popularity} + 0.499{Duration} - 1.013{Acousticness} - 0.234{Danceability} 
-\\ - 0.027{Energy} - 2.298{Instrumentalness} - 0.254{Key1} - 0.182{Key2} 
-\\ + 0.260{Key3} + 0.067{Key4} + 0.007{Key5} - 0.595{Key7} 
-\\ + 0.087{Key9} + 0.076{Key10} - 0.120{Loudness}
-\\ - 1.362{Speechiness} + 0.001{Tempo} + 1.025{Valence}
-$$
 
 Performance metrics
 ```{r}
 mode0.results <- data.frame(Model = c("Full", "Step", "Step 10CV", "AllReg", "Ridge 10CV", "Lasso 10CV", "ElasticNet 10CV"),
-                            cutoff = c(0.65, 0.64, 0.65, 0.64, 0.64, 0.65, 0.65), #optimal balance between sensitivity and specificity
-                            #AIC = c(3815.2, 3813.4, 3804, 3813.4, NA, NA, NA),
-                            Accuracy = c(0.7175, 0.7247, 0.7218, 0.7247, 0.7218, 0.729, 0.7247),
-                            Kappa = c(0.4222, 0.4342, 0.432, 0.4342, 0.4298, 0.4455, 0.4378),
-                            Sensitivity = c(0.7196, 0.7336 , 0.7196, 0.7336, 0.7266, 0.7290, 0.7220),
-                            Specificity = c(0.7143, 0.7106, 0.7253, 0.7106, 0.7143, 0.7289, 0.7289))
+                            cutoff = c(0.35, 0.36, 0.35, 0.36, 0.37, 0.35, 0.35), #optimal balance between sensitivity and specificity
+                            #AIC = c(3815.2, 3813.4, 3804.3, 3813.4, NA, NA, NA),
+                            Accuracy = c(0.7175, 0.7247, 0.7218, 0.7247, 0.7261, 0.7361, 0.7375),
+                            Kappa = c(0.4222, 0.4342, 0.4320, 0.4342, 0.4360, 0.4597, 0.4616),
+                            Sensitivity = c(0.7143, 0.7106, 0.7253, 0.7106, 0.7070, 0.7363, 0.7326),
+                            Specificity = c(0.7196, 0.7336, 0.7196, 0.7336, 0.7383, 0.7360, 0.7407))
 mode0.results
 ```
 
-All models have VERY similar results. Therefore, one could argue that each would work as equally as well as one another. Based on the analysis done with this sample, the best model would be the Lasso model, as it has the highest accuracy score, as well as the sensitivity and specifity scores simultaneously having fairly high rates. 
+All models have VERY similar results. Therefore, one could argue that each would work as equally as well as one another. Based on the analysis done with this sample, the best model would be the Elastic Net model, as it has the highest accuracy score, as well as the sensitivity and specifity scores simultaneously having fairly high rates. 
+
+Elastic Net 10 fold Cross Validation model:
+
+Compared to the full model, this one leaves out the variables of danceability, energy, Key4 - Key6, Key8, Key9, and Key11
+
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 0.116 + 0.070{Popularity} - 0.008{Duration} + 0.737{Acousticness} + 1.771{Instrumentalness}
+\\  
++ 0.305{Key1} + 0.174{Key2} - 0.129{Key3} + 0.454{Key7} - 0.0004{Key10}
+\\  
++ 0.170{Loudness} + 1.154{Speechiness} - 0.001{Tempo} -0.847{Valence}
+$$
+
 
 
 ## Logistic Where mode = 1
@@ -668,6 +723,20 @@ logit1.final <- glm(newgen ~., data = all.train1, family = "binomial")
 summary(logit1.final)
 ```
 
+Full Logistic model 
+
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = -0.783 + 0.079{Popularity} - 0.009{Duration} + 0.882{Acousticness} + 0.665{Danceability} 
+\\ + 0.537{Energy} + 2.471{Instrumentalness} - 0.415{Key1} + 0.002{Key2} 
+\\ + 0.149{Key3} + 0.280{Key4} - 0.217{Key5} - 0.280{Key6} - 0.161{Key7} 
+\\ - 0.185{Key8} + 0.006{Key9} - 0.071{Key10} - 0.094{Key11} + 0.154{Loudness}
+\\ + 0.792{Speechiness} + 0.0002{Tempo} - 0.742{Valence}
+$$
+
+The audio features in this model that increase the odds of being categorized as a new generation kpop song multiplicativley are Popularity, Acousticness, Danceability, Energy, Instrumentalness, Loudness, Speechiness, Tempo and choosing Key2(D major), Key3(D#/E-flat Major), Key4(E Major), Key9(A Major), instead of Key0 (C Major). The features that decrease the odds multiplicatively of being categorized as a new generation kpop song are Duration, Valence and choosing, Key5(F Major), Key6(F#/G-flat Major), Key8 (G#/A-flat Major), Key10(A#/B-flat Major), Key11(B Major) instead of Key0(C Major).
+
+Only the variables Popularity, Duration, Acousticness, Danceability, Instrumentalness, Key1(C#/D-flat major), Loudness, Speechiness, and Valence are significant predictors in contributing to the log of odds for categorizing a song into the newer generations of kpop versus the older generation for songs composed in the major mode. 
+
 
 confusion matrix on the test data using standard cut off 
 ```{r}
@@ -678,20 +747,20 @@ confusionMatrix(as.factor(logit.test1.y), as.factor(test1$newgen),
                 positive = "1")
 ```
 
-confusion matrix on the test data using optimal cutoff based on kappa
+confusion matrix on the test data using optimal cutoff based on kappa (0.39)
 ```{r}
 #get predicted probabilities for the test data
 logit.test1.pred <- predict(logit1.final, newdata = test1, type = "response")
-logit.test1.y <- ifelse(logit.test1.pred > 0.61, 1, 0) # using cutoff = 0.61
+logit.test1.y <- ifelse(logit.test1.pred > 0.39, 1, 0) # using cutoff = 0.39
 confusionMatrix(as.factor(logit.test1.y), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
-confusion matrix on the test data using optimal cutoff based on sensitivity/specificty balance
+confusion matrix on the test data using optimal cutoff based on sensitivity/specificty balance (0.34)
 ```{r}
 #get predicted probabilities for the test data
 logit.test1.pred <- predict(logit1.final, newdata = test1, type = "response")
-logit.test1.y <- ifelse(logit.test1.pred > 0.66, 1, 0) # using cutoff = 0.66
+logit.test1.y <- ifelse(logit.test1.pred > 0.34, 1, 0) # using cutoff = 0.34
 confusionMatrix(as.factor(logit.test1.y), as.factor(test1$newgen), 
                 positive = "1")
 ```
@@ -741,6 +810,21 @@ summary(step1.final)
 ```
 
 
+Stepwise Logistic Model:
+
+Compared to the full model, the stepwise logistic model does not have Tempo or Energy in the model
+
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = -0.226 + 0.079{Popularity} - 0.009Duration + 0.739{Acousticness} + 0.632{Danceability} 
+\\ + 2.516{Instrumentalness} - 0.415{Key1} + 0.002{Key2} 
+\\ + 0.147{Key3} + 0.279{Key4} - 0.222{Key5} - 0.276{Key6} - 0.162{Key7} 
+\\ - 0.187{Key8} + 0.002{Key9} - 0.072{Key10} - 0.094{Key11} + 0.178{Loudness}
+\\ + 0.980{Speechiness} - 0.668{Valence}
+$$
+
+The audio features in this model that increase the odds of being categorized as a new generation kpop song multiplicativley are Popularity, Acousticness, Danceability, Instrumentalness, Loudness, Speechiness, and choosing Key2(D major), Key3(D#/E-flat Major), Key4(E Major), Key9(A Major), instead of Key0 (C Major). The features that decrease the odds multiplicatively of being categorized as a new generation kpop song are Duration, Valence and choosing, Key1(C#/D-flat Major), Key5(F Major), Key6(F#/G-flat Major), Key8 (G#/A-flat Major), Key10(A#/B-flat Major), Key11(B Major) instead of Key0(C Major).
+
+Only the variables Popularity, Duration, Acousticness, Instrumentalness, Loudness, and Valence are significant predictors in contributing to the log of odds for categorizing a song into the newer generations of kpop versus the older generation for songs composed in the major mode. Unlike the full model, none of the key dummy variables are considered significant towards the predictive power of the model.
 
 
 predict and evaluate on test using standard cut off 0.5
@@ -752,20 +836,20 @@ confusionMatrix(as.factor(step.test1.y), as.factor(test1$newgen),
                 positive = "1")
 ```
 
-predict and evaluate on test using optimal cut off 0.61 for highest kappa
+predict and evaluate on test using optimal cut off 0.39 for highest kappa
 ```{r}
 #get predicted probabilities for the test data
 step.test1.pred <- predict(step1.final, newdata = test1, type = "response")
-step.test1.y <- ifelse(step.test1.pred > 0.61, 1, 0) # using cutoff = 0.61
+step.test1.y <- ifelse(step.test1.pred > 0.39, 1, 0) # using cutoff = 0.39
 confusionMatrix(as.factor(step.test1.y), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
-predict and evaluate on test using optimal cut off 0.66 for best sensitivity/specificity balance
+predict and evaluate on test using optimal cut off 0.34 for best sensitivity/specificity balance
 ```{r}
 #get predicted probabilities for the test data
 step.test1.pred <- predict(step1.final, newdata = test1, type = "response")
-step.test1.y <- ifelse(step.test1.pred > 0.66, 1, 0) # using cutoff = 0.66
+step.test1.y <- ifelse(step.test1.pred > 0.34, 1, 0) # using cutoff = 0.34
 confusionMatrix(as.factor(step.test1.y), as.factor(test1$newgen), 
                 positive = "1")
 ```
@@ -785,7 +869,7 @@ bye3 <- capture.output(step1_kcv <- train(newgen ~ ., data = train1, family = bi
 
 ```{r}
 step1_kcv <- step1_kcv$finalModel
-step1_kcv
+summary(step1_kcv)
 ```
 
 
@@ -817,8 +901,23 @@ bye4 <- capture.output(step1_kcv.final <- train(newgen ~ ., data = all.train1, f
 
 ```{r}
 step1_kcv.final <- step1_kcv.final$finalModel
-step1_kcv.final
+summary(step1_kcv.final)
 ```
+
+Stepwise 10CV Logistic Model:
+
+Energy, Key2, Key3, Key9, Key10, Key11, Energy and Tempo not included.
+
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = -0.233 + 0.079{Popularity} - 0.009{Duration} + 0.743{Acousticness} + 0.621{Danceability} 
+\\ + 2.524{Instrumentalness} - 0.406{Key1} + 0.287{Key4} - 0.214{Key5} 
+\\ - 0.268{Key6} - 0.154{Key7} - 0.179{Key8} + 0.178{Loudness}
+\\ + 0.992{Speechiness} - 0.674{Valence}
+$$
+
+The audio features in this model that increase the odds of being categorized as a new generation kpop song multiplicativley are Popularity, Acousticness, Danceability, Instrumentalness, Loudness, Speechiness, and choosing Key4(E Major) instead of Key0 (C Major). The features that decrease the odds multiplicatively of being categorized as a new generation kpop song are Duration, Valence and choosing, Key1(C#/D-flat Major), Key5(F Major), Key6(F#/G-flat Major), Key8(G#/A-flat Major), instead of Key0(C Major).
+
+Only the variables Popularity, Duration, Acousticness, Instrumentalness, Loudness, Valence, and choosing Key1(C#/D-flat Major) or Key6(F#/G-flat Major) instead of Key0 (C Major) are significant predictors in contributing to the log of odds for categorizing a song into the newer generations of kpop versus the older generation for songs composed in the major mode.
 
 
 Get prediction and performance evaluation for standard cut off 0.5
@@ -830,20 +929,20 @@ confusionMatrix(as.factor(step_kcv.test1.y), as.factor(test1$newgen),
                 positive = "1")
 ```
 
-Get prediction and performance evaluation for optimal cut off 0.61 for highest kappa
+Get prediction and performance evaluation for optimal cut off 0.39 for highest kappa
 ```{r}
 #get predicted probabilities for the test data
 step_kcv.test1.pred <- predict(step1_kcv.final, newdata = key.dummy(test1), type = "response")
-step_kcv.test1.y <- ifelse(step_kcv.test1.pred > 0.61, 1, 0) # using cutoff = 0.61
+step_kcv.test1.y <- ifelse(step_kcv.test1.pred > 0.39, 1, 0) # using cutoff = 0.39
 confusionMatrix(as.factor(step_kcv.test1.y), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
-Get prediction and performance evaluation for optimal cut off 0.66 for best sensitivity/specificity balance
+Get prediction and performance evaluation for optimal cut off 0.34 for best sensitivity/specificity balance
 ```{r}
 #get predicted probabilities for the test data
 step_kcv.test1.pred <- predict(step1_kcv.final, newdata = key.dummy(test1), type = "response")
-step_kcv.test1.y <- ifelse(step_kcv.test1.pred > 0.66, 1, 0) # using cutoff = 0.66
+step_kcv.test1.y <- ifelse(step_kcv.test1.pred > 0.34, 1, 0) # using cutoff = 0.34
 confusionMatrix(as.factor(step_kcv.test1.y), as.factor(test1$newgen), 
                 positive = "1")
 ```
@@ -910,6 +1009,22 @@ summary(glmulti.out1.final@objects[[1]])
 allreg.logit1.final <- glmulti.out1.final@objects[[1]]
 ```
 
+All Possible Regressions Model
+
+Compared to the Full model, the one resulting from All possible Regressions omits Energy and Tempo.
+
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = -0.226 + 0.079{Popularity} - 0.009Duration + 0.739{Acousticness} + 0.632{Danceability} 
+\\ + 2.516{Instrumentalness} - 0.415{Key1} + 0.002{Key2} 
+\\ + 0.147{Key3} + 0.279{Key4} - 0.222{Key5} - 0.276{Key6} - 0.162{Key7} 
+\\ - 0.187{Key8} + 0.002{Key9} - 0.072{Key10} - 0.094{Key11} + 0.178{Loudness}
+\\ + 0.980{Speechiness} - 0.668{Valence}
+$$
+
+The audio features in this model that increase the odds of being categorized as a new generation kpop song multiplicativley are Popularity, Acousticness, Danceability, Instrumentalness, Loudness, Speechiness, and choosing Key2(D major), Key3(D#/E-flat Major), Key4(E Major), Key9(A Major), instead of Key0 (C Major). The features that decrease the odds multiplicatively of being categorized as a new generation kpop song are Duration, Valence and choosing, Key1(C#/D-flat Major), Key5(F Major), Key6(F#/G-flat Major), Key8 (G#/A-flat Major), Key10(A#/B-flat Major), Key11(B Major) instead of Key0(C Major).
+
+Only the variables Popularity, Duration, Acousticness, Instrumentalness, Key1(C#/D-flat major), Loudness, and Valence are significant predictors in contributing to the log of odds for categorizing a song into the newer generations of kpop versus the older generation for songs composed in the major mode. 
+
 
 
 ```{r}
@@ -920,19 +1035,20 @@ confusionMatrix(as.factor(all.test1.y), as.factor(test1$newgen),
                 positive = "1")
 ```
 
-
+Using the cut off that yields the optimal kappa (0.39)
 ```{r}
 #get predicted probabilities for the test data
 all.test1.pred <- predict(allreg.logit1.final, newdata = test1, type = "response")
-all.test1.y <- ifelse(all.test1.pred > 0.61, 1, 0) # using cutoff = 0.61
+all.test1.y <- ifelse(all.test1.pred > 0.39, 1, 0) # using cutoff = 0.39
 confusionMatrix(as.factor(all.test1.y), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
+Using the cut-off that yields the best balance between the sensitivity and specificity rates. (0.34)
 ```{r}
 #get predicted probabilities for the test data
 all.test1.pred <- predict(allreg.logit1.final, newdata = test1, type = "response")
-all.test1.y <- ifelse(all.test1.pred > 0.66, 1, 0) # using cutoff = 0.66
+all.test1.y <- ifelse(all.test1.pred > 0.34, 1, 0) # using cutoff = 0.34
 confusionMatrix(as.factor(all.test1.y), as.factor(test1$newgen), 
                 positive = "1")
 ```
@@ -971,6 +1087,19 @@ ridge1.model.final <- coef(ridge1.final$finalModel, ridge1.final$bestTune$lambda
 ridge1.model.final
 ```
 
+
+Ridge 10 Fold Cross Validation Logistic model
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = -0.538 + 0.062{Popularity} - 0.007{Duration} + 0.553{Acousticness} + 0.350{Danceability} 
+\\ + 0.318{Energy} + 1.609{Instrumentalness} - 0.257{Key1} + 0.064{Key2} 
+\\ + 0.205{Key3} + 0.256{Key4} - 0.121{Key5} - 0.162{Key6} - 0.056{Key7} 
+\\ - 0.071{Key8} + 0.068{Key9} - 0.025{Key10} - 0.011{Key11} + 0.117{Loudness}
+\\ + 0.915{Speechiness} + 0.0005{Tempo} - 0.502{Valence}
+$$
+
+The audio features in this model that increase the odds of being categorized as a new generation kpop song multiplicativley are Popularity, Acousticness, Danceability, Energy, Instrumentalness, Loudness, Speechiness, Tempo and choosing Key2(D major), Key3(D#/E-flat Major), Key4(E Major), Key9(A Major), instead of Key0 (C Major). The features that decrease the odds multiplicatively of being categorized as a new generation kpop song are Duration, Valence and choosing, Key1(C#/D-flat Major), Key5(F Major), Key6(F#/G-flat Major), Key8 (G#/A-flat Major), Key10(A#/B-flat Major), Key11(B Major) instead of Key0(C Major).
+
+
 predict and evaluate on the test set where cutoff is at 0.5
 ```{r}
 prob.ridge1 <- predict(ridge1.final, s = ridge1.final$bestTune, test1, type = "prob")
@@ -979,18 +1108,18 @@ confusionMatrix(as.factor(pred.ridge1), as.factor(test1$newgen),
                 positive = "1")
 ```
 
-predict and evaluate on the test set where cutoff is at 0.59 corresponding to optimal kappa
+predict and evaluate on the test set where cutoff is at 0.40 corresponding to optimal kappa
 ```{r}
 prob.ridge1 <- predict(ridge1.final, s = ridge1.final$bestTune, test1, type = "prob")
-pred.ridge1 <- ifelse(prob.ridge1[,2] > 0.59, 1, 0) # using cutoff = 0.59
+pred.ridge1 <- ifelse(prob.ridge1[,2] > 0.40, 1, 0) # using cutoff = 0.40
 confusionMatrix(as.factor(pred.ridge1), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
-predict and evaluate on the test set where cutoff is at 0.65 corresponding to optimal balance of sensitivity and specificity
+predict and evaluate on the test set where cutoff is at 0.35 corresponding to optimal balance of sensitivity and specificity
 ```{r}
 prob.ridge1 <- predict(ridge1.final, s = ridge1.final$bestTune, test1, type = "prob")
-pred.ridge1 <- ifelse(prob.ridge1[,2] > 0.65, 1, 0) # using cutoff = 0.65
+pred.ridge1 <- ifelse(prob.ridge1[,2] > 0.35, 1, 0) # using cutoff = 0.35
 confusionMatrix(as.factor(pred.ridge1), as.factor(test1$newgen), 
                 positive = "1")
 ```
@@ -1031,6 +1160,19 @@ lasso1.model.final <- coef(lasso1.final$finalModel, lasso1.final$bestTune$lambda
 lasso1.model.final
 ```
 
+
+Lasso 10 Fold Cross Validation Logistic model:
+
+Compared to the full logistic model the lasso model does not include the variables Danceability, Energy, Key2, Key3, Key5 - Key11, Speechiness, and Tempo.
+
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = -0.928 + 0.075{Popularity} - 0.006{Duration} + 0.195{Acousticness}
+\\ + 1.169{Instrumentalness} - 0.173{Key1} + 0.002{Key4} + 0.081{Loudness} - 0.098{Valence}
+$$
+
+The audio features in this model that increase the odds of being categorized as a new generation kpop song multiplicativley are Popularity, Acousticness, Instrumentalness, Loudness, and choosing Key4(E Major) instead of Key0 (C Major). The features that decrease the odds multiplicatively of being categorized as a new generation kpop song are Duration, Valence and choosing, Key1(C#/D-flat) instead of Key0(C Major).
+
+
 predict and evaluate on the test set where cutoff is at 0.5
 ```{r}
 prob.lasso1 <- predict(lasso1.final, s = lasso1.final$bestTune, test1, type = "prob")
@@ -1039,18 +1181,18 @@ confusionMatrix(as.factor(pred.lasso1), as.factor(test1$newgen),
                 positive = "1")
 ```
 
-predict and evaluate on the test set where cutoff is at 0.56 corresponding to optimal kappa
+predict and evaluate on the test set where cutoff is at 0.44 corresponding to optimal kappa
 ```{r}
 prob.lasso1 <- predict(lasso1.final, s = lasso1.final$bestTune, test1, type = "prob")
-pred.lasso1 <- ifelse(prob.lasso1[,2] > 0.56, 1, 0) # using cutoff = 0.56
+pred.lasso1 <- ifelse(prob.lasso1[,2] > 0.44, 1, 0) # using cutoff = 0.44
 confusionMatrix(as.factor(pred.lasso1), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
-predict and evaluate on the test set where cutoff is at 0.66 corresponding to optimal balance of sensitivity and specificity
+predict and evaluate on the test set where cutoff is at 0.34 corresponding to optimal balance of sensitivity and specificity
 ```{r}
 prob.lasso1 <- predict(lasso1.final, s = lasso1.final$bestTune, test1, type = "prob")
-pred.lasso1 <- ifelse(prob.lasso1[,2] > 0.66, 1, 0) # using cutoff = 0.66
+pred.lasso1 <- ifelse(prob.lasso1[,2] > 0.34, 1, 0) # using cutoff = 0.34
 confusionMatrix(as.factor(pred.lasso1), as.factor(test1$newgen), 
                 positive = "1")
 ```
@@ -1091,6 +1233,18 @@ enet1.model.final <- coef(enet1.final$finalModel, enet1.final$bestTune$lambda)
 enet1.model.final
 ```
 
+
+Elastic Net 10 Fold Cross Validation Logistic model:
+
+Compared to the full logistic model the lasso model does not include the variables Acousticness, Danceability, Energy, Key2 - Key11, Speechiness, Duration and Tempo.
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = -1.072 + 0.071{Popularity} - 0.005{Duration} 
+\\ + 0.671{Instrumentalness} - 0.059{Key1} + 0.054{Loudness} 
+$$
+
+The audio features in this model that increase the odds of being categorized as a new generation kpop song multiplicativley are Popularity, Instrumentalness, and Loudness. The features that decrease the odds multiplicatively of being categorized as a new generation kpop song are Duration and choosing Key1(C#/D-flat) instead of Key0(C Major).
+
+
 predict and evaluate on the test set where cutoff is at 0.5
 ```{r}
 prob.enet1 <- predict(enet1.final, s = enet1.final$bestTune, test1, type = "prob")
@@ -1099,96 +1253,46 @@ confusionMatrix(as.factor(pred.enet1), as.factor(test1$newgen),
                 positive = "1")
 ```
 
-predict and evaluate on the test set where cutoff is at 0.57 corresponding to optimal kappa
+predict and evaluate on the test set where cutoff is at 0.43 corresponding to optimal kappa
 ```{r}
 prob.enet1 <- predict(enet1.final, s = enet1.final$bestTune, test1, type = "prob")
-pred.enet1 <- ifelse(prob.enet1[,2] > 0.57, 1, 0) # using cutoff = 0.57
+pred.enet1 <- ifelse(prob.enet1[,2] > 0.43, 1, 0) # using cutoff = 0.43
 confusionMatrix(as.factor(pred.enet1), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
-predict and evaluate on the test set where cutoff is at 0.66 corresponding to optimal balance of sensitivity and specificity
+predict and evaluate on the test set where cutoff is at 0.35 corresponding to optimal balance of sensitivity and specificity
 ```{r}
 prob.enet1 <- predict(enet1.final, s = enet1.final$bestTune, test1, type = "prob")
-pred.enet1 <- ifelse(prob.enet1[,2] > 0.66, 1, 0) # using cutoff = 0.66
+pred.enet1 <- ifelse(prob.enet1[,2] > 0.35, 1, 0) # using cutoff = 0.35
 confusionMatrix(as.factor(pred.enet1), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
 ### Deciding on the best model for Mode 1 songs
 
-Full Logistic model
-$$
-log(\frac{\hat \pi}{1 - \hat \pi}) = 0.783 - 0.079{Popularity} + 0.512{Duration} - 0.882{Acousticness} - 0.665{Danceability} 
-\\ - 0.537{Energy} - 2.471{Instrumentalness} + 0.415{Key1} - 0.002{Key2} 
-\\ - 0.149{Key3} - 0.280{Key4} + 0.217{Key5} + 0.280{Key6} + 0.161{Key7} 
-\\ + 0.185{Key8} - 0.006{Key9} + 0.071{Key10} + 0.094{Key11} - 0.154{Loudness}
-\\ - 0.792{Speechiness} - 0.0002{Tempo} + 0.742{Valence}
-$$
 
-Stepwise Logistic Model
-Compared to the full model, the stepwise logistic model does not have Tempo or Energy in the model
-$$
-log(\frac{\hat \pi}{1 - \hat \pi}) = 0.226 - 0.079{Popularity} + 0.515Duration - 0.739{Acousticness} - 0.632{Danceability} 
-\\ - 2.516{Instrumentalness} + 0.415{Key1} - 0.002{Key2} 
-\\ - 0.147{Key3} - 0.279{Key4} + 0.222{Key5} + 0.276{Key6} + 0.162{Key7} 
-\\ + 0.187{Key8} - 0.002{Key9} + 0.072{Key10} + 0.094{Key11} - 0.178{Loudness}
-\\ - 0.980{Speechiness} + 0.668{Valence}
-$$
-
-Stepwise 10kcv Logistic Model
-Energy, Key2, Key3, Key9, Key10, Key11 and Tempo not included.
-Code has issues running this model through prediction due to the dummy variables :(
-$$
-log(\frac{\hat \pi}{1 - \hat \pi}) = 0.233 - 0.079{Popularity} + 0.513{Duration} - 0.743{Acousticness} - 0.621{Danceability} 
-\\ - 2.524{Instrumentalness} + 0.406{Key1} - 0.287{Key4} + 0.214{Key5} 
-\\ + 0.268{Key6} + 0.154{Key7} + 0.179{Key8} - 0.178{Loudness}
-\\ - 0.992{Speechiness} + 0.674{Valence}
-$$
-
-All Possible Regressions Model
-Compared to the Full model, the one resulting from All possible Regressions omits Energy and Tempo
-$$
-log(\frac{\hat \pi}{1 - \hat \pi}) = 0.226 - 0.079{Popularity} + 0.515Duration - 0.739{Acousticness} - 0.632{Danceability} 
-\\ - 2.516{Instrumentalness} + 0.415{Key1} - 0.002{Key2} 
-\\ - 0.147{Key3} - 0.279{Key4} + 0.222{Key5} + 0.276{Key6} + 0.162{Key7} 
-\\ + 0.187{Key8} - 0.002{Key9} + 0.072{Key10} + 0.094{Key11} - 0.178{Loudness}
-\\ - 0.980{Speechiness} + 0.668{Valence}
-$$
-
-Ridge 10 Fold Cross Validation Logistic model
-$$
-log(\frac{\hat \pi}{1 - \hat \pi}) = 0.554 - 0.064{Popularity} + 0.433{Duration} - 0.578{Acousticness} - 0.373{Danceability} 
-\\ - 0.332{Energy} - 1.686{Instrumentalness} + 0.268{Key1} - 0.062{Key2} 
-\\ - 0.204{Key3} - 0.261{Key4} + 0.127{Key5} + 0.170{Key6} + 0.063{Key7} 
-\\ + 0.078{Key8} - 0.065{Key9} + 0.026{Key10} + 0.015{Key11} - 0.120{Loudness}
-\\ - 0.907{Speechiness} - 0.0001{Tempo} + 0.521{Valence}
-$$
-
-Lasso 10 Fold Cross Validation Logistic model
-Compared to the full logistic model the lasso model does not include the variables Danceability, Energy, Key2, Key3, Key5 - Key11, Speechiness, and Tempo.
-$$
-log(\frac{\hat \pi}{1 - \hat \pi}) = 0.928 - 0.075{Popularity} + 0.354{Duration} - 0.195{Acousticness}
-\\ - 1.169{Instrumentalness} + 0.173{Key1} - 0.002{Key4} - 0.081{Loudness} + 0.098{Valence}
-$$
-
-Elastic Net 10 Fold Cross Validation Logistic model
-Compared to the full logistic model the lasso model does not include the variables Danceability, Energy, Key2, Key3, Key5 - Key11, Speechiness, and Tempo.
-$$
-log(\frac{\hat \pi}{1 - \hat \pi}) = 0.915 - 0.072{Popularity} + 0.360{Duration} - 0.106{Acousticness}
-\\ - 1.08{Instrumentalness} + 0.117{Key1} - 0.063{Key4} - 0.073{Loudness} + 0.010{Valence}
-$$
 
 Performance metrics
 ```{r}
 mode1.results <- data.frame(Model = c("Full", "Step", "Step 10CV", "AllReg", "Ridge 10CV", "Lasso 10CV", "ElasticNet 10CV"),
-                            cutoff = c(0.66, 0.66, 0.66, 0.66, 0.65, 0.66, 0.66), #Best balance between sensitivity and specificity
-                            AIC = c(5936.1, 5934, 5925, 5934, NA, NA, NA),
-                            Accuracy = c(0.7575, 0.7566, 0.7557, 0.7566, 0.7566, 0.7520, 0.752),
-                            Kappa = c(0.5006, 0.4995, 0.4974, 0.4995, 0.4985, 0.4894, 0.4894),
-                            Sensitivity = c(0.7507, 0.7478, 0.7478, 0.7478, 0.7507, 0.7464, 0.7464),
-                            Specificity = c(0.7689, 0.7713, 0.7689, 0.7713, 0.7664, 0.7616, 0.7616))
+                            cutoff = c(0.34, 0.34, 0.34, 0.34, 0.35, 0.34, 0.35), #Best balance between sensitivity and specificity
+                            AIC = c(5936.1, 5934, 5925.4, 5934, NA, NA, NA),
+                            Accuracy = c(0.7575, 0.7566, 0.7557, 0.7566, 0.7566, 0.7520, 0.7566),
+                            Kappa = c(0.5006, 0.4995, 0.4974, 0.4995, 0.4985, 0.4894, 0.4952),
+                            Sensitivity = c(0.7689, 0.7713, 0.7689, 0.7713, 0.7664, 0.7616, 0.7494),
+                            Specificity = c(0.7507, 0.7478, 0.7478, 0.7478, 0.7507, 0.7464, 0.7609))
 mode1.results
 ```
 
 The best model is the full logistic model.
+
+Full Logistic model 
+
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = -0.783 + 0.079{Popularity} - 0.009{Duration} + 0.882{Acousticness} + 0.665{Danceability} 
+\\ + 0.537{Energy} + 2.471{Instrumentalness} - 0.415{Key1} + 0.002{Key2} 
+\\ + 0.149{Key3} + 0.280{Key4} - 0.217{Key5} - 0.280{Key6} - 0.161{Key7} 
+\\ - 0.185{Key8} + 0.006{Key9} - 0.071{Key10} - 0.094{Key11} + 0.154{Loudness}
+\\ + 0.792{Speechiness} + 0.0002{Tempo} - 0.742{Valence}
+$$
