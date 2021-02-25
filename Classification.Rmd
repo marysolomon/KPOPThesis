@@ -45,9 +45,11 @@ data$oldgen <- as.factor(ifelse(data$ArtistGen == 1 | data$ArtistGen == 2, 1, 0)
 Variables being kept for classification and cluster analysis: popularity, duration, acousticness, danceability, energy, instrumentalness, key, liveness, loudness, mode, speechiness, tempo, valence. These are the predictor variables that will be used to classify on outcome of ArtistGeneration, or to determine the optimal clusters in the case of a clustering problem. 
 Any information about date of song release or date of artist promotions are excluded since these are directly correlated to kpop generations. rather, we just want to make predictions on whether we can classify the kpop songs into their kpop generations based on qualities of the music such as the audio features.
 
-Time signature is out since almost all are 4/4 time. Analysis will also be split up into logistic regression predicting for songs where mode = 0 and those for where mode = 1
+Time signature is out since almost all are 4/4 time. Analysis will also be split up into two binary logistic regression models which will predict for songs where mode = 0 and those where mode = 1
 
 Personal predictions: I believe popularity will be a strong predictor since the popularity measure is also time dependent.
+
+# Assumptions of the logistic Model
 
 
 # Logistic: predict which songs are old gen (1 & 2) vs new gen (3 & 4)
