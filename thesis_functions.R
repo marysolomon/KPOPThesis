@@ -145,3 +145,53 @@ bc.transform <- function(y, lambda){
   t <- (y^(lambda) - 1)/lambda
   return(t)
 }
+
+
+
+### Calculates plots optimal cutoff for the generations classification (new)
+opt.cut.genn <- function(model, data){
+  # create a vector for cutoff values
+  cutoff <- seq(0, 1, 0.01)
+  
+  # create three empty vectors of same length
+  sensitivity.vec <- rep(NA, length(cutoff))
+  specificity.vec <- rep(NA, length(cutoff))
+  ssdiff.vec <- rep(NA, length(cutoff))
+  kappa.vec <- rep(NA, length(cutoff))
+  
+  # For loop.
+  for(i in 1:length(cutoff)){
+    pred.prob.val <- predict(model, newdata = data, type = "response")
+    pred.y.val <- as.factor(ifelse(pred.prob.val > cutoff[i], 1, 0)) 
+    c <- confusionMatrix(pred.y.val, data$newgen, 
+                         positive = "1")
+    sensitivity.vec[i] <- c$byClass["Sensitivity"]
+    specificity.vec[i] <- c$byClass["Specificity"]
+    ssdiff.vec[i] <- abs(sensitivity.vec[i] - specificity.vec[i])
+    kappa.vec[i] <- c$overall["Kappa"]
+  }
+  return(list(cutoff = cutoff, sensitivity.vec = sensitivity.vec, specificity.vec = specificity.vec, ssdiff.vec = ssdiff.vec, kappa.vec = kappa.vec))
+}
+
+reg.opt.cut.genn <-  function(model, data){
+  cutoff <- seq(0, 1, 0.01)
+  
+  # create three empty vectors of same length
+  sensitivity.vec <- rep(NA, length(cutoff))
+  specificity.vec <- rep(NA, length(cutoff))
+  ssdiff.vec <- rep(NA, length(cutoff))
+  kappa.vec <- rep(NA, length(cutoff))
+  
+  # For loop.
+  for(i in 1:length(cutoff)){
+    pred.prob.val <- predict(model, s=model$bestTune, data, type = "prob")
+    pred.y.val <- as.factor(ifelse(pred.prob.val[,2] > cutoff[i], 1, 0)) 
+    c <- confusionMatrix(pred.y.val, data$newgen, 
+                         positive = "1")
+    sensitivity.vec[i] <- c$byClass["Sensitivity"]
+    specificity.vec[i] <- c$byClass["Specificity"]
+    ssdiff.vec[i] <- abs(sensitivity.vec[i] - specificity.vec[i])
+    kappa.vec[i] <- c$overall["Kappa"]
+  }
+  return(list(cutoff = cutoff, sensitivity.vec = sensitivity.vec, specificity.vec = specificity.vec, ssdiff.vec = ssdiff.vec, kappa.vec = kappa.vec))
+}

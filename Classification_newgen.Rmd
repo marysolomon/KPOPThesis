@@ -37,8 +37,7 @@ data <- mutate(data, ArtistType = as.factor(ArtistType),
                key = factor(key, levels = 0:11),
                mode = as.factor(mode),
                time_signature = factor(time_signature, levels = c(1,3,4,5)))
-data$gen1 <- as.factor(ifelse(data$ArtistGen == 1, 1, 0))
-data$oldgen <- as.factor(ifelse(data$ArtistGen == 1 | data$ArtistGen == 2, 1, 0))
+data$newgen <- as.factor(ifelse(data$ArtistGen == 3 | data$ArtistGen == 4, 1, 0))
 ```
 
 
@@ -56,7 +55,7 @@ Personal predictions: I believe popularity will be a strong predictor since the 
 
 Create Train(70%), Valid(15%), and Test(15%) Data
 ```{r}
-kpop <- select(data, oldgen, popularity, duration, acousticness, danceability, energy, instrumentalness, key, loudness, mode, speechiness, tempo, valence)
+kpop <- select(data, newgen, popularity, duration, acousticness, danceability, energy, instrumentalness, key, loudness, mode, speechiness, tempo, valence)
 kpop0 <- kpop %>% filter(mode == 0)%>% select(-mode)
 kpop1 <- kpop %>% filter(mode == 1) %>% select(-mode)
 
@@ -85,13 +84,13 @@ Minor key
 Full logistic model
 ```{r}
 set.seed(123)
-logit0 <- glm(oldgen ~., data = train0, family = "binomial")
+logit0 <- glm(newgen ~., data = train0, family = "binomial")
 summary(logit0)
 ```
 
 find optimal cut off value
 ```{r, warning = FALSE}
-logit.out0 <- opt.cut.gen(logit0, valid0)
+logit.out0 <- opt.cut.genn(logit0, valid0)
 opt.cut.plot(logit.out0)
 #optimal by kappa score
 logit.out0$cutoff[which.max(logit.out0$kappa.vec)]
@@ -102,7 +101,7 @@ logit.out0$cutoff[which.min(logit.out0$ssdiff.vec)]
 Final full logistic model fit to the combo of train and validation data.
 ```{r}
 set.seed(123)
-logit0.final <- glm(oldgen ~., data = all.train0, family = "binomial")
+logit0.final <- glm(newgen ~., data = all.train0, family = "binomial")
 summary(logit0.final)
 ```
 
@@ -110,7 +109,7 @@ confusion matrix on the training data:
 ```
 logit.train0.pred <- logit0$fitted.values
 logit.train0.y <- ifelse(logit.train0.pred > 0.5, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(logit.train0.y), as.factor(train0$oldgen), 
+confusionMatrix(as.factor(logit.train0.y), as.factor(train0$newgen), 
                 positive = "1")
 ```
 
@@ -120,7 +119,7 @@ confusion matrix on the test data using standard cut off
 #get predicted probabilities for the test data
 logit.test0.pred <- predict(logit0.final, newdata = test0, type = "response")
 logit.test0.y <- ifelse(logit.test0.pred > 0.5, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(logit.test0.y), as.factor(test0$oldgen), 
+confusionMatrix(as.factor(logit.test0.y), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
@@ -129,7 +128,7 @@ confusion matrix on the test data using optimal cutoff based on kappa
 #get predicted probabilities for the test data
 logit.test0.pred <- predict(logit0.final, newdata = test0, type = "response")
 logit.test0.y <- ifelse(logit.test0.pred > 0.60, 1, 0) # using cutoff = 0.60
-confusionMatrix(as.factor(logit.test0.y), as.factor(test0$oldgen), 
+confusionMatrix(as.factor(logit.test0.y), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
@@ -138,7 +137,7 @@ confusion matrix on the test data using optimal cutoff based on sensitivity/spec
 #get predicted probabilities for the test data
 logit.test0.pred <- predict(logit0.final, newdata = test0, type = "response")
 logit.test0.y <- ifelse(logit.test0.pred > 0.65, 1, 0) # using cutoff = 0.65
-confusionMatrix(as.factor(logit.test0.y), as.factor(test0$oldgen), 
+confusionMatrix(as.factor(logit.test0.y), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
@@ -146,7 +145,7 @@ confusionMatrix(as.factor(logit.test0.y), as.factor(test0$oldgen),
 stepwise 
 ```{r}
 set.seed(123)
-logit0.none <- glm(oldgen ~ 1, data = train0, family = binomial)
+logit0.none <- glm(newgen ~ 1, data = train0, family = binomial)
 step0 <- step(logit0.none, 
                  list(lower=formula(logit0.none), upper = formula(logit0)),
                  direction = "both",
@@ -157,7 +156,7 @@ summary(step0)
 
 find optimal cut off value
 ```{r, warning = FALSE}
-step.out0 <- opt.cut.gen(step0, valid0)
+step.out0 <- opt.cut.genn(step0, valid0)
 opt.cut.plot(step.out0)
 #optimal by kappa score
 step.out0$cutoff[which.max(step.out0$kappa.vec)]
@@ -168,7 +167,7 @@ step.out0$cutoff[which.min(step.out0$ssdiff.vec)]
 final stepwise model
 ```{r}
 set.seed(123)
-logit0.none <- glm(oldgen ~ 1, data = all.train0, family = binomial)
+logit0.none <- glm(newgen ~ 1, data = all.train0, family = binomial)
 step0.final <- step(logit0.none, 
                  list(lower=formula(logit0.none), upper = formula(logit0)),
                  direction = "both",
@@ -181,7 +180,7 @@ confusion matrix on the training data:
 ```
 step.train0.pred <- step0$fitted.values
 step.train0.y <- ifelse(step.train0.pred > 0.5, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(step.train0.y), as.factor(train0$oldgen), 
+confusionMatrix(as.factor(step.train0.y), as.factor(train0$newgen), 
                 positive = "1")
 ```
 
@@ -191,7 +190,7 @@ predict and evaluate on test using standard cut off 0.5
 #get predicted probabilities for the test data
 step.test0.pred <- predict(step0.final, newdata = test0, type = "response")
 step.test0.y <- ifelse(step.test0.pred > 0.5, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(step.test0.y), as.factor(test0$oldgen), 
+confusionMatrix(as.factor(step.test0.y), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
@@ -200,7 +199,7 @@ predict and evaluate on test using optimal cut off 0.54 for highest kappa
 #get predicted probabilities for the test data
 step.test0.pred <- predict(step0.final, newdata = test0, type = "response")
 step.test0.y <- ifelse(step.test0.pred > 0.54, 1, 0) # using cutoff = 0.54
-confusionMatrix(as.factor(step.test0.y), as.factor(test0$oldgen), 
+confusionMatrix(as.factor(step.test0.y), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
@@ -209,7 +208,7 @@ predict and evaluate on test using optimal cut off 0.63 for best sensitivity/spe
 #get predicted probabilities for the test data
 step.test0.pred <- predict(step0.final, newdata = test0, type = "response")
 step.test0.y <- ifelse(step.test0.pred > 0.64, 1, 0) # using cutoff = 0.64
-confusionMatrix(as.factor(step.test0.y), as.factor(test0$oldgen), 
+confusionMatrix(as.factor(step.test0.y), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
@@ -222,7 +221,7 @@ train_control <- trainControl(method = "cv",
                               number = 10) 
 
 # Fit K-fold CV model  
-bye <- capture.output(step0_kcv <- train(oldgen ~ ., data = train0, family = "binomial", 
+bye <- capture.output(step0_kcv <- train(newgen ~ ., data = train0, family = "binomial", 
                  method = "glmStepAIC", trControl = train_control, verbose = FALSE)) 
 ```
 
@@ -234,7 +233,7 @@ step0_kcv
 
 find optimal cut off value
 ```{r, warning = FALSE}
-step_kcv.out0 <- opt.cut.gen(step0_kcv, key.dummy(valid0))
+step_kcv.out0 <- opt.cut.genn(step0_kcv, key.dummy(valid0))
 opt.cut.plot(step_kcv.out0)
 #optimal by kappa score
 step_kcv.out0$cutoff[which.max(step_kcv.out0$kappa.vec)]
@@ -246,7 +245,7 @@ Fit final model on combination of training and validation data
 ```{r}
 set.seed(123)
 # Fit K-fold CV model  
-bye2 <- capture.output(step0_kcv.final <- train(oldgen ~ ., data = all.train0, family = "binomial", 
+bye2 <- capture.output(step0_kcv.final <- train(newgen ~ ., data = all.train0, family = "binomial", 
                  method = "glmStepAIC", trControl = train_control, verbose = FALSE)) 
 ```
 
@@ -260,7 +259,7 @@ step0_kcv.final
 #get predicted probabilities for training data
 step_kcv.train0.pred <- step0_kcv$fitted.values
 step_kcv.train0.y <- ifelse(step_kcv.train0.pred > 0.5, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(step_kcv.train0.y), as.factor(train0$oldgen), 
+confusionMatrix(as.factor(step_kcv.train0.y), as.factor(train0$newgen), 
                 positive = "1")
 ```
 
@@ -269,7 +268,7 @@ Get prediction and performance evaluation for standard cut off 0.5
 #get predicted probabilities for the test data
 step_kcv.test0.pred <- predict(step0_kcv.final, newdata = key.dummy(test0), type = "response")
 step_kcv.test0.y <- ifelse(step_kcv.test0.pred > 0.5, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(step_kcv.test0.y), as.factor(test0$oldgen), 
+confusionMatrix(as.factor(step_kcv.test0.y), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
@@ -278,7 +277,7 @@ Get prediction and performance evaluation for optimal cut off 0.55 for highest k
 #get predicted probabilities for the test data
 step_kcv.test0.pred <- predict(step0_kcv.final, newdata = key.dummy(test0), type = "response")
 step_kcv.test0.y <- ifelse(step_kcv.test0.pred > 0.55, 1, 0) # using cutoff = 0.55
-confusionMatrix(as.factor(step_kcv.test0.y), as.factor(test0$oldgen), 
+confusionMatrix(as.factor(step_kcv.test0.y), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
@@ -287,7 +286,7 @@ Get prediction and performance evaluation for optimal cut off 0.65 for best sens
 #get predicted probabilities for the test data
 step_kcv.test0.pred <- predict(step0_kcv.final, newdata = key.dummy(test0), type = "response")
 step_kcv.test0.y <- ifelse(step_kcv.test0.pred > 0.65, 1, 0) # using cutoff = 0.65
-confusionMatrix(as.factor(step_kcv.test0.y), as.factor(test0$oldgen), 
+confusionMatrix(as.factor(step_kcv.test0.y), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
@@ -295,7 +294,7 @@ confusionMatrix(as.factor(step_kcv.test0.y), as.factor(test0$oldgen),
 
 ```{r}
 set.seed(123)
-glmulti.out0 <- glmulti(oldgen ~ ., data = train0,
+glmulti.out0 <- glmulti(newgen ~ ., data = train0,
                            level = 1,               # No interaction considered
             method = "h",            # Exhaustive approach
             crit = "aic",            # AIC as criteria
@@ -321,7 +320,7 @@ allreg.logit0 <- glmulti.out0@objects[[1]]
 
 find optimal cut off value
 ```{r, warning = FALSE}
-allreg.out0 <- opt.cut.gen(allreg.logit0, valid0)
+allreg.out0 <- opt.cut.genn(allreg.logit0, valid0)
 opt.cut.plot(allreg.out0)
 #optimal by kappa score
 allreg.out0$cutoff[which.max(allreg.out0$kappa.vec)]
@@ -332,7 +331,7 @@ allreg.out0$cutoff[which.min(allreg.out0$ssdiff.vec)]
 Fit final model on combo of train/validation data
 ```{r}
 set.seed(123)
-glmulti.out0.final <- glmulti(oldgen ~ ., data = all.train0,
+glmulti.out0.final <- glmulti(newgen ~ ., data = all.train0,
                            level = 1,               # No interaction considered
             method = "h",            # Exhaustive approach
             crit = "aic",            # AIC as criteria
@@ -351,7 +350,7 @@ try fitting training data to results from all possible regression variable selec
 #get predicted probabilities for training data
 all.train0.pred <- allreg.logit0$fitted.values
 all.train0.y <- ifelse(all.train0.pred > 0.5, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(all.train0.y), as.factor(train0$oldgen), 
+confusionMatrix(as.factor(all.train0.y), as.factor(train0$newgen), 
                 positive = "1")
 ```
 
@@ -359,7 +358,7 @@ confusionMatrix(as.factor(all.train0.y), as.factor(train0$oldgen),
 #get predicted probabilities for the test data
 all.test0.pred <- predict(allreg.logit0.final, newdata = test0, type = "response")
 all.test0.y <- ifelse(all.test0.pred > 0.5, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(all.test0.y), as.factor(test0$oldgen), 
+confusionMatrix(as.factor(all.test0.y), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
@@ -368,7 +367,7 @@ confusionMatrix(as.factor(all.test0.y), as.factor(test0$oldgen),
 #get predicted probabilities for the test data
 all.test0.pred <- predict(allreg.logit0.final, newdata = test0, type = "response")
 all.test0.y <- ifelse(all.test0.pred > 0.54, 1, 0) # using cutoff = 0.54
-confusionMatrix(as.factor(all.test0.y), as.factor(test0$oldgen), 
+confusionMatrix(as.factor(all.test0.y), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
@@ -376,7 +375,7 @@ confusionMatrix(as.factor(all.test0.y), as.factor(test0$oldgen),
 #get predicted probabilities for the test data
 all.test0.pred <- predict(allreg.logit0.final, newdata = test0, type = "response")
 all.test0.y <- ifelse(all.test0.pred > 0.64, 1, 0) # using cutoff = 0.64
-confusionMatrix(as.factor(all.test0.y), as.factor(test0$oldgen), 
+confusionMatrix(as.factor(all.test0.y), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
@@ -385,7 +384,7 @@ confusionMatrix(as.factor(all.test0.y), as.factor(test0$oldgen),
 ### Regularized Regression: Ridge 10 fold Cross Validation
 ```{r}
 set.seed(123)
-ridge0 <- train(oldgen ~ ., data = train0, method = "glmnet",
+ridge0 <- train(newgen ~ ., data = train0, method = "glmnet",
                       family = "binomial", trControl = train_control, 
                       tuneGrid = expand.grid(alpha = 0,lambda = seq(0.001,0.1,by = 0.001)))
 #best tuning parameter
@@ -396,7 +395,7 @@ ridge0.model
 
 Search for best cutoff using validation set
 ```{r, warning = FALSE}
-ridge0.out <- reg.opt.cut.gen(ridge0, valid0)
+ridge0.out <- reg.opt.cut.genn(ridge0, valid0)
 opt.cut.plot(ridge0.out)
 # cut off by kappa
 ridge0.out$cutoff[which.max(ridge0.out$kappa.vec)]
@@ -406,7 +405,7 @@ ridge0.out$cutoff[which.min(ridge0.out$ssdiff.vec)]
 create final model
 ```{r}
 set.seed(123)
-ridge0.final <- train(oldgen ~ ., data = all.train0, method = "glmnet",
+ridge0.final <- train(newgen ~ ., data = all.train0, method = "glmnet",
                       family = "binomial", trControl = train_control, 
                       tuneGrid = expand.grid(alpha = 0,lambda = seq(0.001,0.1,by = 0.001)))
 #best tuning parameter
@@ -420,7 +419,7 @@ predict and evaluate on the test set where cutoff is at 0.5
 ```{r}
 prob.ridge0 <- predict(ridge0.final, s = ridge0.final$bestTune, test0, type = "prob")
 pred.ridge0 <- ifelse(prob.ridge0[,2] > 0.50, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(pred.ridge0), as.factor(test0$oldgen), 
+confusionMatrix(as.factor(pred.ridge0), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
@@ -428,7 +427,7 @@ predict and evaluate on the test set where cutoff is at 0.55 corresponding to op
 ```{r}
 prob.ridge0 <- predict(ridge0.final, s = ridge0.final$bestTune, test0, type = "prob")
 pred.ridge0 <- ifelse(prob.ridge0[,2] > 0.55, 1, 0) # using cutoff = 0.55
-confusionMatrix(as.factor(pred.ridge0), as.factor(test0$oldgen), 
+confusionMatrix(as.factor(pred.ridge0), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
@@ -436,14 +435,14 @@ predict and evaluate on the test set where cutoff is at 0.64 corresponding to op
 ```{r}
 prob.ridge0 <- predict(ridge0.final, s = ridge0.final$bestTune, test0, type = "prob")
 pred.ridge0 <- ifelse(prob.ridge0[,2] > 0.64, 1, 0) # using cutoff = 0.64
-confusionMatrix(as.factor(pred.ridge0), as.factor(test0$oldgen), 
+confusionMatrix(as.factor(pred.ridge0), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
 ### Regularized Regression: Lasso 10 fold Cross Validation
 ```{r}
 set.seed(123)
-lasso0 <- train(oldgen ~ ., data = train0, method = "glmnet",
+lasso0 <- train(newgen ~ ., data = train0, method = "glmnet",
                       family = "binomial", trControl = train_control, 
                       tuneGrid = expand.grid(alpha = 1,lambda = seq(0.001,0.1,by = 0.001)))
 # best parameter
@@ -455,7 +454,7 @@ lasso0.model
 
 Search for best cutoff using validation set
 ```{r, warning = FALSE}
-lasso0.out <- reg.opt.cut.gen(lasso0, valid0)
+lasso0.out <- reg.opt.cut.genn(lasso0, valid0)
 opt.cut.plot(lasso0.out)
 # cut off by kappa
 lasso0.out$cutoff[which.max(lasso0.out$kappa.vec)]
@@ -465,7 +464,7 @@ lasso0.out$cutoff[which.min(lasso0.out$ssdiff.vec)]
 create final model
 ```{r}
 set.seed(123)
-lasso0.final <- train(oldgen ~ ., data = train0, method = "glmnet",
+lasso0.final <- train(newgen ~ ., data = train0, method = "glmnet",
                       family = "binomial", trControl = train_control, 
                       tuneGrid = expand.grid(alpha = 1,lambda = seq(0.001,0.1,by = 0.001)))
 # best parameter
@@ -479,7 +478,7 @@ predict and evaluate on the test set where cutoff is at 0.5
 ```{r}
 prob.lasso0 <- predict(lasso0.final, s = lasso0.final$bestTune, test0, type = "prob")
 pred.lasso0 <- ifelse(prob.lasso0[,2] > 0.50, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(pred.lasso0), as.factor(test0$oldgen), 
+confusionMatrix(as.factor(pred.lasso0), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
@@ -487,7 +486,7 @@ predict and evaluate on the test set where cutoff is at 0.58 corresponding to op
 ```{r}
 prob.lasso0 <- predict(lasso0.final, s = lasso0.final$bestTune, test0, type = "prob")
 pred.lasso0 <- ifelse(prob.lasso0[,2] > 0.58, 1, 0) # using cutoff = 0.58
-confusionMatrix(as.factor(pred.lasso0), as.factor(test0$oldgen), 
+confusionMatrix(as.factor(pred.lasso0), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
@@ -495,7 +494,7 @@ predict and evaluate on the test set where cutoff is at 0.65 corresponding to op
 ```{r}
 prob.lasso0 <- predict(lasso0.final, s = lasso0.final$bestTune, test0, type = "prob")
 pred.lasso0 <- ifelse(prob.lasso0[,2] > 0.65, 1, 0) # using cutoff = 0.65
-confusionMatrix(as.factor(pred.lasso0), as.factor(test0$oldgen), 
+confusionMatrix(as.factor(pred.lasso0), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
@@ -503,7 +502,7 @@ confusionMatrix(as.factor(pred.lasso0), as.factor(test0$oldgen),
 ### Regularized Regression: Elastic Net 10 fold Cross Validation
 ```{r}
 set.seed(123)
-enet0 <- train(oldgen ~ ., data = train0, method = "glmnet",
+enet0 <- train(newgen ~ ., data = train0, method = "glmnet",
                       family = "binomial", trControl = train_control, 
                       tuneGrid = expand.grid(alpha = seq(0,1,by = 0.05),lambda = seq(0.001,0.1,by = 0.001)))
 # best parameter
@@ -515,7 +514,7 @@ enet0.model
 
 search for best cutoff with validation set
 ```{r, warning = FALSE}
-enet0.out <- reg.opt.cut.gen(enet0, valid0)
+enet0.out <- reg.opt.cut.genn(enet0, valid0)
 opt.cut.plot(enet0.out)
 # cut off by kappa
 enet0.out$cutoff[which.max(enet0.out$kappa.vec)]
@@ -525,7 +524,7 @@ enet0.out$cutoff[which.min(enet0.out$ssdiff.vec)]
 create final model on train and validation
 ```{r}
 set.seed(123)
-enet0.final <- train(oldgen ~ ., data = all.train0, method = "glmnet",
+enet0.final <- train(newgen ~ ., data = all.train0, method = "glmnet",
                       family = "binomial", trControl = train_control, 
                       tuneGrid = expand.grid(alpha = seq(0,1,by = 0.05),lambda = seq(0.001,0.1,by = 0.001)))
 # best parameter
@@ -539,7 +538,7 @@ predict and evaluate on the test set where cutoff is at 0.5
 ```{r}
 prob.enet0 <- predict(enet0.final, s = enet0.final$bestTune, test0, type = "prob")
 pred.enet0 <- ifelse(prob.enet0[,2] > 0.50, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(pred.enet0), as.factor(test0$oldgen), 
+confusionMatrix(as.factor(pred.enet0), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
@@ -547,7 +546,7 @@ predict and evaluate on the test set where cutoff is at 0.54 corresponding to op
 ```{r}
 prob.enet0 <- predict(enet0.final, s = enet0.final$bestTune, test0, type = "prob")
 pred.enet0 <- ifelse(prob.enet0[,2] > 0.54, 1, 0) # using cutoff = 0.54
-confusionMatrix(as.factor(pred.enet0), as.factor(test0$oldgen), 
+confusionMatrix(as.factor(pred.enet0), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
@@ -555,7 +554,7 @@ predict and evaluate on the test set where cutoff is at 0.65 corresponding to op
 ```{r}
 prob.enet0 <- predict(enet0.final, s = enet0.final$bestTune, test0, type = "prob")
 pred.enet0 <- ifelse(prob.enet0[,2] > 0.65, 1, 0) # using cutoff = 0.65
-confusionMatrix(as.factor(pred.enet0), as.factor(test0$oldgen), 
+confusionMatrix(as.factor(pred.enet0), as.factor(test0$newgen), 
                 positive = "1")
 ```
 
@@ -640,7 +639,7 @@ Major key
 Full logistic regression model
 ```{r}
 set.seed(123)
-logit1 <- glm(oldgen ~., data = train1, family = "binomial")
+logit1 <- glm(newgen ~., data = train1, family = "binomial")
 summary(logit1)
 ```
 
@@ -649,12 +648,12 @@ confusion matrix on the training data:
 ```
 logit.train1.pred <- logit1$fitted.values
 logit.train1.y <- ifelse(logit.train1.pred > 0.5, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(logit.train1.y), as.factor(train1$oldgen), 
+confusionMatrix(as.factor(logit.train1.y), as.factor(train1$newgen), 
                 positive = "1")
 ```
 find optimal cut off value
 ```{r, warning = FALSE}
-logit.out1 <- opt.cut.gen(logit1, valid1)
+logit.out1 <- opt.cut.genn(logit1, valid1)
 opt.cut.plot(logit.out1)
 #optimal by kappa score
 logit.out1$cutoff[which.max(logit.out1$kappa.vec)]
@@ -665,7 +664,7 @@ logit.out1$cutoff[which.min(logit.out1$ssdiff.vec)]
 Final full logistic model fit to the combo of train and validation data.
 ```{r}
 set.seed(123)
-logit1.final <- glm(oldgen ~., data = all.train1, family = "binomial")
+logit1.final <- glm(newgen ~., data = all.train1, family = "binomial")
 summary(logit1.final)
 ```
 
@@ -675,7 +674,7 @@ confusion matrix on the test data using standard cut off
 #get predicted probabilities for the test data
 logit.test1.pred <- predict(logit1.final, newdata = test1, type = "response")
 logit.test1.y <- ifelse(logit.test1.pred > 0.5, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(logit.test1.y), as.factor(test1$oldgen), 
+confusionMatrix(as.factor(logit.test1.y), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
@@ -684,7 +683,7 @@ confusion matrix on the test data using optimal cutoff based on kappa
 #get predicted probabilities for the test data
 logit.test1.pred <- predict(logit1.final, newdata = test1, type = "response")
 logit.test1.y <- ifelse(logit.test1.pred > 0.61, 1, 0) # using cutoff = 0.61
-confusionMatrix(as.factor(logit.test1.y), as.factor(test1$oldgen), 
+confusionMatrix(as.factor(logit.test1.y), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
@@ -693,7 +692,7 @@ confusion matrix on the test data using optimal cutoff based on sensitivity/spec
 #get predicted probabilities for the test data
 logit.test1.pred <- predict(logit1.final, newdata = test1, type = "response")
 logit.test1.y <- ifelse(logit.test1.pred > 0.66, 1, 0) # using cutoff = 0.66
-confusionMatrix(as.factor(logit.test1.y), as.factor(test1$oldgen), 
+confusionMatrix(as.factor(logit.test1.y), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
@@ -703,7 +702,7 @@ confusionMatrix(as.factor(logit.test1.y), as.factor(test1$oldgen),
 stepwise 
 ```{r}
 set.seed(123)
-logit1.none <- glm(oldgen ~ 1, data = train1, family = binomial)
+logit1.none <- glm(newgen ~ 1, data = train1, family = binomial)
 step1 <- step(logit1.none, 
                  list(lower=formula(logit1.none), upper = formula(logit1)),
                  direction = "both",
@@ -716,12 +715,12 @@ confusion matrix on the training data:
 ```
 step.train1.pred <- step1$fitted.values
 step.train1.y <- ifelse(step.train1.pred > 0.5, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(step.train1.y), as.factor(train1$oldgen), 
+confusionMatrix(as.factor(step.train1.y), as.factor(train1$newgen), 
                 positive = "1")
 ```
 find optimal cut off value
 ```{r, warning = FALSE}
-step.out1 <- opt.cut.gen(step1, valid1)
+step.out1 <- opt.cut.genn(step1, valid1)
 opt.cut.plot(step.out1)
 #optimal by kappa score
 step.out1$cutoff[which.max(step.out1$kappa.vec)]
@@ -732,7 +731,7 @@ step.out1$cutoff[which.min(step.out1$ssdiff.vec)]
 final stepwise model
 ```{r}
 set.seed(123)
-logit1.none <- glm(oldgen ~ 1, data = all.train1, family = binomial)
+logit1.none <- glm(newgen ~ 1, data = all.train1, family = binomial)
 step1.final <- step(logit1.none, 
                  list(lower=formula(logit1.none), upper = formula(logit1)),
                  direction = "both",
@@ -749,7 +748,7 @@ predict and evaluate on test using standard cut off 0.5
 #get predicted probabilities for the test data
 step.test1.pred <- predict(step1.final, newdata = test1, type = "response")
 step.test1.y <- ifelse(step.test1.pred > 0.5, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(step.test1.y), as.factor(test1$oldgen), 
+confusionMatrix(as.factor(step.test1.y), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
@@ -758,7 +757,7 @@ predict and evaluate on test using optimal cut off 0.61 for highest kappa
 #get predicted probabilities for the test data
 step.test1.pred <- predict(step1.final, newdata = test1, type = "response")
 step.test1.y <- ifelse(step.test1.pred > 0.61, 1, 0) # using cutoff = 0.61
-confusionMatrix(as.factor(step.test1.y), as.factor(test1$oldgen), 
+confusionMatrix(as.factor(step.test1.y), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
@@ -767,7 +766,7 @@ predict and evaluate on test using optimal cut off 0.66 for best sensitivity/spe
 #get predicted probabilities for the test data
 step.test1.pred <- predict(step1.final, newdata = test1, type = "response")
 step.test1.y <- ifelse(step.test1.pred > 0.66, 1, 0) # using cutoff = 0.66
-confusionMatrix(as.factor(step.test1.y), as.factor(test1$oldgen), 
+confusionMatrix(as.factor(step.test1.y), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
@@ -780,7 +779,7 @@ train_control <- trainControl(method = "cv",
                               number = 10) 
 
 # Fit K-fold CV model  
-bye3 <- capture.output(step1_kcv <- train(oldgen ~ ., data = train1, family = binomial(), 
+bye3 <- capture.output(step1_kcv <- train(newgen ~ ., data = train1, family = binomial(), 
                  method = "glmStepAIC", trControl = train_control, verbose = FALSE)) 
 ```
 
@@ -794,13 +793,13 @@ step1_kcv
 #get predicted probabilities for training data
 step_kcv.pred1 <- predict(step1_kcv, newdata = key.dummy(test1), type = "response")
 step_kcv.train1.y <- ifelse(step_kcv.train1.pred > 0.5, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(step_kcv.train1.y), as.factor(train1$oldgen), 
+confusionMatrix(as.factor(step_kcv.train1.y), as.factor(train1$newgen), 
                 positive = "1")
 ```
 
 find optimal cut off value
 ```{r, warning = FALSE}
-step_kcv.out1 <- opt.cut.gen(step1_kcv, key.dummy(valid1))
+step_kcv.out1 <- opt.cut.genn(step1_kcv, key.dummy(valid1))
 opt.cut.plot(step_kcv.out1)
 #optimal by kappa score
 step_kcv.out1$cutoff[which.max(step_kcv.out1$kappa.vec)]
@@ -812,7 +811,7 @@ Fit final model on combination of training and validation data
 ```{r}
 set.seed(123)
 # Fit K-fold CV model  
-bye4 <- capture.output(step1_kcv.final <- train(oldgen ~ ., data = all.train1, family = "binomial", 
+bye4 <- capture.output(step1_kcv.final <- train(newgen ~ ., data = all.train1, family = "binomial", 
                  method = "glmStepAIC", trControl = train_control, verbose = FALSE)) 
 ```
 
@@ -827,7 +826,7 @@ Get prediction and performance evaluation for standard cut off 0.5
 #get predicted probabilities for the test data
 step_kcv.test1.pred <- predict(step1_kcv.final, newdata = key.dummy(test1), type = "response")
 step_kcv.test1.y <- ifelse(step_kcv.test1.pred > 0.5, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(step_kcv.test1.y), as.factor(test1$oldgen), 
+confusionMatrix(as.factor(step_kcv.test1.y), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
@@ -836,7 +835,7 @@ Get prediction and performance evaluation for optimal cut off 0.61 for highest k
 #get predicted probabilities for the test data
 step_kcv.test1.pred <- predict(step1_kcv.final, newdata = key.dummy(test1), type = "response")
 step_kcv.test1.y <- ifelse(step_kcv.test1.pred > 0.61, 1, 0) # using cutoff = 0.61
-confusionMatrix(as.factor(step_kcv.test1.y), as.factor(test1$oldgen), 
+confusionMatrix(as.factor(step_kcv.test1.y), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
@@ -845,7 +844,7 @@ Get prediction and performance evaluation for optimal cut off 0.66 for best sens
 #get predicted probabilities for the test data
 step_kcv.test1.pred <- predict(step1_kcv.final, newdata = key.dummy(test1), type = "response")
 step_kcv.test1.y <- ifelse(step_kcv.test1.pred > 0.66, 1, 0) # using cutoff = 0.66
-confusionMatrix(as.factor(step_kcv.test1.y), as.factor(test1$oldgen), 
+confusionMatrix(as.factor(step_kcv.test1.y), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
@@ -854,7 +853,7 @@ confusionMatrix(as.factor(step_kcv.test1.y), as.factor(test1$oldgen),
 
 ```{r}
 set.seed(123)
-glmulti.out1 <- glmulti(oldgen ~ ., data = train1,
+glmulti.out1 <- glmulti(newgen ~ ., data = train1,
                            level = 1,               # No interaction considered
             method = "h",            # Exhaustive approach
             crit = "aic",            # AIC as criteria
@@ -881,13 +880,13 @@ try fitting training data to results from all possible regression variable selec
 #get predicted probabilities for training data
 all.train1.pred <- allreg.logit1$fitted.values
 all.train1.y <- ifelse(all.train1.pred > 0.5, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(all.train1.y), as.factor(train1$oldgen), 
+confusionMatrix(as.factor(all.train1.y), as.factor(train1$newgen), 
                 positive = "1")
 ```
 
 find optimal cut off value
 ```{r, warning = FALSE}
-allreg.out1 <- opt.cut.gen(allreg.logit1, valid1)
+allreg.out1 <- opt.cut.genn(allreg.logit1, valid1)
 opt.cut.plot(allreg.out1)
 #optimal by kappa score
 allreg.out1$cutoff[which.max(allreg.out1$kappa.vec)]
@@ -898,7 +897,7 @@ allreg.out1$cutoff[which.min(allreg.out1$ssdiff.vec)]
 Fit final model on combo of train/validation data
 ```{r}
 set.seed(123)
-glmulti.out1.final <- glmulti(oldgen ~ ., data = all.train1,
+glmulti.out1.final <- glmulti(newgen ~ ., data = all.train1,
                            level = 1,               # No interaction considered
             method = "h",            # Exhaustive approach
             crit = "aic",            # AIC as criteria
@@ -917,7 +916,7 @@ allreg.logit1.final <- glmulti.out1.final@objects[[1]]
 #get predicted probabilities for the test data
 all.test1.pred <- predict(allreg.logit1.final, newdata = test1, type = "response")
 all.test1.y <- ifelse(all.test1.pred > 0.5, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(all.test1.y), as.factor(test1$oldgen), 
+confusionMatrix(as.factor(all.test1.y), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
@@ -926,7 +925,7 @@ confusionMatrix(as.factor(all.test1.y), as.factor(test1$oldgen),
 #get predicted probabilities for the test data
 all.test1.pred <- predict(allreg.logit1.final, newdata = test1, type = "response")
 all.test1.y <- ifelse(all.test1.pred > 0.61, 1, 0) # using cutoff = 0.61
-confusionMatrix(as.factor(all.test1.y), as.factor(test1$oldgen), 
+confusionMatrix(as.factor(all.test1.y), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
@@ -934,7 +933,7 @@ confusionMatrix(as.factor(all.test1.y), as.factor(test1$oldgen),
 #get predicted probabilities for the test data
 all.test1.pred <- predict(allreg.logit1.final, newdata = test1, type = "response")
 all.test1.y <- ifelse(all.test1.pred > 0.66, 1, 0) # using cutoff = 0.66
-confusionMatrix(as.factor(all.test1.y), as.factor(test1$oldgen), 
+confusionMatrix(as.factor(all.test1.y), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
@@ -942,7 +941,7 @@ confusionMatrix(as.factor(all.test1.y), as.factor(test1$oldgen),
 ### Regularized Regression: Ridge 10 fold Cross Validation
 ```{r}
 set.seed(123)
-ridge1 <- train(oldgen ~ ., data = train1, method = "glmnet",
+ridge1 <- train(newgen ~ ., data = train1, method = "glmnet",
                       family = "binomial", trControl = train_control, 
                       tuneGrid = expand.grid(alpha = 0,lambda = seq(0.001,0.1,by = 0.001)))
 #best tuning parameter
@@ -953,7 +952,7 @@ ridge1.model
 
 Search for best cutoff using validation set
 ```{r, warning = FALSE}
-ridge1.out <- reg.opt.cut.gen(ridge1, valid1)
+ridge1.out <- reg.opt.cut.genn(ridge1, valid1)
 opt.cut.plot(ridge1.out)
 # cut off by kappa
 ridge1.out$cutoff[which.max(ridge1.out$kappa.vec)]
@@ -963,7 +962,7 @@ ridge1.out$cutoff[which.min(ridge1.out$ssdiff.vec)]
 create final model
 ```{r}
 set.seed(123)
-ridge1.final <- train(oldgen ~ ., data = all.train1, method = "glmnet",
+ridge1.final <- train(newgen ~ ., data = all.train1, method = "glmnet",
                       family = "binomial", trControl = train_control, 
                       tuneGrid = expand.grid(alpha = 0,lambda = seq(0.001,0.1,by = 0.001)))
 #best tuning parameter
@@ -976,7 +975,7 @@ predict and evaluate on the test set where cutoff is at 0.5
 ```{r}
 prob.ridge1 <- predict(ridge1.final, s = ridge1.final$bestTune, test1, type = "prob")
 pred.ridge1 <- ifelse(prob.ridge1[,2] > 0.50, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(pred.ridge1), as.factor(test1$oldgen), 
+confusionMatrix(as.factor(pred.ridge1), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
@@ -984,7 +983,7 @@ predict and evaluate on the test set where cutoff is at 0.59 corresponding to op
 ```{r}
 prob.ridge1 <- predict(ridge1.final, s = ridge1.final$bestTune, test1, type = "prob")
 pred.ridge1 <- ifelse(prob.ridge1[,2] > 0.59, 1, 0) # using cutoff = 0.59
-confusionMatrix(as.factor(pred.ridge1), as.factor(test1$oldgen), 
+confusionMatrix(as.factor(pred.ridge1), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
@@ -992,7 +991,7 @@ predict and evaluate on the test set where cutoff is at 0.65 corresponding to op
 ```{r}
 prob.ridge1 <- predict(ridge1.final, s = ridge1.final$bestTune, test1, type = "prob")
 pred.ridge1 <- ifelse(prob.ridge1[,2] > 0.65, 1, 0) # using cutoff = 0.65
-confusionMatrix(as.factor(pred.ridge1), as.factor(test1$oldgen), 
+confusionMatrix(as.factor(pred.ridge1), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
@@ -1000,7 +999,7 @@ confusionMatrix(as.factor(pred.ridge1), as.factor(test1$oldgen),
 ### Regularized Regression: Lasso 10 fold Cross Validation
 ```{r}
 set.seed(123)
-lasso1 <- train(oldgen ~ ., data = train1, method = "glmnet",
+lasso1 <- train(newgen ~ ., data = train1, method = "glmnet",
                       family = "binomial", trControl = train_control, 
                       tuneGrid = expand.grid(alpha = 1,lambda = seq(0.001,0.1,by = 0.001)))
 # best parameter
@@ -1012,7 +1011,7 @@ lasso1.model
 
 Search for best cutoff using validation set
 ```{r, warning=FALSE}
-lasso1.out <- reg.opt.cut.gen(lasso1, valid1)
+lasso1.out <- reg.opt.cut.genn(lasso1, valid1)
 opt.cut.plot(lasso1.out)
 # cut off by kappa
 lasso1.out$cutoff[which.max(lasso1.out$kappa.vec)]
@@ -1022,7 +1021,7 @@ lasso1.out$cutoff[which.min(lasso1.out$ssdiff.vec)]
 create final model
 ```{r}
 set.seed(123)
-lasso1.final <- train(oldgen ~ ., data = train1, method = "glmnet",
+lasso1.final <- train(newgen ~ ., data = train1, method = "glmnet",
                       family = "binomial", trControl = train_control, 
                       tuneGrid = expand.grid(alpha = 1,lambda = seq(0.001,0.1,by = 0.001)))
 # best parameter
@@ -1036,7 +1035,7 @@ predict and evaluate on the test set where cutoff is at 0.5
 ```{r}
 prob.lasso1 <- predict(lasso1.final, s = lasso1.final$bestTune, test1, type = "prob")
 pred.lasso1 <- ifelse(prob.lasso1[,2] > 0.50, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(pred.lasso1), as.factor(test1$oldgen), 
+confusionMatrix(as.factor(pred.lasso1), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
@@ -1044,7 +1043,7 @@ predict and evaluate on the test set where cutoff is at 0.56 corresponding to op
 ```{r}
 prob.lasso1 <- predict(lasso1.final, s = lasso1.final$bestTune, test1, type = "prob")
 pred.lasso1 <- ifelse(prob.lasso1[,2] > 0.56, 1, 0) # using cutoff = 0.56
-confusionMatrix(as.factor(pred.lasso1), as.factor(test1$oldgen), 
+confusionMatrix(as.factor(pred.lasso1), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
@@ -1052,7 +1051,7 @@ predict and evaluate on the test set where cutoff is at 0.66 corresponding to op
 ```{r}
 prob.lasso1 <- predict(lasso1.final, s = lasso1.final$bestTune, test1, type = "prob")
 pred.lasso1 <- ifelse(prob.lasso1[,2] > 0.66, 1, 0) # using cutoff = 0.66
-confusionMatrix(as.factor(pred.lasso1), as.factor(test1$oldgen), 
+confusionMatrix(as.factor(pred.lasso1), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
@@ -1060,7 +1059,7 @@ confusionMatrix(as.factor(pred.lasso1), as.factor(test1$oldgen),
 ### Regularized Regression: Elastic Net 10 fold Cross Validation
 ```{r}
 set.seed(123)
-enet1 <- train(oldgen ~ ., data = train1, method = "glmnet",
+enet1 <- train(newgen ~ ., data = train1, method = "glmnet",
                       family = "binomial", trControl = train_control, 
                       tuneGrid = expand.grid(alpha = seq(0,1,by = 0.05),lambda = seq(0.001,0.1,by = 0.001)))
 # best parameter
@@ -1072,7 +1071,7 @@ enet1.model
 
 search for best cutoff with validation set
 ```{r, warning = FALSE}
-enet1.out <- reg.opt.cut.gen(enet1, valid1)
+enet1.out <- reg.opt.cut.genn(enet1, valid1)
 opt.cut.plot(enet1.out)
 # cut off by kappa
 enet1.out$cutoff[which.max(enet1.out$kappa.vec)]
@@ -1082,7 +1081,7 @@ enet1.out$cutoff[which.min(enet1.out$ssdiff.vec)]
 create final model on train and validation
 ```{r}
 set.seed(123)
-enet1.final <- train(oldgen ~ ., data = all.train1, method = "glmnet",
+enet1.final <- train(newgen ~ ., data = all.train1, method = "glmnet",
                       family = "binomial", trControl = train_control, 
                       tuneGrid = expand.grid(alpha = seq(0,1,by = 0.05),lambda = seq(0.001,0.1,by = 0.001)))
 # best parameter
@@ -1096,7 +1095,7 @@ predict and evaluate on the test set where cutoff is at 0.5
 ```{r}
 prob.enet1 <- predict(enet1.final, s = enet1.final$bestTune, test1, type = "prob")
 pred.enet1 <- ifelse(prob.enet1[,2] > 0.50, 1, 0) # using cutoff = 0.5
-confusionMatrix(as.factor(pred.enet1), as.factor(test1$oldgen), 
+confusionMatrix(as.factor(pred.enet1), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
@@ -1104,7 +1103,7 @@ predict and evaluate on the test set where cutoff is at 0.57 corresponding to op
 ```{r}
 prob.enet1 <- predict(enet1.final, s = enet1.final$bestTune, test1, type = "prob")
 pred.enet1 <- ifelse(prob.enet1[,2] > 0.57, 1, 0) # using cutoff = 0.57
-confusionMatrix(as.factor(pred.enet1), as.factor(test1$oldgen), 
+confusionMatrix(as.factor(pred.enet1), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
@@ -1112,7 +1111,7 @@ predict and evaluate on the test set where cutoff is at 0.66 corresponding to op
 ```{r}
 prob.enet1 <- predict(enet1.final, s = enet1.final$bestTune, test1, type = "prob")
 pred.enet1 <- ifelse(prob.enet1[,2] > 0.66, 1, 0) # using cutoff = 0.66
-confusionMatrix(as.factor(pred.enet1), as.factor(test1$oldgen), 
+confusionMatrix(as.factor(pred.enet1), as.factor(test1$newgen), 
                 positive = "1")
 ```
 
