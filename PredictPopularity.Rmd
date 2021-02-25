@@ -19,6 +19,7 @@ library(scales)
 library(caret)
 library(leaps) # for all possible regressions approach LINEAR
 library(glmulti)# for all possible regressions approach LOGISTIC
+library(moments) # for calculating skewness
 ```
 
 
@@ -41,22 +42,100 @@ data <- mutate(data, ArtistType = as.factor(ArtistType),
                popular = factor(ifelse(popularity >=50, 1, 0)))
 ```
 
-understanding popularity
+# Understanding Popularity
+
+## Assessing normality of popularity scores
 ```{r}
-hist(data$popularity)
+ggplot(data, aes(x=popularity)) +
+  geom_histogram(aes(y = stat(density)), bins = 30, fill = "white", col = "black") +
+  stat_function(
+    fun = dnorm, 
+    args = list(mean = mean(data$popularity), sd = sd(data$popularity)), 
+    lwd = 1, 
+    col = 'red'
+  ) +
+  xlab("Popularity") + ylab("Density") +
+  ggtitle(paste("Popularity", "Distribution")) +
+  theme_bw()
 summary(data$popularity)
 ```
 
-heavily skewed right.
-
-
-The square root transformation makes it more normal. This will help to meet the multiple linear regression assumptions.
 ```{r}
-hist(data$popularity^0.5)
+#produce normal qqplot to assess normality
+qqnorm(data$popularity, pch = 1, frame = FALSE)
+qqline(data$popularity, col = "red", lwd = 2)
+#Skewness score
+skewness(data$popularity)
+kurtosis(data$popularity)
+```
+
+moderately skewed right.
+
+### Square Root Transformation
+Try square root transformation makes it more normal. This will help to meet the multiple linear regression assumptions.
+```{r}
+ggplot(data, aes(x=popularity^0.5)) +
+  geom_histogram(aes(y = stat(density)), bins = 30, fill = "white", col = "black") +
+  stat_function(
+    fun = dnorm, 
+    args = list(mean = mean(data$popularity^0.5), sd = sd(data$popularity^0.5)), 
+    lwd = 1, 
+    col = 'red'
+  ) +
+  xlab("Popularity") + ylab("Density") +
+  ggtitle(paste("Popularity", "Distribution")) +
+  theme_bw()
+summary(data$popularity^0.5)
 ```
 
 
-Classification of 
+```{r}
+#produce normal qqplot to assess normality
+qqnorm(data$popularity^0.5, pch = 1, frame = FALSE)
+qqline(data$popularity^0.5, col = "red", lwd = 2)
+#Skewness score
+skewness(data$popularity^0.5)
+kurtosis(data$popularity^0.5)
+```
+
+
+
+### to the power of 0.6 Transformation
+Try log transformation makes it more normal. This will help to meet the multiple linear regression assumptions.
+```{r}
+ggplot(data, aes(x=popularity^0.6)) +
+  geom_histogram(aes(y = stat(density)), bins = 30, fill = "white", col = "black") +
+  stat_function(
+    fun = dnorm, 
+    args = list(mean = mean(data$popularity^0.6), sd = sd(data$popularity^0.6)), 
+    lwd = 1, 
+    col = 'red'
+  ) +
+  xlab("Popularity") + ylab("Density") +
+  ggtitle(paste("Popularity", "Distribution")) +
+  theme_bw()
+summary(data$popularity^0.6)
+```
+
+```{r}
+#produce normal qqplot to assess normality
+qqnorm(data$popularity^0.6, pch = 1, frame = FALSE)
+qqline(data$popularity^0.6, col = "red", lwd = 2)
+#Skewness score
+skewness(data$popularity^0.6)
+kurtosis(data$popularity^0.6)
+```
+
+```{r}
+#produce normal qqplot to assess normality
+qqnorm(data$popularity^0.75, pch = 1, frame = FALSE)
+qqline(data$popularity^0.75, col = "red", lwd = 2)
+#Skewness score
+skewness(data$popularity^0.75)
+kurtosis(data$popularity^0.75)
+```
+
+## Classification of popularity: Popular vs. Not popular
 ```{r}
 table(data$popular)/nrow(data)
 ```
@@ -75,7 +154,7 @@ the distribution of the variables are not normal, we will check for normality of
 Goal: create model for predicting popularity scores
 
 
-# Multiple Linear Model?
+# Multiple Linear Model
 select just audio features
 ```{r}
 kpop <- select(data, popularity, duration, acousticness, danceability, energy, instrumentalness, key, loudness, mode, speechiness, tempo, valence)
@@ -101,7 +180,7 @@ test1 <- kpop1[-smpl1,]
 
 ## For Songs with Mode 0
 
-### Full Multiple Linear Regression
+### Multiple Linear Regression Assumption Checking
 fit a multiple linear regression model
 ```{r}
 ml0 <- lm(popularity ~. , data = train0)
@@ -144,9 +223,10 @@ data.frame(
 )
 ```
 
-Much improved!
+not that improved :(
 
 
+check performance where the exponent is 0.6
 
 
 ### Variable Selection: Stepwise 10 fold cross validation
