@@ -193,7 +193,6 @@ summary {
 <li><a href="#energy-difference-by-generations">Energy Difference by Generations</a></li>
 <li><a href="#instrumentalness-difference-by-generations">Instrumentalness Difference by Generations</a></li>
 <li><a href="#speechiness-difference-by-generations">Speechiness Difference by Generations</a></li>
-<li><a href="#speechiness-difference-by-generations-1">Speechiness Difference by Generations</a></li>
 <li><a href="#loudness-difference-by-generations">Loudness Difference by Generations</a></li>
 <li><a href="#tempo-difference-by-generations">Tempo Difference by Generations</a></li>
 <li><a href="#valence-difference-by-generations">Valence Difference by Generations</a></li>
@@ -304,7 +303,6 @@ gen1 &lt;- filter(data, ArtistGen == 1)
 gen2 &lt;- filter(data, ArtistGen == 2)
 gen3 &lt;- filter(data, ArtistGen == 3)
 gen4 &lt;- filter(data, ArtistGen == 4)
-
 # ## Reducing the groups
 # oldgen &lt;- filter(data, oldgen == 1)
 # newgen &lt;- filter(data, oldgen == 0)</code></pre>
@@ -317,6 +315,79 @@ gen4 &lt;- filter(data, ArtistGen == 4)
 ## 
 ## data:  list(gen1$popularity, gen2$popularity, gen3$popularity, gen4$popularity)
 ## Kruskal-Wallis chi-squared = 4079.2, df = 3, p-value &lt; 2.2e-16</code></pre>
+<p>Pairwise confidence intervals with bonferroni correction 0.05 /6</p>
+<pre class="r"><code>wilcox.test(gen1$popularity, gen2$popularity, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$popularity and gen2$popularity
+## W = 3315856, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -9.000078 -7.999948
+## sample estimates:
+## difference in location 
+##              -8.000014</code></pre>
+<pre class="r"><code>wilcox.test(gen1$popularity, gen3$popularity, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$popularity and gen3$popularity
+## W = 808533, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -27.00002 -25.00003
+## sample estimates:
+## difference in location 
+##              -26.00001</code></pre>
+<pre class="r"><code>wilcox.test(gen1$popularity, gen4$popularity, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$popularity and gen4$popularity
+## W = 40423, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -36.99996 -34.00001
+## sample estimates:
+## difference in location 
+##              -35.99999</code></pre>
+<pre class="r"><code>wilcox.test(gen2$popularity, gen3$popularity, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen2$popularity and gen3$popularity
+## W = 4827719, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -18.00001 -16.00003
+## sample estimates:
+## difference in location 
+##              -17.00004</code></pre>
+<pre class="r"><code>wilcox.test(gen2$popularity, gen4$popularity, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen2$popularity and gen4$popularity
+## W = 364107, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -28.00005 -25.00000
+## sample estimates:
+## difference in location 
+##              -26.99998</code></pre>
+<pre class="r"><code>wilcox.test(gen3$popularity, gen4$popularity, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen3$popularity and gen4$popularity
+## W = 856299, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -10.999985  -7.000043
+## sample estimates:
+## difference in location 
+##              -9.000029</code></pre>
 <p>Reduced to two generations</p>
 <pre><code>wilcox.test(oldgen$popularity, newgen$popularity, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 </div>
@@ -329,6 +400,79 @@ gen4 &lt;- filter(data, ArtistGen == 4)
 ## 
 ## data:  list(gen1$duration, gen2$duration, gen3$duration, gen4$duration)
 ## Kruskal-Wallis chi-squared = 749.45, df = 3, p-value &lt; 2.2e-16</code></pre>
+<p>Pairwise confidence intervals with bonferroni correction 0.05 /6</p>
+<pre class="r"><code>wilcox.test(gen1$duration, gen2$duration, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$duration and gen2$duration
+## W = 6716006, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##   9.60805 13.81404
+## sample estimates:
+## difference in location 
+##               11.71993</code></pre>
+<pre class="r"><code>wilcox.test(gen1$duration, gen3$duration, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$duration and gen3$duration
+## W = 5168638, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  16.98804 21.08295
+## sample estimates:
+## difference in location 
+##                 19.039</code></pre>
+<pre class="r"><code>wilcox.test(gen1$duration, gen4$duration, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$duration and gen4$duration
+## W = 1013108, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  23.40404 29.84504
+## sample estimates:
+## difference in location 
+##               26.61209</code></pre>
+<pre class="r"><code>wilcox.test(gen2$duration, gen3$duration, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen2$duration and gen3$duration
+## W = 12237926, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  5.546969 8.319974
+## sample estimates:
+## difference in location 
+##               6.932911</code></pre>
+<pre class="r"><code>wilcox.test(gen2$duration, gen4$duration, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen2$duration and gen4$duration
+## W = 2507990, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  11.65498 16.90297
+## sample estimates:
+## difference in location 
+##               14.26608</code></pre>
+<pre class="r"><code>wilcox.test(gen3$duration, gen4$duration, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen3$duration and gen4$duration
+## W = 1526027, p-value = 2.905e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  4.960046 9.662030
+## sample estimates:
+## difference in location 
+##               7.296042</code></pre>
 <p>Reduced to two generations</p>
 <pre><code>wilcox.test(oldgen$duration, newgen$duration, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 </div>
@@ -341,6 +485,79 @@ gen4 &lt;- filter(data, ArtistGen == 4)
 ## 
 ## data:  list(gen1$acousticness, gen2$acousticness, gen3$acousticness,     gen4$acousticness)
 ## Kruskal-Wallis chi-squared = 81.984, df = 3, p-value &lt; 2.2e-16</code></pre>
+<p>Pairwise confidence intervals with bonferroni correction 0.05 /6</p>
+<pre class="r"><code>wilcox.test(gen1$acousticness, gen2$acousticness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$acousticness and gen2$acousticness
+## W = 5082732, p-value = 1.12e-07
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -0.019403049 -0.005477621
+## sample estimates:
+## difference in location 
+##            -0.01197935</code></pre>
+<pre class="r"><code>wilcox.test(gen1$acousticness, gen3$acousticness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$acousticness and gen3$acousticness
+## W = 3231122, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -0.03282232 -0.01646448
+## sample estimates:
+## difference in location 
+##            -0.02426363</code></pre>
+<pre class="r"><code>wilcox.test(gen1$acousticness, gen4$acousticness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$acousticness and gen4$acousticness
+## W = 648436, p-value = 0.2567
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -0.013777980  0.005443325
+## sample estimates:
+## difference in location 
+##           -0.003820072</code></pre>
+<pre class="r"><code>wilcox.test(gen2$acousticness, gen3$acousticness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen2$acousticness and gen3$acousticness
+## W = 9997900, p-value = 2.263e-05
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -0.015168099 -0.003189845
+## sample estimates:
+## difference in location 
+##           -0.009066502</code></pre>
+<pre class="r"><code>wilcox.test(gen2$acousticness, gen4$acousticness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen2$acousticness and gen4$acousticness
+## W = 1985756, p-value = 0.01084
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -0.0002510459  0.0220042216
+## sample estimates:
+## difference in location 
+##               0.009739</code></pre>
+<pre class="r"><code>wilcox.test(gen3$acousticness, gen4$acousticness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen3$acousticness and gen4$acousticness
+## W = 1432583, p-value = 2.727e-07
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  0.01017743 0.03571814
+## sample estimates:
+## difference in location 
+##             0.02229378</code></pre>
 <p>Reduced to two generations</p>
 <pre><code>wilcox.test(oldgen$acousticness, newgen$acousticness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 </div>
@@ -353,6 +570,79 @@ gen4 &lt;- filter(data, ArtistGen == 4)
 ## 
 ## data:  list(gen1$danceability, gen2$danceability, gen3$danceability,     gen4$danceability)
 ## Kruskal-Wallis chi-squared = 184.52, df = 3, p-value &lt; 2.2e-16</code></pre>
+<p>Pairwise confidence intervals with bonferroni correction 0.05 /6</p>
+<pre class="r"><code>wilcox.test(gen1$danceability, gen2$danceability, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$danceability and gen2$danceability
+## W = 6587764, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  0.03105147 0.04702434
+## sample estimates:
+## difference in location 
+##             0.03905339</code></pre>
+<pre class="r"><code>wilcox.test(gen1$danceability, gen3$danceability, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$danceability and gen3$danceability
+## W = 4401916, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  0.02505498 0.04104477
+## sample estimates:
+## difference in location 
+##             0.03301117</code></pre>
+<pre class="r"><code>wilcox.test(gen1$danceability, gen4$danceability, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$danceability and gen4$danceability
+## W = 722712, p-value = 0.001459
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  0.002968698 0.028966216
+## sample estimates:
+## difference in location 
+##             0.01597192</code></pre>
+<pre class="r"><code>wilcox.test(gen2$danceability, gen3$danceability, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen2$danceability and gen3$danceability
+## W = 10219613, p-value = 0.01215
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -1.206055e-02  2.574947e-05
+## sample estimates:
+## difference in location 
+##           -0.005991546</code></pre>
+<pre class="r"><code>wilcox.test(gen2$danceability, gen4$danceability, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen2$danceability and gen4$danceability
+## W = 1641144, p-value = 1.447e-07
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -0.03503132 -0.01199629
+## sample estimates:
+## difference in location 
+##            -0.02303717</code></pre>
+<pre class="r"><code>wilcox.test(gen3$danceability, gen4$danceability, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen3$danceability and gen4$danceability
+## W = 1149812, p-value = 5.229e-05
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -0.028952266 -0.006059512
+## sample estimates:
+## difference in location 
+##            -0.01791596</code></pre>
 <p>Reduced to two generations</p>
 <pre><code>wilcox.test(oldgen$danceability, newgen$danceability, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 </div>
@@ -365,6 +655,79 @@ gen4 &lt;- filter(data, ArtistGen == 4)
 ## 
 ## data:  list(gen1$energy, gen2$energy, gen3$energy, gen4$energy)
 ## Kruskal-Wallis chi-squared = 28.023, df = 3, p-value = 3.591e-06</code></pre>
+<p>Pairwise confidence intervals with bonferroni correction 0.05 /6</p>
+<pre class="r"><code>wilcox.test(gen1$energy, gen2$energy, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$energy and gen2$energy
+## W = 5582152, p-value = 0.495
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -0.007971006  0.013086582
+## sample estimates:
+## difference in location 
+##            0.002929043</code></pre>
+<pre class="r"><code>wilcox.test(gen1$energy, gen3$energy, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$energy and gen3$energy
+## W = 3715470, p-value = 0.4733
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -0.014031869  0.007970819
+## sample estimates:
+## difference in location 
+##           -0.002985051</code></pre>
+<pre class="r"><code>wilcox.test(gen1$energy, gen4$energy, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$energy and gen4$energy
+## W = 597314, p-value = 4.032e-05
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -0.04394520 -0.00902158
+## sample estimates:
+## difference in location 
+##            -0.02605816</code></pre>
+<pre class="r"><code>wilcox.test(gen2$energy, gen3$energy, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen2$energy and gen3$energy
+## W = 10327704, p-value = 0.09598
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -0.011964001  0.002963283
+## sample estimates:
+## difference in location 
+##           -0.004988166</code></pre>
+<pre class="r"><code>wilcox.test(gen2$energy, gen4$energy, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen2$energy and gen4$energy
+## W = 1643106, p-value = 1.841e-07
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -0.03904493 -0.01295186
+## sample estimates:
+## difference in location 
+##            -0.02595654</code></pre>
+<pre class="r"><code>wilcox.test(gen3$energy, gen4$energy, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen3$energy and gen4$energy
+## W = 1135920, p-value = 6.909e-06
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -0.033008665 -0.008978771
+## sample estimates:
+## difference in location 
+##            -0.02094674</code></pre>
 <p>Reduced to two generations</p>
 <pre><code>wilcox.test(oldgen$energy, newgen$energy, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 </div>
@@ -377,6 +740,79 @@ gen4 &lt;- filter(data, ArtistGen == 4)
 ## 
 ## data:  list(gen1$instrumentalness, gen2$instrumentalness, gen3$instrumentalness,     gen4$instrumentalness)
 ## Kruskal-Wallis chi-squared = 681.01, df = 3, p-value &lt; 2.2e-16</code></pre>
+<p>Pairwise confidence intervals with bonferroni correction 0.05 /6</p>
+<pre class="r"><code>wilcox.test(gen1$instrumentalness, gen2$instrumentalness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$instrumentalness and gen2$instrumentalness
+## W = 6827255, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  5.330529e-06 3.635337e-05
+## sample estimates:
+## difference in location 
+##           4.322088e-05</code></pre>
+<pre class="r"><code>wilcox.test(gen1$instrumentalness, gen3$instrumentalness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$instrumentalness and gen3$instrumentalness
+## W = 4962824, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  6.242531e-05 1.324542e-05
+## sample estimates:
+## difference in location 
+##           5.940454e-05</code></pre>
+<pre class="r"><code>wilcox.test(gen1$instrumentalness, gen4$instrumentalness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$instrumentalness and gen4$instrumentalness
+## W = 845691, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  2.214427e-05 3.656347e-05
+## sample estimates:
+## difference in location 
+##           2.302424e-05</code></pre>
+<pre class="r"><code>wilcox.test(gen2$instrumentalness, gen3$instrumentalness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen2$instrumentalness and gen3$instrumentalness
+## W = 11428636, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  1.562298e-05 6.900444e-06
+## sample estimates:
+## difference in location 
+##          -3.016059e-06</code></pre>
+<pre class="r"><code>wilcox.test(gen2$instrumentalness, gen4$instrumentalness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen2$instrumentalness and gen4$instrumentalness
+## W = 1938095, p-value = 0.05353
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -1.880325e-05  6.295205e-05
+## sample estimates:
+## difference in location 
+##           2.930242e-07</code></pre>
+<pre class="r"><code>wilcox.test(gen3$instrumentalness, gen4$instrumentalness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen3$instrumentalness and gen4$instrumentalness
+## W = 1212845, p-value = 0.002867
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -1.116460e-05  3.371762e-05
+## sample estimates:
+## difference in location 
+##          -1.824214e-05</code></pre>
 <p>Reduced to two generations</p>
 <pre><code>wilcox.test(oldgen$instrumentalness, newgen$instrumentalness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 </div>
@@ -389,18 +825,79 @@ gen4 &lt;- filter(data, ArtistGen == 4)
 ## 
 ## data:  list(gen1$speechiness, gen2$speechiness, gen3$speechiness, gen4$speechiness)
 ## Kruskal-Wallis chi-squared = 258.18, df = 3, p-value &lt; 2.2e-16</code></pre>
-<p>Reduced to two generations</p>
-<pre><code>wilcox.test(oldgen$speechiness, newgen$speechiness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
-</div>
-<div id="speechiness-difference-by-generations-1" class="section level3">
-<h3>Speechiness Difference by Generations</h3>
-<p>All four gens</p>
-<pre class="r"><code>kruskal.test(list(gen1$speechiness, gen2$speechiness, gen3$speechiness, gen4$speechiness))</code></pre>
+<p>Pairwise confidence intervals with bonferroni correction 0.05 /6</p>
+<pre class="r"><code>wilcox.test(gen1$speechiness, gen2$speechiness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
 <pre><code>## 
-##  Kruskal-Wallis rank sum test
+##  Wilcoxon rank sum test with continuity correction
 ## 
-## data:  list(gen1$speechiness, gen2$speechiness, gen3$speechiness, gen4$speechiness)
-## Kruskal-Wallis chi-squared = 258.18, df = 3, p-value &lt; 2.2e-16</code></pre>
+## data:  gen1$speechiness and gen2$speechiness
+## W = 5967231, p-value = 1.16e-07
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  0.001754788 0.005245966
+## sample estimates:
+## difference in location 
+##            0.003403991</code></pre>
+<pre class="r"><code>wilcox.test(gen1$speechiness, gen3$speechiness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$speechiness and gen3$speechiness
+## W = 3443958, p-value = 1.676e-07
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -0.006280242 -0.002035958
+## sample estimates:
+## difference in location 
+##           -0.004143073</code></pre>
+<pre class="r"><code>wilcox.test(gen1$speechiness, gen4$speechiness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$speechiness and gen4$speechiness
+## W = 553926, p-value = 3.415e-11
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -0.013304688 -0.005701992
+## sample estimates:
+## difference in location 
+##           -0.009538247</code></pre>
+<pre class="r"><code>wilcox.test(gen2$speechiness, gen3$speechiness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen2$speechiness and gen3$speechiness
+## W = 8765167, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -0.009428564 -0.006263813
+## sample estimates:
+## difference in location 
+##           -0.007850917</code></pre>
+<pre class="r"><code>wilcox.test(gen2$speechiness, gen4$speechiness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen2$speechiness and gen4$speechiness
+## W = 1386588, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -0.01704981 -0.01034887
+## sample estimates:
+## difference in location 
+##            -0.01365338</code></pre>
+<pre class="r"><code>wilcox.test(gen3$speechiness, gen4$speechiness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen3$speechiness and gen4$speechiness
+## W = 1160456, p-value = 0.0002162
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -0.008878170 -0.001443872
+## sample estimates:
+## difference in location 
+##           -0.005133815</code></pre>
 <p>Reduced to two generations</p>
 <pre><code>wilcox.test(oldgen$speechiness, newgen$speechiness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 </div>
@@ -413,6 +910,79 @@ gen4 &lt;- filter(data, ArtistGen == 4)
 ## 
 ## data:  list(gen1$loudness, gen2$loudness, gen3$loudness, gen4$loudness)
 ## Kruskal-Wallis chi-squared = 681.81, df = 3, p-value &lt; 2.2e-16</code></pre>
+<p>Pairwise confidence intervals with bonferroni correction 0.05 /6</p>
+<pre class="r"><code>wilcox.test(gen1$loudness, gen2$loudness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$loudness and gen2$loudness
+## W = 3987612, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -1.0690260 -0.8050314
+## sample estimates:
+## difference in location 
+##             -0.9369967</code></pre>
+<pre class="r"><code>wilcox.test(gen1$loudness, gen3$loudness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$loudness and gen3$loudness
+## W = 2325016, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -1.380008 -1.110075
+## sample estimates:
+## difference in location 
+##              -1.244935</code></pre>
+<pre class="r"><code>wilcox.test(gen1$loudness, gen4$loudness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$loudness and gen4$loudness
+## W = 341425, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -1.783976 -1.359077
+## sample estimates:
+## difference in location 
+##              -1.571012</code></pre>
+<pre class="r"><code>wilcox.test(gen2$loudness, gen3$loudness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen2$loudness and gen3$loudness
+## W = 9432992, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -0.3900043 -0.2079796
+## sample estimates:
+## difference in location 
+##              -0.298954</code></pre>
+<pre class="r"><code>wilcox.test(gen2$loudness, gen4$loudness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen2$loudness and gen4$loudness
+## W = 1451189, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -0.7900220 -0.4470353
+## sample estimates:
+## difference in location 
+##             -0.6179893</code></pre>
+<pre class="r"><code>wilcox.test(gen3$loudness, gen4$loudness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen3$loudness and gen4$loudness
+## W = 1117533, p-value = 3.509e-07
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -0.4850057 -0.1540285
+## sample estimates:
+## difference in location 
+##             -0.3190569</code></pre>
 <p>Reduced to two generations</p>
 <pre><code>wilcox.test(oldgen$loudness, newgen$loudness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 </div>
@@ -425,6 +995,79 @@ gen4 &lt;- filter(data, ArtistGen == 4)
 ## 
 ## data:  list(gen1$tempo, gen2$tempo, gen3$tempo, gen4$tempo)
 ## Kruskal-Wallis chi-squared = 36.012, df = 3, p-value = 7.444e-08</code></pre>
+<p>Pairwise confidence intervals with bonferroni correction 0.05 /6</p>
+<pre class="r"><code>wilcox.test(gen1$tempo, gen2$tempo, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$tempo and gen2$tempo
+## W = 5147904, p-value = 6.052e-06
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -4.948980 -1.075945
+## sample estimates:
+## difference in location 
+##              -3.001052</code></pre>
+<pre class="r"><code>wilcox.test(gen1$tempo, gen3$tempo, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$tempo and gen3$tempo
+## W = 3672100, p-value = 0.1503
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -2.983978  0.874021
+## sample estimates:
+## difference in location 
+##             -0.9980123</code></pre>
+<pre class="r"><code>wilcox.test(gen1$tempo, gen4$tempo, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$tempo and gen4$tempo
+## W = 593010, p-value = 1.326e-05
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -8.044934 -1.998050
+## sample estimates:
+## difference in location 
+##               -5.01609</code></pre>
+<pre class="r"><code>wilcox.test(gen2$tempo, gen3$tempo, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen2$tempo and gen3$tempo
+## W = 11044058, p-value = 8.742e-05
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  0.2600649 3.1589815
+## sample estimates:
+## difference in location 
+##               1.999025</code></pre>
+<pre class="r"><code>wilcox.test(gen2$tempo, gen4$tempo, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen2$tempo and gen4$tempo
+## W = 1802280, p-value = 0.1077
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -4.2850588  0.9970885
+## sample estimates:
+## difference in location 
+##              -1.933973</code></pre>
+<pre class="r"><code>wilcox.test(gen3$tempo, gen4$tempo, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen3$tempo and gen4$tempo
+## W = 1165645, p-value = 0.0004144
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -6.587050 -0.946052
+## sample estimates:
+## difference in location 
+##              -3.958047</code></pre>
 <p>Reduced to two generations</p>
 <pre><code>wilcox.test(oldgen$tempo, newgen$tempo, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 </div>
@@ -437,6 +1080,79 @@ gen4 &lt;- filter(data, ArtistGen == 4)
 ## 
 ## data:  list(gen1$valence, gen2$valence, gen3$valence, gen4$valence)
 ## Kruskal-Wallis chi-squared = 92.884, df = 3, p-value &lt; 2.2e-16</code></pre>
+<p>Pairwise confidence intervals with bonferroni correction 0.05 /6</p>
+<pre class="r"><code>wilcox.test(gen1$valence, gen2$valence, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$valence and gen2$valence
+## W = 6145471, p-value = 1.031e-13
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  0.02893193 0.06002026
+## sample estimates:
+## difference in location 
+##             0.04401088</code></pre>
+<pre class="r"><code>wilcox.test(gen1$valence, gen3$valence, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$valence and gen3$valence
+## W = 4319974, p-value &lt; 2.2e-16
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  0.04198552 0.07405643
+## sample estimates:
+## difference in location 
+##             0.05804304</code></pre>
+<pre class="r"><code>wilcox.test(gen1$valence, gen4$valence, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen1$valence and gen4$valence
+## W = 778713, p-value = 1.213e-10
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  0.03800416 0.09000625
+## sample estimates:
+## difference in location 
+##             0.06400126</code></pre>
+<pre class="r"><code>wilcox.test(gen2$valence, gen3$valence, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen2$valence and gen3$valence
+## W = 10865590, p-value = 0.01137
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -0.0009727786  0.0240385187
+## sample estimates:
+## difference in location 
+##             0.01195164</code></pre>
+<pre class="r"><code>wilcox.test(gen2$valence, gen4$valence, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen2$valence and gen4$valence
+## W = 1958912, p-value = 0.05243
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -0.006001465  0.041033561
+## sample estimates:
+## difference in location 
+##             0.01700794</code></pre>
+<pre class="r"><code>wilcox.test(gen3$valence, gen4$valence, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.9917)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  gen3$valence and gen4$valence
+## W = 1294594, p-value = 0.5102
+## alternative hypothesis: true location shift is not equal to 0
+## 99.17 percent confidence interval:
+##  -0.01798393  0.02894915
+## sample estimates:
+## difference in location 
+##            0.005951968</code></pre>
 <p>Reduced to two generations</p>
 <pre><code>wilcox.test(oldgen$valence, newgen$valence, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 </div>
@@ -577,10 +1293,10 @@ solo &lt;- filter(data, ArtistType == &quot;solo&quot;)</code></pre>
 ## W = 8820586, p-value = 2.21e-07
 ## alternative hypothesis: true location shift is not equal to 0
 ## 95 percent confidence interval:
-##  -0.08753883 -0.03953395
+##  -5.251045 -2.372974
 ## sample estimates:
 ## difference in location 
-##            -0.06354772</code></pre>
+##              -3.811053</code></pre>
 </div>
 <div id="acousticness-difference-by-artist-type" class="section level3">
 <h3>Acousticness Difference by Artist Type</h3>
@@ -734,10 +1450,10 @@ girl.group &lt;- filter(data, ArtistType == &quot;group&quot; &amp; ArtistGender
 ## W = 13174314, p-value &lt; 2.2e-16
 ## alternative hypothesis: true location shift is not equal to 0
 ## 95 percent confidence interval:
-##  0.1066426 0.1417340
+##  6.397087 8.503953
 ## sample estimates:
 ## difference in location 
-##              0.1241311</code></pre>
+##               7.448076</code></pre>
 </div>
 <div id="acousticness-difference-by-group-type" class="section level3">
 <h3>Acousticness Difference by Group Type</h3>

@@ -19,6 +19,7 @@ library(scales) #for formatting with percentage signs
 library(nnet) #for multinomial regression
 library(caret)
 library(car) #for vif function and boxcox transformation
+library(FSA)
 ```
 
 
@@ -85,7 +86,6 @@ gen1 <- filter(data, ArtistGen == 1)
 gen2 <- filter(data, ArtistGen == 2)
 gen3 <- filter(data, ArtistGen == 3)
 gen4 <- filter(data, ArtistGen == 4)
-
 # ## Reducing the groups
 # oldgen <- filter(data, oldgen == 1)
 # newgen <- filter(data, oldgen == 0)
@@ -99,6 +99,18 @@ All four gens
 kruskal.test(list(gen1$popularity, gen2$popularity, gen3$popularity, gen4$popularity))
 ```
 
+Pairwise confidence intervals with bonferroni correction 0.05 /6 
+```{r}
+wilcox.test(gen1$popularity, gen2$popularity, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen1$popularity, gen3$popularity, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen1$popularity, gen4$popularity, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen2$popularity, gen3$popularity, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen2$popularity, gen4$popularity, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen3$popularity, gen4$popularity, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+```
+
+
+
 Reduced to two generations
 ```
 wilcox.test(oldgen$popularity, newgen$popularity, paired = FALSE, alternative = "two.sided")
@@ -111,6 +123,17 @@ All four gens
 kruskal.test(list(gen1$duration, gen2$duration, gen3$duration, gen4$duration))
 ```
 
+
+Pairwise confidence intervals with bonferroni correction 0.05 /6 
+```{r}
+wilcox.test(gen1$duration, gen2$duration, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen1$duration, gen3$duration, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen1$duration, gen4$duration, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen2$duration, gen3$duration, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen2$duration, gen4$duration, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen3$duration, gen4$duration, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+```
+
 Reduced to two generations
 ```
 wilcox.test(oldgen$duration, newgen$duration, paired = FALSE, alternative = "two.sided")
@@ -121,6 +144,17 @@ wilcox.test(oldgen$duration, newgen$duration, paired = FALSE, alternative = "two
 All four gens
 ```{r}
 kruskal.test(list(gen1$acousticness, gen2$acousticness, gen3$acousticness, gen4$acousticness))
+```
+
+
+Pairwise confidence intervals with bonferroni correction 0.05 /6 
+```{r}
+wilcox.test(gen1$acousticness, gen2$acousticness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen1$acousticness, gen3$acousticness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen1$acousticness, gen4$acousticness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen2$acousticness, gen3$acousticness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen2$acousticness, gen4$acousticness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen3$acousticness, gen4$acousticness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
 ```
 
 Reduced to two generations
@@ -137,6 +171,18 @@ All four gens
 kruskal.test(list(gen1$danceability, gen2$danceability, gen3$danceability, gen4$danceability))
 ```
 
+
+Pairwise confidence intervals with bonferroni correction 0.05 /6 
+```{r}
+wilcox.test(gen1$danceability, gen2$danceability, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen1$danceability, gen3$danceability, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen1$danceability, gen4$danceability, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen2$danceability, gen3$danceability, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen2$danceability, gen4$danceability, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen3$danceability, gen4$danceability, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+```
+
+
 Reduced to two generations
 ```
 wilcox.test(oldgen$danceability, newgen$danceability, paired = FALSE, alternative = "two.sided")
@@ -151,6 +197,18 @@ All four gens
 kruskal.test(list(gen1$energy, gen2$energy, gen3$energy, gen4$energy))
 ```
 
+
+Pairwise confidence intervals with bonferroni correction 0.05 /6 
+```{r}
+wilcox.test(gen1$energy, gen2$energy, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen1$energy, gen3$energy, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen1$energy, gen4$energy, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen2$energy, gen3$energy, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen2$energy, gen4$energy, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen3$energy, gen4$energy, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+```
+
+
 Reduced to two generations
 ```
 wilcox.test(oldgen$energy, newgen$energy, paired = FALSE, alternative = "two.sided")
@@ -162,6 +220,16 @@ wilcox.test(oldgen$energy, newgen$energy, paired = FALSE, alternative = "two.sid
 All four gens
 ```{r}
 kruskal.test(list(gen1$instrumentalness, gen2$instrumentalness, gen3$instrumentalness, gen4$instrumentalness))
+```
+
+Pairwise confidence intervals with bonferroni correction 0.05 /6 
+```{r}
+wilcox.test(gen1$instrumentalness, gen2$instrumentalness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen1$instrumentalness, gen3$instrumentalness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen1$instrumentalness, gen4$instrumentalness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen2$instrumentalness, gen3$instrumentalness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen2$instrumentalness, gen4$instrumentalness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen3$instrumentalness, gen4$instrumentalness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
 ```
 
 Reduced to two generations
@@ -177,24 +245,22 @@ All four gens
 kruskal.test(list(gen1$speechiness, gen2$speechiness, gen3$speechiness, gen4$speechiness))
 ```
 
-Reduced to two generations
-```
-wilcox.test(oldgen$speechiness, newgen$speechiness, paired = FALSE, alternative = "two.sided")
-```
-
-
-### Speechiness Difference by Generations
-
-All four gens
+Pairwise confidence intervals with bonferroni correction 0.05 /6 
 ```{r}
-kruskal.test(list(gen1$speechiness, gen2$speechiness, gen3$speechiness, gen4$speechiness))
+wilcox.test(gen1$speechiness, gen2$speechiness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen1$speechiness, gen3$speechiness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen1$speechiness, gen4$speechiness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen2$speechiness, gen3$speechiness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen2$speechiness, gen4$speechiness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen3$speechiness, gen4$speechiness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
 ```
+
+
 
 Reduced to two generations
 ```
 wilcox.test(oldgen$speechiness, newgen$speechiness, paired = FALSE, alternative = "two.sided")
 ```
-
 
 
 ### Loudness Difference by Generations
@@ -204,6 +270,15 @@ All four gens
 kruskal.test(list(gen1$loudness, gen2$loudness, gen3$loudness, gen4$loudness))
 ```
 
+Pairwise confidence intervals with bonferroni correction 0.05 /6 
+```{r}
+wilcox.test(gen1$loudness, gen2$loudness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen1$loudness, gen3$loudness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen1$loudness, gen4$loudness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen2$loudness, gen3$loudness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen2$loudness, gen4$loudness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen3$loudness, gen4$loudness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+```
 Reduced to two generations
 ```
 wilcox.test(oldgen$loudness, newgen$loudness, paired = FALSE, alternative = "two.sided")
@@ -215,6 +290,17 @@ wilcox.test(oldgen$loudness, newgen$loudness, paired = FALSE, alternative = "two
 All four gens
 ```{r}
 kruskal.test(list(gen1$tempo, gen2$tempo, gen3$tempo, gen4$tempo))
+```
+
+
+Pairwise confidence intervals with bonferroni correction 0.05 /6 
+```{r}
+wilcox.test(gen1$tempo, gen2$tempo, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen1$tempo, gen3$tempo, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen1$tempo, gen4$tempo, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen2$tempo, gen3$tempo, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen2$tempo, gen4$tempo, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen3$tempo, gen4$tempo, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
 ```
 
 Reduced to two generations
@@ -229,6 +315,18 @@ All four gens
 ```{r}
 kruskal.test(list(gen1$valence, gen2$valence, gen3$valence, gen4$valence))
 ```
+
+Pairwise confidence intervals with bonferroni correction 0.05 /6 
+```{r}
+wilcox.test(gen1$valence, gen2$valence, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen1$valence, gen3$valence, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen1$valence, gen4$valence, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen2$valence, gen3$valence, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen2$valence, gen4$valence, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+wilcox.test(gen3$valence, gen4$valence, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.9917)
+```
+
+
 
 Reduced to two generations
 ```
