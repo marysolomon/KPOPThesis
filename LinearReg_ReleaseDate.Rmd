@@ -50,7 +50,7 @@ data <- fread("kpopdata.csv")
 data <- mutate(data, ArtistType = as.factor(ArtistType),
                ArtistGender = as.factor(ArtistGender),
                ArtistGen = factor(ArtistGen),
-               release_date = as.POSIXct(release_date, format = "%m/%d/%y"),
+               release_date = as.POSIXct(str_sub(data$release_date, 1, 10)),
                key = factor(key, levels = 0:11),
                mode = as.factor(mode),
                time_signature = factor(time_signature, levels = c(1,3,4,5)))
@@ -438,10 +438,10 @@ All variables except Key1, Key2, Key3, Kdy5, Key6, Key7, and Key8 are have a sig
 
 The Full Multiple Linear Regression model for mode 0 songs is written below with coefficients rounded to the thousandths.
 $$
-log(360 - \hat{months}) = 2.739 - 0.022{popularity} + 0.194{duration} - 0.240{acousticness} 
-\\ + 0.424{danceability} +  0.572{energy} - 0.848{instrumentalness} 
-\\ - 0.013{key1} + 0.016{key2} + 0.035{key3} + 0.118{key4} + 0.017{key5} + 0.051{key6}
-\\ - 0.087{key7}  -0.056{key8} +  0.109{key9} + 0.126{key10} + 0.101{key11}
+log(360 - \hat{months}) = 2.739 - 0.022{popularity} + 0.003{duration} - 0.240{acousticness} + 0.424{danceability} +  0.572{energy}
+\\  - 0.848{instrumentalness} - 0.013{key1} + 0.016{key2} + 0.035{key3} + 0.118{key4} + 0.017{key5} 
+\\ 
+\\ + 0.051{key6} - 0.087{key7}  -0.056{key8} +  0.109{key9} + 0.126{key10} + 0.101{key11}
 \\ - 0.087{loudness} - 0.330{speechiness} + 0.001{tempo} + 0.324{valence}
 $$
 
@@ -472,11 +472,11 @@ summary(mlr.step_kcv0$finalModel)
 The Stepwise Multiple Linear Regression model for mode 0 songs is written below with coefficients rounded to the thousandths.
 
 $$
-log(360 - \hat{months}) = 2.732 - 0.022{popularity} + 0.193{duration} - 0.241{acousticness} 
-\\ + 0.425{danceability} +  0.572{energy} - 0.852{instrumentalness} 
-\\ + 0.125{key4} + 0.057{key6}
-\\ +  0.115{key9} + 0.133{key10} + 0.107{key11}
-\\ - 0.087{loudness} - 0.328{speechiness} + 0.001{tempo} + 0.324{valence}
+log(360 - \hat{months}) = 2.732 - 0.022{popularity} + 0.003{duration} - 0.241{acousticness} + 0.425{danceability} +  0.572{energy} 
+\\  
+- 0.852{instrumentalness} + 0.125{key4} + 0.057{key6} +  0.115{key9} + 0.133{key10} + 0.107{key11 }
+\\ 
+- 0.087{loudness} - 0.328{speechiness} + 0.001{tempo} + 0.324{valence} 
 $$
 
 Compared to the full multiple linear regression model, the stepwise regression model omits the variables: Key1, Key2, Key3, Key5, Key7, and Key8. Furthermore, all the variables except Key6 have a significant linear relationship with the response. The percent of variation explained is just .05% larger than that of the full multiple linear regression model at 40.74% of the variance explained.
@@ -512,6 +512,7 @@ allreg.compare0
 ```
 
 The model with the smallest CP value and greatest Adjusted R2 value is model number 15.
+
 ```{r}
 set.seed(123)
 mlr.allreg0 <- lm(months ~ popularity +duration +acousticness +danceability +energy +instrumentalness+
@@ -522,11 +523,11 @@ summary(mlr.allreg0)
 The All Subsets Regression Multiple Linear Regression model for mode 0 songs is written below with coefficients rounded to the thousandths.
 
 $$
-log(360 - \hat{months}) = 2.733 - 0.022{popularity} + 0.193{duration} - 0.241{acousticness} 
-\\ + 0.425{danceability} +  0.572{energy} - 0.852{instrumentalness} 
-\\ + 0.125{key4} + 0.057{key6}
-\\ +  0.115{key9} + 0.133{key10} + 0.107{key11}
-\\ - 0.087{loudness} - 0.328{speechiness} + 0.001{tempo} + 0.324{valence}
+log(360 - \hat{months}) = 2.733 - 0.022{popularity} + 0.003{duration} - 0.241{acousticness} + 0.425{danceability} +  0.572{energy} 
+\\  
+- 0.852{instrumentalness} + 0.125{key4} + 0.057{key6}+  0.115{key9} + 0.133{key10} + 0.107{key11}
+\\ 
+ - 0.087{loudness} - 0.328{speechiness} + 0.001{tempo} + 0.324{valence}
 $$
 
 The multiple linear regression model result from the all subsets regression model is the same as that from the stepwise method. It also has the same significant variables and the adjusted R squared value.
@@ -547,7 +548,7 @@ data.frame(
 
 
 
-## Regularized Regression: Ridge
+## Regularized Regression: Ridge 10 Fold Cross Validation
 ```{r}
 set.seed(123)
 lm.ridge0 <- train(months ~. , data = train0, method = "glmnet",
@@ -563,10 +564,10 @@ lm.ridge0.model
 The Ridge Multiple Linear Regression model for mode 0 songs is written below with coefficients rounded to the thousandths.
 
 $$
-log(360 - \hat{months}) = 2.866 - 0.021{popularity} + 0.190{duration} - 0.245{acousticness} 
-\\ + 0.413{danceability} +  0.482{energy} - 0.749{instrumentalness} 
-\\ - 0.034{key1} - 0.006{key2} + 0.008{key3} + 0.095{key4} - 0.007{key5} + 0.023{key6}
-\\ - 0.063{key7} - 0.075{key8} + 0.082{key9} + 0.099{key10} + 0.078{key11}
+log(360 - \hat{months}) = 2.866 - 0.021{popularity} + 0.003{duration} - 0.245{acousticness} + 0.413{danceability} +  0.482{energy}
+\\  - 0.749{instrumentalness} - 0.034{key1} - 0.006{key2} + 0.008{key3} + 0.095{key4} - 0.007{key5} 
+\\ 
+\\ + 0.023{key6} - 0.063{key7} - 0.075{key8} + 0.082{key9} + 0.099{key10} + 0.078{key11}
 \\ - 0.080{loudness} - 0.308{speechiness} + 0.001{tempo} + 0.323{valence}
 $$
 
@@ -581,7 +582,7 @@ data.frame(
 ```
 
 
-## Regularized Regression: Lasso
+## Regularized Regression: Lasso 10 Fold Cross Validation
 ```{r}
 set.seed(123)
 lm.lasso0 <- train(months ~. , data = train0, method = "glmnet",
@@ -597,9 +598,8 @@ lm.lasso0.model
 The Lasso Multiple Linear Regression model for mode 0 songs is written below with coefficients rounded to the thousandths.
 
 $$
-log(360 - \hat{months}) = 2.837 - 0.022{popularity} + 0.191{duration} - 0.240{acousticness} 
-\\ + 0.409{danceability} + 0.533{energy} - 0.808{instrumentalness} 
-\\ - 0.027{key1} + 0.004{key3} + 0.092{key4} + 0.024{key6}
+log(360 - \hat{months}) = 2.837 - 0.022{popularity} + 0.003{duration} - 0.240{acousticness} + 0.409{danceability} + 0.533{energy}
+\\  - 0.808{instrumentalness} - 0.027{key1} + 0.004{key3} + 0.092{key4} + 0.024{key6}
 \\ - 0.056{key7} - 0.068{key8} + 0.082{key9} + 0.099{key10} + 0.077{key11}
 \\ - 0.084{loudness} - 0.280{speechiness} + 0.001{tempo} + 0.321{valence}
 $$
@@ -619,13 +619,43 @@ data.frame(
 )
 ```
 
+## Regularized Regression : Elastic Net 10 Fold Cross Validation
+```{r}
+lm.enet0 <- train(months ~. , data = train0, method = "glmnet",
+                      trControl = train_control, 
+                      tuneGrid = expand.grid(alpha = seq(0,1,by = 0.05),lambda = seq(0.001,0.1,by = 0.001)))
+# best parameter
+lm.enet0$bestTune
+# best coefficient
+lm.enet0.model <- coef(lm.enet0$finalModel, lm.enet0$bestTune$lambda)
+lm.enet0.model
+```
+
+$$
+log(360 - \hat{months}) = 2.838 - 0.021{popularity} + 0.003{duration} - 0.240{acousticness} + 0.409{danceability} + 0.528{energy}
+\\ - 0.802{instrumentalness} - 0.027{key1} + 0.005{key3} + 0.093{key4} + 0.024{key6}
+\\ - 0.056{key7} - 0.068{key8} + 0.083{key9} + 0.010{key10} + 0.078{key11}
+\\ - 0.084{loudness} - 0.280{speechiness} + 0.001{tempo} + 0.322{valence}
+$$
+
+```{r}
+# prediction on test data
+yhat.enet0 = predict(lm.enet0, s=lm.enet0$bestTune, newdata=test0)
+# RMSE for test data
+error.enet0 <- yhat.enet0 - test0$months
+rmse.enet0 <- sqrt(mean(error.enet0^2))
+data.frame(
+  RMSE = RMSE(yhat.enet0, test0$months),
+  R2 = R2(yhat.enet0, test0$months)
+)
+```
 
 ## Deciding on the best model
 
 ```{r}
-results0 <- data.frame(Model = c("FullMLR", "Stepwise", "AllSubsets","Ridge", "Lasso"),
-                       RMSE = c(0.5976752 , 0.5980156, 0.5980156,0.5981751,0.5975859),
-                       R2 = c(0.3932124, 0.3925419, 0.3925419,0.3921513,0.3932411))
+results0 <- data.frame(Model = c("FullMLR", "Stepwise", "AllSubsets","Ridge", "Lasso", "Elastic Net"),
+                       RMSE = round(c(0.5976752 , 0.5980156, 0.5980156,0.5981751,0.5975859, 0.5976055), 5),
+                       R2 = round(c(0.3932124, 0.3925419, 0.3925419,0.3921513,0.3932411, 0.3931638), 5))
 results0
 ```
 
@@ -634,7 +664,7 @@ With the lowest RMSE and the Highest R2 value resulting from the prediction asse
 
 
 $$
-log(360 - \hat{months}) = 2.837 - 0.022{popularity} + 0.191{duration} - 0.240{acousticness} 
+log(360 - \hat{months}) = 2.837 - 0.022{popularity} + 0.003{duration} - 0.240{acousticness} 
 \\ + 0.409{danceability} + 0.533{energy} - 0.808{instrumentalness} 
 \\ - 0.027{key1} + 0.004{key4} + 0.092{key4} + 0.024{key6}
 \\ - 0.056{key7} - 0.068{key8} + 0.082{key9} + 0.099{key10} + 0.077{key11}
@@ -643,7 +673,7 @@ $$
 
 The Lasso model back to original scale would be:
 $$
-360 - \hat{months} = \frac{exp(2.837 + 0.191{duration} + 0.409{danceability} + 0.533{energy}+ 0.004{key4} + 0.092{key4} + 0.024{key6}+ 0.082{key9} + 0.099{key10} + 0.077{key11} + 0.001{tempo} + 0.321{valence})}{exp(0.022{popularity} + 0.240{acousticness} + 0.808{instrumentalness} + 0.027{key1} + 0.056{key7} + 0.068{key8}+ 0.084{loudness} + 0.280{speechiness})}
+360 - \hat{months} = \frac{exp(2.837 + 0.003{duration} + 0.409{danceability} + 0.533{energy}+ 0.004{key4} + 0.092{key4} + 0.024{key6}+ 0.082{key9} + 0.099{key10} + 0.077{key11} + 0.001{tempo} + 0.321{valence})}{exp(0.022{popularity} + 0.240{acousticness} + 0.808{instrumentalness} + 0.027{key1} + 0.056{key7} + 0.068{key8}+ 0.084{loudness} + 0.280{speechiness})}
 $$
 
 # Multiple linear regression for mode 1 songs 
@@ -666,10 +696,10 @@ summary(mlr1)
 
 The Full Multiple Linear Regression model for mode 1 songs is written below with coefficients rounded to the thousandths.
 $$
-log(360 - \hat{months}) = 2.990 - 0.020{popularity} + 0.125{duration} - 0.127{acousticness} 
-\\ + 0.631{danceability} +  0.383{energy} - 0.771{instrumentalness} 
-\\ + 0.084{key1} + 0.029{key2} + 0.020{key3} + 0.068{key4} + 0.075{key5} + 0.096{key6}
-\\ + 0.102{key7} + 0.119{key8} + 0.012{key9} + 0.081{key10} + 0.046{key11}
+log(360 - \hat{months}) = 2.990 - 0.020{popularity} + 0.002{duration} - 0.127{acousticness} + 0.631{danceability} +  0.383{energy}
+\\  - 0.771{instrumentalness} + 0.084{key1} + 0.029{key2} + 0.020{key3} + 0.068{key4} + 0.075{key5} 
+\\ + 0.096{key6} + 0.102{key7} + 0.119{key8} + 0.012{key9} + 0.081{key10} + 0.046{key11}
+\\ 
 \\ - 0.076{loudness} - 0.180{speechiness} + 0.001{tempo} + 0.294{valence}
 $$
 
@@ -704,10 +734,10 @@ summary(mlr.step_kcv1$finalModel)
 The Multiple Linear Regression model resulting from stepwise 10 fold cross validation for mode 1 songs is written below with coefficients rounded to the thousandths.
 
 $$
-log(360 - \hat{months}) = 3.020 - 0.020{popularity} + 0.127{duration} - 0.124{acousticness} 
-\\ + 0.630{danceability} +  0.357{energy} - 0.765{instrumentalness} + 0.062{key1} 
-\\ + 0.053{key5} + 0.073{key6} + 0.079{key7} + 0.096{key8} + 0.060{key10} 
-\\ - 0.074{loudness}   + 0.001{tempo} + 0.289{valence}
+log(360 - \hat{months}) = 3.020 - 0.020{popularity} + 0.002{duration} - 0.124{acousticness} + 0.630{danceability} +  0.357{energy}
+\\  - 0.765{instrumentalness} + 0.062{key1} + 0.053{key5} + 0.073{key6} + 0.079{key7}
+\\  + 0.096{key8}+ 0.060{key10} - 0.074{loudness}   + 0.001{tempo} + 0.289{valence}
+\\ 
 $$
 
 Compared to the full multiple linear regression model, the stewise multiple regression leaves out the dummy variables of Key2, key3, key4, key11 and speechiness. All of the variables in the model besides Key5 and Key10 have a significant linear relationship with month of song release.
@@ -754,10 +784,10 @@ summary(mlr.allreg1)
 The Multiple Linear Regression model resulting from all subsets regression for mode 1 songs is written below with coefficients rounded to the thousandths.
 
 $$
-log(360 - \hat{months}) = 3.033 - 0.020{popularity} + 0.128{duration} - 0.122{acousticness} 
-\\ + 0.630{danceability} +  0.357{energy} - 0.768{instrumentalness} + 0.057{key1} 
-\\ + 0.048{key5} + 0.068{key6} + 0.074{key7} + 0.091{key8}
-\\ - 0.074{loudness}   + 0.001{tempo} + 0.289{valence}
+log(360 - \hat{months}) = 3.033 - 0.020{popularity} + 0.002{duration} - 0.122{acousticness} + 0.630{danceability} +  0.357{energy}
+\\ - 0.768{instrumentalness} + 0.057{key1} + 0.048{key5} + 0.068{key6} + 0.074{key7}
+\\  + 0.091{key8} - 0.074{loudness}   + 0.001{tempo} + 0.289{valence}
+\\ 
 $$
 
 Compared to the full multiple linear regression model, the all subsets multiple regression leaves out the dummy variables of Key2, key3, key4, Key10, key11 and Speechiness. All of the variables in the model besides Key5 have a significant linear relationship with month of song release. Furthermore, the model is very similar to that resulting from the stepwise method, however, this model has removed key 10 which was insignificant in the wtepwise model.
@@ -775,7 +805,7 @@ data.frame(
 )
 ```
 
-## Regularized Regression: Ridge
+## Regularized Regression: Ridge 10 Fold Cross Validation
 ```{r}
 set.seed(123)
 lm.ridge1 <- train(months ~. , data = train1, method = "glmnet",
@@ -791,10 +821,9 @@ lm.ridge1.model
 
 The Ridge Multiple Linear Regression model for mode 1 songs is written below with coefficients rounded to the thousandths.
 $$
-log(360 - \hat{months}) = 3.143 - 0.019{popularity} + 0.122{duration} - 0.142{acousticness} 
-\\ + 0.597{danceability} +  0.279{energy} - 0.690{instrumentalness} 
-\\ + 0.066{key1} + 0.012{key2} + 0.001{key3} + 0.050{key4} + 0.056{key5} + 0.077{key6}
-\\ + 0.081{key7} + 0.096{key8} - 0.005{key9} + 0.065{key10} + 0.028{key11}
+log(360 - \hat{months}) = 3.143 - 0.019{popularity} + 0.002{duration} - 0.142{acousticness} + 0.597{danceability} +  0.279{energy} 
+\\ - 0.690{instrumentalness} + 0.066{key1} + 0.012{key2} + 0.001{key3} + 0.050{key4} + 0.056{key5} 
+\\ + 0.077{key6} + 0.081{key7} + 0.096{key8} - 0.005{key9} + 0.065{key10} + 0.028{key11}
 \\ - 0.068{loudness} - 0.158{speechiness} + 0.001{tempo} + 0.297{valence}
 $$
 
@@ -811,7 +840,7 @@ data.frame(
 ```
 
 
-## Regularized Regression: Lasso
+## Regularized Regression: Lasso 10 Fold Cross Validation
 ```{r}
 set.seed(123)
 lm.lasso1 <- train(months ~. , data = train1, method = "glmnet",
@@ -826,10 +855,10 @@ lm.lasso1.model
 
 The Lasso Multiple Linear Regression model for mode 1 songs is written below with coefficients rounded to the thousandths.
 $$
-log(360 - \hat{months}) = 3.055 - 0.020{popularity} + 0.123{duration} - 0.127{acousticness}  + 0.622{danceability} +  0.354{energy} - 0.750{instrumentalness}
+log(360 - \hat{months}) = 3.055 - 0.020{popularity} + 0.002{duration} - 0.127{acousticness}  + 0.622{danceability} +  0.354{energy} 
 \\ 
- + 0.066{key1} + 0.010{key2} + 0.047{key4} + 0.055{key5} + 0.077{key6} + 0.084{key7} + 0.0997{key8} + 0.061{key10} + 0.027{key11}
-\\ 
+- 0.750{instrumentalness} + 0.066{key1} + 0.010{key2} + 0.047{key4} + 0.055{key5}  
+\\ + 0.077{key6} + 0.084{key7} + 0.0997{key8} + 0.061{key10} + 0.027{key11}
 \\ - 0.073{loudness} - 0.148{speechiness} + 0.001{tempo} + 0.291{valence}
 $$
 
@@ -848,6 +877,38 @@ data.frame(
 ```
 
 
+## Regularized Regression : Elastic Net 10 Fold Cross Validation
+```{r}
+lm.enet1 <- train(months ~. , data = train1, method = "glmnet",
+                      trControl = train_control, 
+                      tuneGrid = expand.grid(alpha = seq(0,1,by = 0.05),lambda = seq(0.001,0.1,by = 0.001)))
+# best parameter
+lm.enet1$bestTune
+# best coefficient
+lm.enet1.model <- coef(lm.enet1$finalModel, lm.enet1$bestTune$lambda)
+lm.enet1.model
+```
+
+$$
+log(360 - \hat{months}) = 3.101 - 0.020{popularity} + 0.002{duration} - 0.127s{acousticness}  + 0.615{danceability} +  0.334{energy} 
+\\ 
+- 0.734{instrumentalness} + 0.056{key1} + 0.035{key4} + 0.044{key5}  
+\\ + 0.066{key6} + 0.073{key7} + 0.088{key8} - 0.005{key9} + 0.049{key10} + 0.016{key11}
+\\ - 0.072{loudness} - 0.123{speechiness} + 0.001{tempo} + 0.291{valence}
+$$
+
+```{r}
+# prediction on test data
+yhat.enet1 = predict(lm.enet1, s=lm.enet1$bestTune, newdata=test1)
+# RMSE for test data
+error.enet1 <- yhat.enet1 - test1$months
+rmse.enet1 <- sqrt(mean(error.enet1^2))
+data.frame(
+  RMSE = RMSE(yhat.enet1, test1$months),
+  R2 = R2(yhat.enet1, test1$months)
+)
+```
+
 ## Determining Best Model and Interpreting.
 
 We will be using the measure of Root Mean Square Error (RMSE) and the R-Squared value to assess the performance of these models. RMSE is calculated: 
@@ -857,9 +918,9 @@ $$
 where $y_i$ are the observed values for month of release since 1992, $\hat {y_i}$ are the predicted month values, and $i = 1, ... , n$ where $n = 1835$ for the test data of songs that are mode 1. 
 
 ```{r}
-results1 <- data.frame(Model = c("FullMLR", "Stepwise", "AllSubsets","Ridge", "Lasso"),
-                       RMSE = c(0.6078257, 0.6070693,0.6071187,0.607864,0.6073883),
-                       R2 = c(0.3312429, 0.3329448, 0.3328339,0.332307,0.3322821))
+results1 <- data.frame(Model = c("FullMLR", "Stepwise 10CV", "AllSubsets","Ridge 10CV", "Lasso 10CV", "Elastic Net 10CV"),
+                       RMSE = round(c(0.6078257, 0.6070693,0.6071187,0.607864,0.6073883, 0.6073717),5),
+                       R2 = round(c(0.3312429, 0.3329448, 0.3328339,0.332307,0.3322821, 0.3323557), 5))
 results1
 ```
 
@@ -871,15 +932,14 @@ summary(mlr.step_kcv1$finalModel)
 ```
 
 $$
-log(360 - \hat{months}) = 3.020 - 0.020{popularity} + 0.127{duration} - 0.124{acousticness} 
-\\ + 0.630{danceability} +  0.357{energy} - 0.765{instrumentalness} + 0.062{key1} 
-\\ + 0.053{key5} + 0.073{key6} + 0.079{key7} + 0.096{key8} + 0.060{key10} 
-\\ - 0.074{loudness}   + 0.001{tempo} + 0.289{valence}
+log(360 - \hat{months}) = 3.020 - 0.020{popularity} + 0.002{duration} - 0.124{acousticness} + 0.630{danceability} +  0.357{energy}
+\\ - 0.765{instrumentalness} + 0.062{key1} + 0.053{key5} + 0.073{key6} + 0.079{key7} 
+\\ + 0.096{key8} + 0.060{key10} - 0.074{loudness}   + 0.001{tempo} + 0.289{valence}
 $$
 
 Converting it back to normal scale would result in the following 
 $$
-360 - \hat{months} = \frac{exp(3 + 0.127{duration} + 0.630{danceability} +  0.357{energy} + 0.062{key1} + 0.053{key5} + 0.073{key6} + 0.079{key7} + 0.096{key8} + 0.060{key10} + 0.001{tempo} + 0.289{valence})}{exp(0.020{popularity} + 0.124{acousticness} - 0.765{instrumentalness} - 0.074{loudness} )}
+360 - \hat{months} = \frac{exp(3 + 0.002{duration} + 0.630{danceability} +  0.357{energy} + 0.062{key1} + 0.053{key5} + 0.073{key6} + 0.079{key7} + 0.096{key8} + 0.060{key10} + 0.001{tempo} + 0.289{valence})}{exp(0.020{popularity} + 0.124{acousticness} + 0.765{instrumentalness} + 0.074{loudness} )}
 $$
 
 
