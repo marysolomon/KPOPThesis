@@ -215,7 +215,7 @@ by generation
 ggbox.type(data$popularity, "Popularity")
 ```
 
-#### Boxplots : By Artist Gender
+#### By Artist Gender
 
 ```{r}
 gghist.gender(data$popularity, "Popularity")
@@ -262,7 +262,7 @@ ggbox.group(data$duration, "Duration (Seconds)")
 Overall, the distributions look fairly similar. However, songs from the first generation tend to have longer songs than the rest of the generations. By looking at the boxplots we can see that the median length of song tends to decrease as the generation increases. Therefore, it seems that songs are becoming shorter as time goes on. 
 
 
-#### By Type
+#### By Artist Type
 
 
 ```{r}
@@ -275,7 +275,18 @@ gghist.type(data$duration, "Duration (seconds)")
 ggbox.type(data$duration, "Duration (Seconds)")
 ```
 
+#### By Artist Gender
 
+
+```{r}
+gghist.gender(data$duration, "Duration (seconds)")
+```
+
+
+
+```{r}
+ggbox.gender(data$duration, "Duration (Seconds)")
+```
 
 ### Acousticness
 
@@ -310,6 +321,30 @@ by generation
 ggbox.group(data$acousticness, "Acousticness")
 ```
 
+#### By Artist Type
+
+acousticness by artist type
+```{r}
+gghist.type(data$acousticness, "Acousticness")
+```
+
+
+```{r}
+ggbox.type(data$acousticness, "Acousticness")
+```
+
+#### By Artist Gender
+
+acousticness by artist gender
+```{r}
+gghist.gender(data$acousticness, "Acousticness")
+```
+
+
+```{r}
+ggbox.gender(data$acousticness, "Acousticness")
+```
+
 ### Danceability
 
 >Danceability describes how suitable a track is for dancing based on a combination of musical elements including tempo, rhythm stability, beat strength, and overall regularity. A value of 0.0 is least danceable and 1.0 is most danceable.
@@ -333,7 +368,15 @@ gghist.group(data$danceability, "Danceability")
 Overall, each generation is has a similar distribution all with centers just below 0.75. With the boxplots we can more easily compare the center of the distribution.
 
 
-#### Boxplots 
+#### By Generation 
+
+Danceability by generation
+```{r}
+gghist.group(data$danceability, "Danceability")
+```
+
+Overall, each generation is has a similar distribution all with centers just below 0.75. With the boxplots we can more easily compare the center of the distribution.
+
 by generation
 ```{r}
 ggbox.group(data$danceability, "Danceability")
@@ -342,8 +385,31 @@ ggbox.group(data$danceability, "Danceability")
 
 While all generations have comparable high levels of danceability, the first generation has the higher typical level of danceability with the 4th generation right behind it. The 1st generation was highly influenced by american boy bands and hip hop, with this style, there were many popular hiphop and dance idol groups.
 
+#### By Artist Type 
+
+```{r}
+gghist.type(data$danceability, "Danceability")
+```
 
 
+
+```{r}
+ggbox.type(data$danceability, "Danceability")
+```
+
+#### By Artist Gender 
+
+```{r}
+gghist.gender(data$danceability, "Danceability")
+```
+
+
+
+```{r}
+ggbox.gender(data$danceability, "Danceability")
+```
+
+Overall, the coed groups have a higher tendency to release songs with higher danceability. There are very few songs that represent the  coed group with little variation as compared to the male and female groups.
 
 ### Energy
 
@@ -359,15 +425,17 @@ gghist(data$energy, 'Energy')
 
 As expected for music that tends to have high levels of danceability, the energy levels are very high for K-pop songs with the typical value being around 0.85. K-pop is especially known for their upbeat, high energy tracks, so it is no surprise that the distribution has a high typical value with a tail to the left.
 
+
+
+
+#### by Generation
+
 energy by generation
 ```{r}
 gghist.group(data$energy, "Energy")
 ```
 
 The distributions all have a similar shape across generations. However, as the generations increase, the tails seem to get shorter and there is less variation. 
-
-
-#### Boxplots 
 
 by generation
 ```{r}
@@ -376,6 +444,32 @@ ggbox.group(data$energy, "Energy")
 
 
 With the boxplots, we can clearly see that the center for all generations is all about the same, with the 4th generation having slightly higher levels of energy than the rest. 
+
+
+#### By Artist Type
+
+energy by Artist Type
+```{r}
+gghist.type(data$energy, "Energy")
+```
+
+
+
+```{r}
+ggbox.type(data$energy, "Energy")
+```
+
+Groups clearly release songs that have higher energy levels on average. This is because some soloists tend to release more ballad songs or songs in general that don't need to  be accompanied by a dance. 
+
+#### By Artist Gender 
+```{r}
+gghist.gender(data$energy, "Energy")
+```
+
+
+```{r}
+ggbox.gender(data$energy, "Energy")
+```
 
 
 ### Instrumentalness 
@@ -395,19 +489,40 @@ Note: the log of the instrumentalness histogram omits songs where instrumentalne
 
 
 
+
+
+
+#### By Generation
+
 instrumentalness by generation
 ```{r}
 gghist.group(data$instrumentalness, "Instrumentalness")
 gghist.group(log(data$instrumentalness), "Instrumentalness (Log Transform)")
 ```
 
-
-#### Boxplots
 by generation
 ```{r}
 ggbox.group(log(data$instrumentalness), 'Instrumentalness (Log Transform)')
 ```
 
+#### By Artist Type
+```{r}
+gghist.type(log(data$instrumentalness), "Instrumentalness (Log Transform)")
+```
+
+```{r}
+ggbox.type(log(data$instrumentalness), 'Instrumentalness (Log Transform)')
+```
+
+
+#### By Artist Gender
+```{r}
+gghist.gender(log(data$instrumentalness), "Instrumentalness (Log Transform)")
+```
+
+```{r}
+ggbox.gender(log(data$instrumentalness), 'Instrumentalness (Log Transform)')
+```
 
 
 ### Musical Key 
@@ -516,17 +631,39 @@ loudness distribution
 gghist(data$loudness, 'loudness')
 ```
 
+
+
+#### By Generation 
 ```{r}
 gghist.group(data$loudness, 'Loudness')
 ```
-
-#### Boxplots 
 
 by generation
 ```{r}
 ggbox.group(data$loudness, "Loudness")
 ```
 
+#### by Artist Type
+```{r}
+gghist.type(data$loudness, 'Loudness')
+```
+
+by generation
+```{r}
+ggbox.type(data$loudness, "Loudness")
+```
+
+#### By Artist Gender 
+```{r}
+gghist.gender(data$loudness, 'Loudness')
+```
+
+
+```{r}
+ggbox.gender(data$loudness, "Loudness")
+```
+
+All loudness distributions are comparable.
 
 ### Mode (major vs. minor)
 
@@ -543,6 +680,7 @@ ggplot(data, aes(mode)) +
   theme_minimal()
 ```
 
+#### By Generation
 ```{r}
 ggplot(data, aes(ArtistGen, y=..count../sum(..count..))) + 
   geom_bar(aes(fill = mode), position = "fill") + 
@@ -554,6 +692,27 @@ ggplot(data, aes(ArtistGen, y=..count../sum(..count..))) +
   #facet_wrap(~ArtistGen)
 ```
 
+#### By Artist Type
+```{r}
+ggplot(data, aes(ArtistType, y=..count../sum(..count..))) + 
+  geom_bar(aes(fill = mode), position = "fill") + 
+  scale_fill_manual("legend", values = c("0" = deux.pal[1], "1" = deux.pal[2])) +
+  xlab('Generation') + ylab('Relative Frequency') +
+  ggtitle("Musical Mode by Generation") +
+  #scale_y_continuous(labels=percent_format()) +
+  theme_minimal()
+```
+
+#### By Artist Gender
+```{r}
+ggplot(data, aes(ArtistGender, y=..count../sum(..count..))) + 
+  geom_bar(aes(fill = mode), position = "fill") + 
+  scale_fill_manual("legend", values = c("0" = deux.pal[1], "1" = deux.pal[2])) +
+  xlab('Generation') + ylab('Relative Frequency') +
+  ggtitle("Musical Mode by Generation") +
+  #scale_y_continuous(labels=percent_format()) +
+  theme_minimal()
+```
 
 ### Speechiness
 
@@ -569,6 +728,11 @@ gghist(log(data$speechiness), 'speechiness (log transform)')
 
 Because this dataset is of songs only and no podcasts or book readings, we would expect this heavily skewed shape of the distribution where the majority of the data is under 0.25 for speachiness. However, it is very difficult to see the details of the long right tail. For this reason, we will also investigate the distribution on the log scale. On the log scale, the data is still strongly skewed to the right, however, we can see more details in the right tail for the speechiness values above 0.25 (normal scale). There's a gradual decline in songs that have high levels of speechiness on the track, however, we can see a clear drop off for log values from -1 to 0. These are likely to be oddities of the data. Perhaps there are some spoken tracks between songs on albums, serving a similar artistic purpose as instrumental intro/outro tracks.
 
+
+
+
+#### By Generation 
+
 ```{r}
 gghist.group(data$speechiness, "Speechiness")
 gghist.group(log(data$speechiness), "Speechiness (Log Transform)")
@@ -580,13 +744,32 @@ However, behond these observations, it is difficult to compare the distribution 
 
 Generation 1 seems to have the most variation in speechiness with a similar center to generation 3, but greater variation in the density for speechiness levels of -2 to 0 on the log scale. It has the highest levels of speechiness as well. This level of variation could be attributed to the experimental nature of music in the first generation. This was the time that kpop was starting to become the model and style of what we listen to in the modern era. However, many music companies and artists were still trying to define their sound and fit into the demand of the market. The generally high levels of speechiness could be due to rap and hiphop elements being heavily influenced into the kpop genre at the time which has heavier levels of speechiness than the generic pop style.
 
-
-#### Boxplots 
-
 by generation
 ```{r}
-ggbox.group(data$speechiness, "Speechiness")
+ggbox.group(log(data$speechiness), "Speechiness (Log Transform)")
 ```
+
+#### By Artist Type
+```{r}
+gghist.type(log(data$speechiness), "Speechiness (Log Transform)")
+```
+
+
+```{r}
+ggbox.type(log(data$speechiness), "Speechiness (Log Transform)")
+```
+
+#### By Artist Gender
+```{r}
+gghist.gender(log(data$speechiness), "Speechiness (Log Transform)")
+```
+
+
+```{r}
+ggbox.gender(log(data$speechiness), "Speechiness (Log Transform)")
+```
+
+Male artists have a slightly higher tendency than others to have higher levels of speechiness in their music on average.
 
 
 ### Tempo 
@@ -606,16 +789,40 @@ gghist(data$tempo, 'tempo')
 As expected, most songs have a tempo between 90 and 160. Any song with a tempo above 90 is fast at an allegro pace. 
 
 
+
+
+
+#### By Generation 
+
 ```{r}
 gghist.group(data$tempo, "Tempo")
 ```
 
-
-#### Boxplots 
-
 by generation
 ```{r}
 ggbox.group(data$tempo, "Tempo")
+```
+
+#### By Artist Type 
+
+```{r}
+gghist.type(data$tempo, "Tempo")
+```
+
+by generation
+```{r}
+ggbox.type(data$tempo, "Tempo")
+```
+
+#### By Artist Gender 
+
+```{r}
+gghist.gender(data$tempo, "Tempo")
+```
+
+by generation
+```{r}
+ggbox.gender(data$tempo, "Tempo")
 ```
 
 
@@ -655,6 +862,9 @@ gghist(data$valence, 'Valence')
 
 Because pop as a genre is generally upbeat with positive vibes (is this a professional way to write this?), this distribution with the majority of the data having above 0.50 in Valence is expected. Let's see how they compare between generations of artists.
 
+
+#### By Generation
+
 ```{r}
 gghist.group(data$valence, "Valence")
 ```
@@ -662,17 +872,33 @@ gghist.group(data$valence, "Valence")
 
 generations 2,3, and 4 roughly have the same distribution shape with their centers at around 0.60. The distribution of Valence is somewhat similar, however, it has a slightly higher center and a longer tail to the left.
 
-#### Boxplots 
 
 by generation
 ```{r}
 ggbox.group(data$valence, "Valence")
 ```
 
+#### By Artist Type
+```{r}
+gghist.type(data$valence, "Valence")
+```
 
 
 
+```{r}
+ggbox.type(data$valence, "Valence")
+```
 
+
+#### By Artist Gender
+```{r}
+gghist.gender(data$valence, "Valence")
+```
+
+
+```{r}
+ggbox.gender(data$valence, "Valence")
+```
 
 ### Detecting multicollinearity
 
