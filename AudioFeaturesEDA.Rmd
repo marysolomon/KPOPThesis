@@ -50,8 +50,50 @@ ggbox.group <- function(var, var_name){
   ggplot(data = data, aes(x = var, y = factor(ArtistGen))) + 
     geom_boxplot(fill = gen.pal, col = "black", 
                outlier.color = 'red') +
-    xlab(var_name) + ylab('K-pop Generation') +
-    ggtitle(paste(var_name, "by Generation"))  + 
+    xlab(var_name) + ylab("K-Pop Generation") +
+    ggtitle(paste(var_name, "K-Pop Generation"))  + 
+    theme_bw()
+}
+
+gghist.type <- function(var, var_name){
+  ggplot(data, aes(var, group = ArtistType)) + 
+    geom_histogram(bins = 30, aes(y = stat(width*density)), 
+                fill = 'white', col = 'black') + 
+    xlab(var_name) + ylab('Relative Frequency') +
+  
+    scale_y_continuous(labels=percent_format()) +
+    ggtitle(paste(var_name, "by Artist Type")) +
+    theme_bw() +
+    facet_wrap(~ArtistType)
+}
+
+ggbox.type <- function(var, var_name){
+  ggplot(data = data, aes(x = var, y = factor(ArtistType))) + 
+    geom_boxplot(fill = deux.pal, col = "black", 
+               outlier.color = 'red') +
+    xlab(var_name) + ylab("Artist Type") +
+    ggtitle(paste(var_name, "Artist Type"))  + 
+    theme_bw()
+}
+
+gghist.gender <- function(var, var_name){
+  ggplot(data, aes(var, group = ArtistGender)) + 
+    geom_histogram(bins = 30, aes(y = stat(width*density)), 
+                fill = 'white', col = 'black') + 
+    xlab(var_name) + ylab('Relative Frequency') +
+  
+    scale_y_continuous(labels=percent_format()) +
+    ggtitle(paste(var_name, "by Artist Gender")) +
+    theme_bw() +
+    facet_wrap(~ArtistGender)
+}
+
+ggbox.gender <- function(var, var_name){
+  ggplot(data = data, aes(x = var, y = factor(ArtistGender))) + 
+    geom_boxplot(fill = c("#19297C", "#A71D31", "#4D8B31"), col = "black", 
+               outlier.color = 'red') +
+    xlab(var_name) + ylab("Artist Gender") +
+    ggtitle(paste(var_name, "Artist Gender"))  + 
     theme_bw()
 }
 ```
@@ -135,6 +177,9 @@ The mode for popularity of songs in the entire dataset is around 10, and the maj
 
 Furthermore, for each artist, I collected their ENTIRE discography. Naturally, not all songs on an artists' album will be popular, even for a very popular artist. It makes sense that a relatively smalll portion of total songs in the dataset are extremely popular. 
 
+
+#### By Generation
+
 popularity by generation
 ```{r}
 gghist.group(data$popularity, "Popularity")
@@ -142,7 +187,6 @@ gghist.group(data$popularity, "Popularity")
 
 From the histograms we can see that the shapes of the 1st and 2nd generation distributions are heavily right skewed, whereas the distribution of popularity in the 3rd and 4th generation both appear roughly normal.
 
-#### Boxplots 
 
 by generation
 ```{r}
@@ -160,6 +204,27 @@ data %>% filter(ArtistGen ==1 & popularity >= 50) %>% select(Artist, ArtistDebut
 
 The two songs that have truly stood the test of time are Boa's No.1 and SHINHWA's perfect man which were both released in 2002.
 
+#### By Artist Type
+
+```{r}
+gghist.type(data$popularity, "Popularity")
+```
+
+by generation
+```{r}
+ggbox.type(data$popularity, "Popularity")
+```
+
+#### Boxplots : By Artist Gender
+
+```{r}
+gghist.gender(data$popularity, "Popularity")
+```
+
+by generation
+```{r}
+ggbox.gender(data$popularity, "Popularity")
+```
 
 ### Duration
 
@@ -177,14 +242,16 @@ As you can see the majority of tracks are between 2.5 - 5 minutes long. This is 
 The rest of the songs are 9 minutes or less. 
 
 
+
+
+#### By Generation
+
 duration by generation
 ```{r}
 gghist.group(data$duration, "Duration (seconds)")
 ```
 
 
-
-#### Boxplots 
 by generation
 ```{r}
 ggbox.group(data$duration, "Duration (Seconds)")
@@ -193,6 +260,20 @@ ggbox.group(data$duration, "Duration (Seconds)")
 
 
 Overall, the distributions look fairly similar. However, songs from the first generation tend to have longer songs than the rest of the generations. By looking at the boxplots we can see that the median length of song tends to decrease as the generation increases. Therefore, it seems that songs are becoming shorter as time goes on. 
+
+
+#### By Type
+
+
+```{r}
+gghist.type(data$duration, "Duration (seconds)")
+```
+
+
+
+```{r}
+ggbox.type(data$duration, "Duration (Seconds)")
+```
 
 
 
@@ -212,6 +293,11 @@ gghist(data$acousticness, 'Acousticness')
 Overall, kpop music is heavily influenced by styles like edm, hip hop, electronic, tropical house...etc.... [find a resource to make a conclusive statement about this?')]. Therefore the backing tracks for the singers use a lot of electronic sounds and instrumentation. It is appropriate for this dataset that the acousticness feature to be skewed to the right where majority of the tracks have acousticness levels below 0.25
 
 
+
+
+
+#### By Generation
+
 acousticness by generation
 ```{r}
 gghist.group(data$acousticness, "Acousticness")
@@ -219,8 +305,6 @@ gghist.group(data$acousticness, "Acousticness")
 
 Generally, the shape of the distribution of Acousticness for each generation is roughly similar: right skewed. It appears that the first generation has typically lower levels of acousticness than the other generations. 
 
-
-#### Boxplots 
 by generation
 ```{r}
 ggbox.group(data$acousticness, "Acousticness")

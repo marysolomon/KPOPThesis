@@ -44,6 +44,23 @@ data <- mutate(data, ArtistType = as.factor(ArtistType),
 
 # Understanding Popularity
 
+General Assumptions:
+continuous response: popularity score ranging from 0 - 100.
+mix of categorical and continuous response.
+the distribution of the variables are not normal, we will check for normality of error terms where appropriate.
+
+Goal: create model for predicting popularity scores
+
+## Classification of popularity: Popular vs. Not popular
+```{r}
+table(data$popular)/nrow(data)
+```
+
+if classifying a song as popular when it's score is greater than 50, only ~12% of the data is considered a popular song.
+
+
+
+
 ## Assessing normality of popularity scores
 ```{r}
 ggplot(data, aes(x=popularity)) +
@@ -100,59 +117,6 @@ kurtosis(data$popularity^0.5)
 
 
 
-### to the power of 0.6 Transformation
-Try log transformation makes it more normal. This will help to meet the multiple linear regression assumptions.
-```{r}
-ggplot(data, aes(x=popularity^0.6)) +
-  geom_histogram(aes(y = stat(density)), bins = 30, fill = "white", col = "black") +
-  stat_function(
-    fun = dnorm, 
-    args = list(mean = mean(data$popularity^0.6), sd = sd(data$popularity^0.6)), 
-    lwd = 1, 
-    col = 'red'
-  ) +
-  xlab("Popularity") + ylab("Density") +
-  ggtitle(paste("Popularity", "Distribution")) +
-  theme_bw()
-summary(data$popularity^0.6)
-```
-
-```{r}
-#produce normal qqplot to assess normality
-qqnorm(data$popularity^0.6, pch = 1, frame = FALSE)
-qqline(data$popularity^0.6, col = "red", lwd = 2)
-#Skewness score
-skewness(data$popularity^0.6)
-kurtosis(data$popularity^0.6)
-```
-
-```{r}
-#produce normal qqplot to assess normality
-qqnorm(data$popularity^0.75, pch = 1, frame = FALSE)
-qqline(data$popularity^0.75, col = "red", lwd = 2)
-#Skewness score
-skewness(data$popularity^0.75)
-kurtosis(data$popularity^0.75)
-```
-
-## Classification of popularity: Popular vs. Not popular
-```{r}
-table(data$popular)/nrow(data)
-```
-
-if classifying a song as popular when it's score is greater than 50, only ~12% of the data is considered a popular song.
-
-```
-kpop <- dplyr::select(data, popularity, duration, acousticness, danceability, energy, instrumentalness, key, loudness, mode, speechiness, time_signature, tempo, valence)
-```
-
-General Assumptions:
-continuous response: popularity score ranging from 0 - 100.
-mix of categorical and continuous response.
-the distribution of the variables are not normal, we will check for normality of error terms where appropriate.
-
-Goal: create model for predicting popularity scores
-
 
 # Multiple Linear Model
 select just audio features
@@ -189,15 +153,20 @@ summary(ml0)
 
 
 
-```{r}
+```{r, width = 10, height = 10}
+par(mfrow = c(2,2))
 plot(ml0)
 ```
 
-no or little multicollinearity
+Interpretting the diagnostic plots: 
 
-no autocorrelation 
+* Residuals vs. Fitted: The line through this plot is somewhat horizontal but has a polynomial curve like pattern throught the 0 horizontal line. This indicates that there could be a linear relationship.
 
-no homoscedasticity.
+* Normal Q-Q: The residuals roughly follow the diagonal Normal QQ line, indicating that the residuals are normally distributed.
+
+* Scale Location: The red line does not pass through the scale-location graph horizontally, rather in a slight positive direction. Therefore, our residuals indicate a heteroscedasticity problem. In otherwords, we do not satisfy the MLR requirement of equal variance across residuals.
+
+* Residuals vs. Leverage: There are residuals that reach above standard residual 3, therefore, there are many outliers.
 
 Try again with tranformation to make popularity normal:(to the squareroot)
 ```{r}
@@ -207,8 +176,40 @@ summary(ml0.sqrt)
 
 assumption checking and diagnostics
 ```{r}
+par(mfrow = c(2,2))
 plot(ml0.sqrt)
 ```
+
+Interpretting the diagnostic plots: 
+
+* Residuals vs. Fitted: The line through this plot is somewhat horizontal but still exhibits some curvature. Overall though, we could conclude that there is roughly a linear relationship between the predictors and outcome variables.
+
+* Normal Q-Q: The residuals roughly follow the diagonal Normal QQ line, indicating that the residuals are normally distributed. In comparison to the original scale of the data, there is slightly more deviance on the upper tail with the points falling below the normal QQ line.
+
+* Scale Location: The red line is roughly more horizontal. Therefore, our residuals exhibit heteroscedasticity. In other words, the model now satisfies the MLR requirement of equal variance across residuals.
+
+* Residuals vs. Leverage: Most of the residuals fall with in the standardized residual valuse of -3 and 3, therefore, we have few outliers in the dataset. 
+
+### Full MLR Model
+
+```{r}
+summary(ml0.sqrt)
+```
+
+The full Multiple Linear Regression model can be written 
+$$
+\hat {\sqrt {popularity}} = 12.803 - 0.010{Duration} - 0.142{Acousticness} - 0.138{Danceability} - 3.909{Energy} - 2.244{Instrumentalness} 
+\\
+- 0.131{Key1} - 0.375{Key2} + 0.182{Key3} - 0.544{Key4} - 0.119{Key5} + 0.138{Key6} - 0.024{Key7} 
+\\ 
+- 0.157{Key8} - 0.152{Key9} - 0.235{Key10} - 0.291{Key11} + 0.423{Loudness} + 2.157{Speechiness}
+\\
+-0.001{Tempo} - 1.189{Valence}
+$$
+
+The variables that have significant contribution in predicting the popularity score is Duration, Energy, Instrumentalness, Key4 (E Minor), Loudness, Speechiness, and Valence. 
+
+An increase in Duration, Acousticness, Danceability, Energy, Instrumentalness, Tempo, Valence and choosing Key1 (C#/D-flat Minor), Key2 (D Minor), Key4 (E Minor), Key5 (F Minor), Key7 (G Minor), Key8 (G#/A-flat Minor), Key9 (A Minor), Key10 (A#/B-flat Minor), Key11 (B minor) instead of Key0(Cminor) decreases the square root popularity score, on average. An increase in Loudness, Speechiness and choosing Key3 (D#/E-flat Minor) or Key6 (F#/G-flat Minor)over Key0 (C Minor) increases the square root popularity score, on average.
 
 prediction on test data
 ```{r}
@@ -223,10 +224,7 @@ data.frame(
 )
 ```
 
-not that improved :(
 
-
-check performance where the exponent is 0.6
 
 
 ### Variable Selection: Stepwise 10 fold cross validation
@@ -237,8 +235,23 @@ train_control <- trainControl(method = "cv",
 bye <- capture.output(mlr.step_kcv <- train(popularity ~. , data = train0 %>% mutate(popularity = popularity^0.5),  
                  method = "lmStepAIC", trControl = train_control)) 
 print(mlr.step_kcv)
-mlr.step_kcv$finalModel 
+summary(mlr.step_kcv$finalModel)
 ```
+
+
+The Stepwise 10 fold Cross Validation Multiple Linear Regression model can be written:
+$$
+\hat {\sqrt {popularity}} = 12.404 - 0.010{Duration} - 3.801{Energy} - 2.244{Instrumentalness} - 0.259{Key2} + 0.305{Key3} - 0.424{Key4}
+\\
+ + 0.262{Key6}  - 0.169{Key11} + 0.421{Loudness} + 2.100{Speechiness} - 1.189{Valence}
+$$
+
+Compared to the full Multiple Linear Regression Model, the Stepwise method removes the variables: Acousticness, Danceability, Key1, Key5, Key7 - Key10, and Tempo.
+
+The variables that have significant contribution in predicting the popularity score is Duration, Energy, Instrumentalness, Key4 (E Minor), Key6 (F#/G-flat Minor), Loudness, Speechiness, and Valence. 
+
+An increase in Duration, Energy, Instrumentalness, Valence and choosing, Key2 (D Minor), Key4 (E Minor), Key5 (F Minor), , Key11 (B minor) instead of Key0(Cminor) decreases the square root popularity score, on average. An increase in Loudness, Speechiness and choosing Key 3 (D#/E-flat Minor) or Key6 (F#/G-flat Minor) over Key0 (C Minor) increases the square root popularity score, on average.
+
 
 prediction on test data
 ```{r}
@@ -255,6 +268,7 @@ data.frame(
 
 Both of the models have RMSE scores of around 2. This isn't terrible since the range of the transformed popularity scores is 0-10.
 
+
 ### Regularized Regression: Ridge
 ```{r}
 lm.ridge0 <- train(popularity ~. , data = train0 %>% mutate(popularity = popularity^0.5), method = "glmnet",
@@ -266,6 +280,23 @@ lm.ridge0$bestTune
 lm.ridge0.model <- coef(lm.ridge0$finalModel, lm.ridge0$bestTune$lambda)
 lm.ridge0.model
 ```
+
+The Ridge Multiple Linear Regularized Regression model can be written 
+$$
+\hat {\sqrt {popularity}} = 12.341 - 0.010{Duration} - 0.066{Acousticness} - 0.149{Danceability} - 3.560{Energy} - 2.269{Instrumentalness} 
+\\
+- 0.083{Key1} - 0.324{Key2} + 0.226{Key3} - 0.493{Key4} - 0.070{Key5} + 0.184{Key6} + 0.017{Key7} 
+\\ 
+- 0.106{Key8} - 0.108{Key9} - 0.184{Key10} - 0.245{Key11} + 0.399{Loudness} + 2.040{Speechiness}
+\\
+-0.001{Tempo} - 1.175{Valence}
+$$
+
+
+An increase in Duration, Acousticness, Danceability, Energy, Instrumentalness, Tempo, Valence and choosing Key1 (C#/D-flat Minor), Key2 (D Minor), Key4 (E Minor), Key5 (F Minor), Key8 (G#/A-flat Minor), Key9 (A Minor), Key10 (A#/B-flat Minor), Key11 (B minor) instead of Key0(Cminor) decreases the square root of the popularity score, on average. An increase in Loudness, Speechiness and choosing Key3 (D#/E-flat Minor), Key6 (F#/G-flat Minor), or Key7 (G Minor)over Key0 (C Minor) increases the square root of the popularity score, on average.
+
+In comparison to the Full MLR model, the ridge shrinks the coefficients closer to zero, and the coefficient of dummy variable Key7 flipped signs from having a negative coefficient to a positive coefficient.
+
 
 ```{r}
 # prediction on test data
@@ -289,6 +320,19 @@ lm.lasso0.model <- coef(lm.lasso0$finalModel, lm.lasso0$bestTune$lambda)
 lm.lasso0.model
 ```
 
+The Lasso Multiple Linear Regularized Regression model can be written 
+$$
+\hat {\sqrt {popularity}} = 11.897 - 0.010{Duration} - 3.492{Energy} - 2.047{Instrumentalness} 
+\\
+- 0.155{Key2} + 0.212{Key3} - 0.359{Key4} + 0.221{Key6} - 0.033{Key7} - 0.040{Key10} 
+\\ 
+- 0.118{Key11} + 0.398{Loudness} + 1.755{Speechiness} - 1.135{Valence}
+$$
+
+Compared to the full Multiple Linear Regression model, the Lasso model removes variables: Acousticness, Danceability, Key1, Key5, Key8, Key9, and Tempo
+
+An increase in Duration, Energy, Instrumentalness, Valence and choosing Key2 (D Minor), Key4 (E Minor), Key7 (G Minor), Key10 (A#/B-flat Minor), Key11 (B minor) instead of Key0(Cminor) decreases the square root popularity score, on average. An increase in Loudness, Speechiness and choosing Key3 (D#/E-flat Minor) or Key6 (F#/G-flat Minor)over Key0 (C Minor) increases the square root popularity score, on average.
+
 
 ```{r}
 # prediction on test data
@@ -303,9 +347,9 @@ data.frame(
 ```
 
 ### Regularized Regression: Elastic Net
-```
+```{r}
 lm.enet0 <- train(popularity ~. , data = train0 %>% mutate(popularity = popularity^0.5), method = "glmnet",
-                      family = "binomial", trControl = train_control, 
+                      trControl = train_control, 
                       tuneGrid = expand.grid(alpha = seq(0,1,by = 0.05),lambda = seq(0.001,0.1,by = 0.001)))
 # best parameter
 lm.enet0$bestTune
@@ -314,7 +358,22 @@ lm.enet0.model <- coef(lm.enet0$finalModel, lm.enet0$bestTune$lambda)
 lm.enet0.model
 ```
 
-```
+The Elastic Net Multiple Linear Regression model can be written 
+$$
+\hat {\sqrt {popularity}} = 11.982 - 0.010{Duration} - 3.542{Energy} - 2.081{Instrumentalness}  - 0.174{Key2}
+\\
++ 0.227{Key3} - 0.371{Key4} + 0.227{Key6}+  0.043{Key7} - 0.053{Key10}  - 0.127{Key11}
+\\
+ + 0.402{Loudness} + 1.817{Speechiness}-0.000001{Tempo} - 1.150{Valence}
+$$
+
+Compare to the Full Multiple linear regression model, the Elastic Net regression removes the variables: Acousticness, Danceability, Key1, Key5, Key8, and Key9. The Key7 Dummy variable also has a positive coefficient rather than the negative coefficient in the full model.
+
+An increase in Duration, Energy, Instrumentalness, Tempo, Valence and choosing Key2 (D Minor), Key4 (E Minor), Key10 (A#/B-flat Minor), Key11 (B minor) instead of Key0(Cminor) decreases the square root popularity score, on average. An increase in Loudness, Speechiness and choosing Key3 (D#/E-flat Minor), Key6 (F#/G-flat Minor) or Key7 (G Minor) instead of Key0 (C Minor) increases the square root popularity score, on average.
+
+
+
+```{r}
 # prediction on test data
 yhat.enet0 = predict(lm.enet0, s=lm.enet0$bestTune,newdata=test0%>% mutate(popularity = popularity^0.5))
 # RMSE for test data
@@ -326,13 +385,69 @@ data.frame(
 )
 ```
 
+
+### Deciding the best MLR model for mode 0 songs
+```{r}
+mlr0.results <- data.frame(Model = c("Full", "Step 10CV", "Ridge 10CV", "Lasso 10CV", "ElasticNet 10CV"),
+                           #AIC = c(),
+                           adjR2 = c(0.1546, 0.1560, NA, NA,NA),
+                           RMSE = c(1.8635, 1.8612,1.8611, 1.8588, 1.8592),
+                           Pred.R2 = c( 0.1333, 0.1351, 0.1340, 0.1352, 0.1351))
+mlr0.results
+```
+
+The model that yields the lowest RMSE and highest R2 from predictions is the Lasso Multiple Linear Regularized Regression model.
+
+The Lasso Multiple Linear Regularized Regression model can be written 
+$$
+\hat {\sqrt {popularity}} = 11.897 - 0.010{Duration} - 3.492{Energy} - 2.047{Instrumentalness} 
+\\
+- 0.155{Key2} + 0.212{Key3} - 0.359{Key4} + 0.221{Key6} - 0.033{Key7} - 0.040{Key10} 
+\\ 
+- 0.118{Key11} + 0.398{Loudness} + 1.755{Speechiness} - 1.135{Valence}
+$$
+
+
 ## For songs with Mode 1
 
-### Full Multiple linear model
+### Assumption checking
+
+```{r}
+ml1 <- lm(popularity ~. , data = train1)
+plot(ml1)
+```
+
 ```{r}
 ml1.sqrt <- lm(popularity ~. , data = train1 %>% mutate(popularity = popularity^0.5))
+plot(ml1.sqrt)
+```
+
+
+
+### Full Multiple linear model
+
+
+
+```{r}
 summary(ml1.sqrt)
 ```
+
+
+The full Multiple Linear Regression model can be written 
+$$
+\hat {\sqrt {popularity}} = 10.857 - 0.010{Duration} + 0.081{Acousticness} + 0.051{Danceability} - 3.078{Energy} - 1.877{Instrumentalness} 
+\\
++ 0.321{Key1} + 0.207{Key2} + 0.431{Key3} - 0.029{Key4} + 0.204{Key5} + 0.217{Key6} + 0.283{Key7} 
+\\ 
++ 0.297{Key8} + 0.271{Key9} + 0.080{Key10} + 0.390{Key11} + 0.386{Loudness} + 4.580{Speechiness}
+\\
+-0.001{Tempo} - 0.849{Valence}
+$$
+
+The variables that have significant contribution in predicting the popularity score is Duration, Energy, Instrumentalness, Key1 (C#/D-flat Major), Key2, Key3, Key6, Key7, Key8, Key9, Key11, Loudness, Speechiness, and Valence. 
+
+An increase in Duration, Energy, Instrumentalness, Tempo, Valence and choosing  Key4 (E Major) instead of Key0(C Major) decreases the square root popularity score, on average. An increase in Acousticness, Danceability, Loudness, Speechiness and choosing Key1 (C#/D-flat Major), Key2 (D Major), Key3 (D#/E-flat Major), Key5 (F Major), Key6 (F#/G-flat Minor), Key7 (G Major), Key8 (G#/A-flat Major), Key9 (A Major), Key10 (A#/B-flat Major),or Key11 (B Major) over Key0 (C Major) increases the square root popularity score, on average.
+
 
 prediction on test data
 ```{r}
@@ -356,8 +471,27 @@ train_control <- trainControl(method = "cv",
 bye <- capture.output(mlr.step_kcv <- train(popularity ~. , data = train1 %>% mutate(popularity = popularity^0.5),  
                  method = "lmStepAIC", trControl = train_control)) 
 print(mlr.step_kcv)
-mlr.step_kcv$finalModel 
+summary(mlr.step_kcv$finalModel)
 ```
+
+The Stepwise Multiple Linear Regression model can be written: 
+$$
+\hat {\sqrt {popularity}} = 10.985 - 0.010{Duration} - 3.161{Energy} - 1.884{Instrumentalness} 
+\\
++ 0.312{Key1} + 0.199{Key2} + 0.425{Key3} + 0.196{Key5} + 0.210{Key6} + 0.275{Key7} 
+\\ 
++ 0.289{Key8} + 0.262{Key9} + 0.383{Key11} + 0.387{Loudness} + 4.579{Speechiness}
+\\
+-0.002{Tempo} - 0.837{Valence}
+$$
+
+Compared to the full multiple linear regression model, the stepwise model removes the variables Acousticness, Danceability, Key4, Key10
+
+The variables that have significant contribution in predicting the popularity score is Duration, Energy, Instrumentalness, Key1 (C#/D-flat Major), Key2, Key3, Key6, Key7, Key8, Key9, Key11, Loudness, Speechiness, and Valence. 
+
+An increase in Duration, Energy, Instrumentalness, Tempo, and Valence decreases the square root popularity score, on average. An increase in Acousticness, Danceability, Loudness, Speechiness and choosing Key1 (C#/D-flat Major), Key2 (D Major), Key3 (D#/E-flat Major), Key5 (F Major), Key6 (F#/G-flat Minor), Key7 (G Major), Key8 (G#/A-flat Major), Key9 (A Major), or Key11 (B Major) over Key0 (C Major) increases the square root popularity score, on average.
+
+
 
 prediction on test data
 ```{r}
@@ -384,6 +518,22 @@ lm.ridge1.model <- coef(lm.ridge1$finalModel, lm.ridge1$bestTune$lambda)
 lm.ridge1.model
 ```
 
+The Ridge Multiple Linear Regularized Regression model can be written:  
+$$
+\hat {\sqrt {popularity}} = 10.348 - 0.010{Duration} + 0.170{Acousticness} + 0.050{Danceability} - 2.621{Energy} - 1.928{Instrumentalness} 
+\\
++ 0.294{Key1} + 0.183Key2} + 0.399{Key3} - 0.049{Key4} + 0.179{Key5} + 0.189{Key6} + 0.260{Key7} 
+\\ 
++ 0.273{Key8} + 0.249{Key9} + 0.052{Key10} + 0.361{Key11} + 0.356{Loudness} + 4.325{Speechiness}
+\\
+-0.001{Tempo} - 0.859{Valence}
+$$
+
+An increase in Duration, Energy, Instrumentalness, Tempo, Valence and choosing  Key4 (E Major) instead of Key0(C Major) decreases the square root popularity score, on average. An increase in Acousticness, Danceability, Loudness, Speechiness and choosing Key1 (C#/D-flat Major), Key2 (D Major), Key3 (D#/E-flat Major), Key5 (F Major), Key6 (F#/G-flat Minor), Key7 (G Major), Key8 (G#/A-flat Major), Key9 (A Major), Key10 (A#/B-flat Major),or Key11 (B Major) over Key0 (C Major) increases the square root popularity score, on average.
+
+
+
+
 ```{r}
 # prediction on test data
 yhat.ridge1 = predict(lm.ridge1, s=lm.ridge1$bestTune,newdata=test1%>% mutate(popularity = popularity^0.5))
@@ -407,6 +557,20 @@ lm.lasso1.model <- coef(lm.lasso1$finalModel, lm.lasso1$bestTune$lambda)
 lm.lasso1.model
 ```
 
+The Lasso Multiple Linear Regression model can be written 
+$$
+\hat {\sqrt {popularity}} = 10.823 - 0.010{Duration} + 0.079{Acousticness} + 0.007{Danceability} - 3.012{Energy} - 1.855{Instrumentalness} 
+\\
++ 0.269{Key1} + 0.153{Key2} + 0.368{Key3} - 0.061{Key4} + 0.148{Key5} + 0.160{Key6} + 0.232{Key7} 
+\\ 
++ 0.243{Key8} + 0.216{Key9} + 0.020{Key10} + 0.334{Key11} + 0.381{Loudness} + 4.504{Speechiness}
+\\
+-0.001{Tempo} - 0.830{Valence}
+$$
+
+Compared to the full multiple linear regression model, all variables are kept in the model with lasso, but the coefficients are shrunk closer to zero.
+
+An increase in Duration, Energy, Instrumentalness, Tempo, Valence and choosing  Key4 (E Major) instead of Key0 (C Major) decreases the square root popularity score, on average. An increase in Acousticness, Danceability, Loudness, Speechiness and choosing Key1 (C#/D-flat Major), Key2 (D Major), Key3 (D#/E-flat Major), Key5 (F Major), Key6 (F#/G-flat Minor), Key7 (G Major), Key8 (G#/A-flat Major), Key9 (A Major), Key10 (A#/B-flat Major),or Key11 (B Major) over Key0 (C Major) increases the square root popularity score, on average.
 
 ```{r}
 # prediction on test data
@@ -421,9 +585,9 @@ data.frame(
 ```
 
 ### Regularized Regression: Elastic Net
-```
+```{r}
 lm.enet1 <- train(popularity ~. , data = train1 %>% mutate(popularity = popularity^0.5), method = "glmnet",
-                      family = "binomial", trControl = train_control, 
+                      trControl = train_control, 
                       tuneGrid = expand.grid(alpha = seq(0,1,by = 0.05),lambda = seq(0.001,0.1,by = 0.001)))
 # best parameter
 lm.enet1$bestTune
@@ -432,7 +596,23 @@ lm.enet1.model <- coef(lm.enet1$finalModel, lm.enet1$bestTune$lambda)
 lm.enet1.model
 ```
 
-```
+
+The Elastic Net Multiple Linear Regression model can be written 
+$$
+\hat {\sqrt {popularity}} = 10.771 - 0.010{Duration} + 0.092{Acousticness} + 0.027{Danceability} - 2.979{Energy} - 1.872{Instrumentalness} 
+\\
++ 0.288{Key1} + 0.173{Key2} + 0.391{Key3} - 0.050{Key4} + 0.169{Key5} + 0.181{Key6} + 0.251{Key7} 
+\\ 
++ 0.263{Key8} +  0.237{Key9} + 0.042{Key10} + 0.354{Key11} + 0.379{Loudness} + 4.504{Speechiness}
+\\
+-0.001{Tempo} - 0.841{Valence}
+$$
+
+
+An increase in Duration, Energy, Instrumentalness, Tempo, Valence and choosing  Key4 (E Major) instead of Key0(C Major) decreases the square root popularity score, on average. An increase in Acousticness, Danceability, Loudness, Speechiness and choosing Key1 (C#/D-flat Major), Key2 (D Major), Key3 (D#/E-flat Major), Key5 (F Major), Key6 (F#/G-flat Minor), Key7 (G Major), Key8 (G#/A-flat Major), Key9 (A Major), Key10 (A#/B-flat Major),or Key11 (B Major) over Key0 (C Major) increases the square root popularity score, on average.
+
+
+```{r}
 # prediction on test data
 yhat.enet1 = predict(lm.enet1, s=lm.enet1$bestTune,newdata=test1%>% mutate(popularity = popularity^0.5))
 # RMSE for test data
@@ -444,6 +624,17 @@ data.frame(
 )
 ```
 
+### Deciding the best MLR model for mode 1 songs
+```{r}
+mlr1.results <- data.frame(Model = c("Full", "Step 10CV", "Ridge 10CV", "Lasso 10CV", "ElasticNet 10CV"),
+                           #AIC = c(),
+                           adjR2 = c(0.1468, 0.1453, NA, NA, NA),
+                           RMSE = c(1.8585, 1.8585, 1.8582, 1.8584, 1.8583),
+                           Pred.R2 = c(0.1258, 0.1257, 0.1254, 0.1256, 0.1256))
+mlr1.results
+```
+
+The model with the lowest RMSE and highest R2...
 
 # Logistic (classification approach)
 
@@ -503,6 +694,19 @@ Fit final model (combo of train and validation)
 v.model.final <-  glm(popular ~ ., data=all.train0, family=binomial(link='logit'))
 summary(v.model.final)
 ```
+
+Full Logistic Model
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 5.059 - 0.009{Duration} - 1.472{Acousticness} + 0.311{Danceability} - 3.723{Energy} -2.809{Instrumentalness}
+\\
++ 0.111{Key1} - 0.088{Key2} + 0.772{Key3} - 0.327{Key4} + 0.180{Key5} + 0.314{Key6} + 0.175{Key7} + 0.218{Key8} + 0.032{Key9}
+\\
+\\
+\\
++ 0.152{Key10} + 0.059{Key11} + 0.350{Loudness} + 3.453{Speechiness} - 0.001{Tempo} -1.639{Valence}
+$$
+
+Significant variables are the Duration, Acousticness, Energy, Loudness, Speechiness, and Valence and having Key3 (D#/E-flat Minor) instead of Key0 (C Minor).
 
 
 predict on test using 0.5 cutoff 
@@ -574,6 +778,19 @@ step0_kcv.final0 <- step0_kcv.final0$finalModel
 step0_kcv.final0
 summary(step0_kcv.final0)
 ```
+
+
+Stepwise 10 Fold Cross Validation:
+
+Compared to the full logistic regression model, the stepwise model leaves out Danceability, Key1, Key2, Key5 - Key11, and Tempo.
+
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 5.377 - 0.009{Duration} - 1.525{Acousticness} - 3.860{Energy} - 2.739{Instrumentalness} 
+\\
+ + 0.639{Key3} - 0.443{Key4} + 0.351{Loudness} + 3.328{Speechiness} - 1.522{Valence}
+$$
+
+The Significant variables in the model are Duration, Acousticness, Energy, Key3 (D#/E-flat Minor), Key4 (E Minor) Loudness, Speechiness and Valence.
 
 predict on test using 0.5 cutoff 
 ```{r}
@@ -647,6 +864,17 @@ glmulti.out0 <- glmulti(popular ~ ., data = all.train0,
 summary(glmulti.out0@objects[[1]])
 ```
 
+All Possible Regression:
+
+Compared to the full Logistic model, the Model from All subsets regression leaves out the variables Danceability, all Key dummy variables, and Tempo.
+
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 5.369 - 0.009{Duration} - 1.537{Acousticness} - 3.955{Energy} - 2.722{Instrumentalness}
+\\
+ + 0.354{Loudness} + 3.278{Speechiness} - 1.445{Valence}
+$$ 
+
+
 store final model
 ```{r}
 allreg.logit0.final <- glmulti.out0@objects[[1]]
@@ -710,6 +938,18 @@ ridge0.model <- coef(ridge0$finalModel, ridge0$bestTune$lambda)
 ridge0.model
 ```
 
+
+
+Ridge 10 Fold Cross Validation:
+
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 0.322 - 0.004{Duration} - 0.409{Acousticness} - 0.063{Danceability} - 0.607{Energy} - 0.839{Instrumentalness}
+\\
+0.013{Key1} - 0.091{Key2} + 0.401{Key3} - 0.053{Key4} + 0.054{Key5} + 0.142{Key6} + 0.037{Key7} + 0.030{Key8} - 0.042{Key9}
+\\
++ 0.034{Key10} - 0.034{Key11} + 0.084{Loudness} + 1.616{Speechiness} - 0.0003{Tempo} - 0.724{Valence}
+$$
+
 predict and evaluate on the test set where cutoff is at 0.5
 ```{r}
 prob.ridge0 <- predict(ridge0, s = ridge0$bestTune, logit.test0, type = "prob")
@@ -735,7 +975,7 @@ confusionMatrix(as.factor(pred.ridge0), as.factor(logit.test0$popular),
                 positive = "1")
 ```
 
-### Regularized Regression: Lasso 10 fold Cross Validation (not kosher, returns with a model of just the intercept)
+### Regularized Regression: Lasso 10 fold Cross Validation (returns with a model of just the intercept)
 ```{r}
 lasso0 <- train(popular ~ ., data = logit.train0, method = "glmnet",
                       family = "binomial", trControl = train_control, 
@@ -822,6 +1062,16 @@ enet0.model <- coef(enet0$finalModel, enet0$bestTune$lambda)
 enet0.model
 ```
 
+
+Elastic Net 10 Cross Validation
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 0.322 - 0.004{Duration} - 0.409{Acousticness} - 0.063{Deanceability} - 0.607{Energy} - 0.839{Instrumentalness}
+\\
++ 0.013{Key1} - 0.091{Key2} + 0.401{Key3} - 0.198{Key4} + 0.054{Key5} + 0.142{Key6} + 0.037{Key7} + 0.030{Key 8}
+\\ 
+- 0.041{Key9} + 0.034{Key10} - 0.034{Key11} + 0.084{Loudness} + 1.616{Speechiness} - 0.0003{Tempo} - 0.724{Valence}
+$$
+
 predict and evaluate on the test set where cutoff is at 0.5
 ```{r}
 prob.enet0 <- predict(enet0, s = enet0$bestTune, logit.test0, type = "prob")
@@ -848,55 +1098,6 @@ confusionMatrix(as.factor(pred.enet0), as.factor(logit.test0$popular),
 
 ### Decide on the best logistic model for Mode 0 
 
-Full Logistic Model
-$$
-log(\frac{\hat \pi}{1 - \hat \pi}) = 5.059 - 0.520{Duration} - 1.472{Acousticness} + 0.311{Danceability} - 3.723{Energy} -2.809{Instrumentalness}
-\\
-+ 0.111{Key1} - 0.088{Key2} + 0.772{Key3} - 0.327{Key4} + 0.180{Key5} + 0.314{Key6} + 0.175{Key7} + 0.218{Key8} + 0.032{Key9}
-\\
-\\
-\\
-+ 0.152{Key10} + 0.059{Key11} + 0.350{Loudness} + 3.453{Speechiness} - 0.001{Tempo} -1.639{Valence}
-$$
-
-Stepwise 10 Fold Cross Validation
-Compared to the full logistic regression model, the stepwise model leaves out Danceability, Key1, Key2, Key5 - Key11, and Tempo.
-$$
-log(\frac{\hat \pi}{1 - \hat \pi}) = 5.377 - 0.526{Duration} - 1.525{Acousticness} - 3.860{Energy} - 2.739{Instrumentalness} 
-\\
- + 0.639{Key3} - 0.443{Key4} + 0.351{Loudness} + 3.328{Speechiness} - 1.522{Valence}
-\\
-
-$$
-
-All Possible Regression
-Compared to the full Logistic model, the Model from All subsets regression leaves out the variables Danceability, all Key dummy variables, and Tempo.
-$$
-log(\frac{\hat \pi}{1 - \hat \pi}) = 5.369 - 0.516{Duration} - 1.537{Acousticness} - 3.955{Energy} - 2.722{Instrumentalness}
-\\
- + 0.354{Loudness} + 3.278{Speechiness} - 1.445{Valence}
-
-$$ 
-
-Ridge 10 Fold Cross Validation
-$$
-log(\frac{\hat \pi}{1 - \hat \pi}) = 0.322 - 0.257{Duration} - 0.409{Acousticness} - 0.063{Danceability} - 0.607{Energy} - 0.839{Instrumentalness}
-\\
-0.013{Key1} - 0.091{Key2} + 0.401{Key3} - 0.198{Key4} + 0.054{Key5} + 0.142{Key6} + 0.037{Key7} + 0.030{Key8} - 0.042{Key9}
-\\
-\\
-\\
-0.034{Key10} - 0.034{Key11} + 0.084{Loudness} + 1.616{Speechiness} - 0.0003{Tempo} - 0.724{Valence}
-$$
-
-Elastic Net 10 Cross Validation
-$$
-log(\frac{\hat \pi}{1 - \hat \pi}) = 0.322 - 0.257{Duration} - 0.409{Acousticness} - 0.063{Deanceability} - 0.607{Energy} - 0.839{Instrumentalness}
-\\
-0.013{Key1} - 0.091{Key2} + 0.401{Key3} - 0.198{Key4} + 0.054{Key5} + 0.142{Key6} + 0.037{Key7} + 0.030{Key 8}
-\\ 
-- 0.041{Key9} + 0.034{Key10} - 0.034{Key11} + 0.084{Loudness} + 1.616{Speechiness} - 0.0003{Tempo} - 0.724{Valence}
-$$
 
 Diagnostic measures
 ```{r}
@@ -907,13 +1108,24 @@ results.logit0 <- data.frame(model = c("Full", "Step 10CV", "All Subsets", "Ridg
                              Kappa = c(0.1013, 0.1007, 0.1269, 0.0901, 0.0901),
                              Sensitivity = c(0.55319, 0.5213, 0.55319, 0.48936, 0.48936),
                              Specificity = c(0.63097, 0.6540, 0.66557, 0.66392, 0.66392))
+results.logit0
 ```
 
+The best model is the all subsets regression method model as it has the highest accuracy, sensitivity and specificity values. 
 
+All Possible Regression:
+
+Compared to the full Logistic model, the Model from All subsets regression leaves out the variables Danceability, all Key dummy variables, and Tempo.
+
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 5.369 - 0.009{Duration} - 1.537{Acousticness} - 3.955{Energy} - 2.722{Instrumentalness}
+\\
+ + 0.354{Loudness} + 3.278{Speechiness} - 1.445{Valence}
+$$ 
 
 ## Mode 1 popularity
 
-### Full Logistic Model: train/valid/test
+### Full Logistic Model
 
 fitting logistic model using combo of train/valid/test, finding optimal model using training data.
 ```{r, warning = FALSE}
@@ -936,6 +1148,19 @@ v.model.final1 <-  glm(popular ~ ., data=all.train1, family=binomial(link='logit
 summary(v.model.final1)
 ```
 
+
+Full Logistic Model
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 3.198 - 0.008{Duration} - 0.747{Acousticness} + 0.935{Danceability} - 3.457{Energy} - 12.325{Instrumentalness}
+\\
++ 0.134{Key1} + 0.070{Key2} + 0.586{Key3} - 0.159{Key4} + 0.031{Key5} + 0.052{Key6} + 0.174{Key7} + 0.344{Key8} + 0.275{Key9}
+\\
+\\
+\\
+- 0.385{Key10} - 0.071{Key11} + 0.330{Loudness} + 4.734{Speechiness} + 0.003{Tempo} - 1.386{Valence}
+$$
+
+Variables Duration, Acousticness, Danceability, Energy, Key3 (D#/E-flat Major), Key8 (G#/A-flat Major), Loudness, Speechiness, and Valence are significant variables in the model.
 
 
 predict on test using 0.5 cutoff 
@@ -1002,6 +1227,21 @@ step1_kcv.final <- step1_kcv.final$finalModel
 step1_kcv.final
 summary(step1_kcv.final)
 ```
+
+
+
+Stepwise 10 Fold Cross Validation:
+
+Compared to the full Logistic model, the stepwise model does not include the variables Key1, Key2, Key4-Key7, Key9 and Key11.
+
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 3.280 - 0.008{Duration} - 0.777{Acousticness} + 0.976{Danceability} - 3.478{Energy} - 12.106{Instrumentalness} 
+\\
+ + 0.513{Key3} - 0.267{Key8} -0.460{Key10} + 0.333{Loudness} + 4.790{Speechiness} + 0.003{Tempo} - 1.411{Valence}
+\\
+$$
+
+Variables Duration, Acousticness, Danceability, Energy, Key3 (D#/E-flat Major), Loudness, Speechiness, and Valence are significant variables in the model.
 
 
 
@@ -1077,6 +1317,20 @@ glmulti.out1 <- glmulti(popular ~ ., data = all.train1,
 summary(glmulti.out1@objects[[1]])
 ```
 
+
+All Possible Regression
+Compared to the full model, the All subsets regression model does not include any of the Key dummy variables.
+
+$$
+
+log(\frac{\hat \pi}{1 - \hat \pi}) = 3.289 - 0.008{Duration} - 0.750{Acousticness} + 0.942{Danceability} - 3.483{Energy} - 11.929{Instrumentalness}
+\\
+ + 0.333{Loudness} + 4.822{Speechiness} + 0.003{Tempo} - 1.406{Valence}
+
+$$ 
+
+Variables Duration, Acousticness, Danceability, Energy, Loudness, Speechiness, and Valence are significant in the model
+
 store final model
 ```{r}
 allreg.logit1.final <- glmulti.out1@objects[[1]]
@@ -1140,6 +1394,19 @@ ridge1.model <- coef(ridge1$finalModel, ridge1$bestTune$lambda)
 ridge1.model
 ```
 
+Ridge 10 Fold Cross Validation
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = -1.031 - 0.003{Duration} - 0.103{Acousticness} + 0.159{Danceability} - 0.270{Energy} - 0.817{Instrumentalness}
+\\
++ 0.027{Key1} + 0.007{Key2} + 0.266{Key3} - 0.114{Key4} - 0.025{Key5} - 0.032{Key6} + 0.078{Key7} + 0.138{Key8} + 0.130{Key9}
+\\
+\\
+\\
+- 0.214{Key10} - 0.064{Key11} + 0.065{Loudness} + 2.178{Speechiness} + 0.002{Tempo} - 0.474{Valence}
+$$
+
+
+
 predict and evaluate on the test set where cutoff is at 0.5
 ```{r}
 prob.ridge1 <- predict(ridge1, s = ridge1$bestTune, logit.test1, type = "prob")
@@ -1166,7 +1433,7 @@ confusionMatrix(as.factor(pred.ridge1), as.factor(logit.test1$popular),
 
 
 
-### Regularized Regression: Lasso 10 fold Cross Validation (not kosher, returns with a model of just the intercept)
+### Regularized Regression: Lasso 10 fold Cross Validation (returns with a model of just the intercept)
 ```{r}
 lasso1 <- train(popular ~ ., data = logit.train1, method = "glmnet",
                       family = "binomial", trControl = train_control, 
@@ -1179,7 +1446,7 @@ lasso1.model
 ```
 
 Search for best cutoff using validation set
-```{r}
+```{r, warning = FALSE}
 lasso1.out <- reg.opt.cut.func(lasso1, logit.valid1)
 opt.cut.plot(lasso1.out)
 # cut off by kappa
@@ -1201,7 +1468,7 @@ lasso1.model.final
 ```
 
 predict and evaluate on the test set where cutoff is at 0.5
-```{r}
+```{r, warning = FALSE}
 prob.lasso1 <- predict(lasso1.final, s = lasso1.final$bestTune, logit.test1, type = "prob")
 pred.lasso1 <- ifelse(prob.lasso1[,2] > 0.5, 1, 0) # using cutoff = 0.5
 confusionMatrix(as.factor(pred.lasso1), as.factor(logit.test1$popular), 
@@ -1209,7 +1476,7 @@ confusionMatrix(as.factor(pred.lasso1), as.factor(logit.test1$popular),
 ```
 
 predict and evaluate on the test set where cutoff is at 0.11
-```{r}
+```{r, warning = FALSE}
 prob.lasso1 <- predict(lasso1.final, s = lasso1.final$bestTune, logit.test1, type = "prob")
 pred.lasso1 <- ifelse(prob.lasso1[,2] > 0.11, 1, 0) # using cutoff = 0.11
 confusionMatrix(as.factor(pred.lasso1), as.factor(logit.test1$popular), 
@@ -1252,6 +1519,16 @@ enet1.model <- coef(enet1$finalModel, enet1$bestTune$lambda)
 enet1.model
 ```
 
+
+Elastic Net 10 Cross Validation
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = -1.031 - 0.003{Duration} - 0.103{Acousticness} + 0.159{Deanceability} - 0.270{Energy} - 0.817{Instrumentalness}
+\\
++ 0.027{Key1} + 0.007{Key2} + 0.266{Key3} - 0.114{Key4} - 0.025{Key5} - 0.032{Key6} + 0.078{Key7} + 0.138{Key 8}
+\\ 
++ 0.130{Key9} - 0.214{Key10} - 0.064{Key11} + 0.065{Loudness} + 2.178{Speechiness} + 0.002{Tempo} - 0.474{Valence}
+$$
+
 predict and evaluate on the test set where cutoff is at 0.5
 ```{r}
 prob.enet1 <- predict(enet1, s = enet1$bestTune, logit.test1, type = "prob")
@@ -1279,57 +1556,8 @@ confusionMatrix(as.factor(pred.enet1), as.factor(logit.test1$popular),
 
 ### Decide on the best logistic model for Mode 1 
 
-Full Logistic Model
-$$
-log(\frac{\hat \pi}{1 - \hat \pi}) = 3.198 - 0.468{Duration} - 0.747{Acousticness} + 0.935{Danceability} - 3.457{Energy} - 12.325{Instrumentalness}
-\\
-+ 0.134{Key1} + 0.070{Key2} + 0.586{Key3} - 0.159{Key4} + 0.031{Key5} + 0.052{Key6} + 0.174{Key7} + 0.344{Key8} + 0.275{Key9}
-\\
-\\
-\\
-- 0.385{Key10} - 0.071{Key11} + 0.330{Loudness} + 4.734{Speechiness} + 0.003{Tempo} - 1.386{Valence}
-$$
 
 
-Stepwise 10 Fold Cross Validation
-Compared to the full Logistic model, the stepwise model does not include the variables Key1, Key2, Key4-Key7, Key9 and Key11.
-$$
-log(\frac{\hat \pi}{1 - \hat \pi}) = 3.280 - 0.465{Duration} - 0.777{Acousticness} + 0.976{Danceability} - 3.478{Energy} - 12.106{Instrumentalness} 
-\\
- + 0.513{Key3} - 0.267{Key8} -0.460{Key10} + 0.333{Loudness} + 4.790{Speechiness} + 0.003{Tempo} - 1.411{Valence}
-\\
-$$
-
-All Possible Regression
-Compared to the full model, the All subsets regression model does not include any of the Key dummy variables.
-
-$$
-
-log(\frac{\hat \pi}{1 - \hat \pi}) = 3.289 - 0.461{Duration} - 0.750{Acousticness} + 0.942{Danceability} - 3.483{Energy} - 11.929{Instrumentalness}
-\\
- + 0.333{Loudness} + 4.822{Speechiness} + 0.003{Tempo} - 1.406{Valence}
-
-$$ 
-
-Ridge 10 Fold Cross Validation
-$$
-log(\frac{\hat \pi}{1 - \hat \pi}) = -1.031 - 0.202{Duration} - 0.103{Acousticness} + 0.159{Danceability} - 0.270{Energy} - 0.817{Instrumentalness}
-\\
-+ 0.027{Key1} + 0.007{Key2} + 0.266{Key3} - 0.114{Key4} - 0.025{Key5} - 0.032{Key6} + 0.078{Key7} + 0.138{Key8} + 0.130{Key9}
-\\
-\\
-\\
-- 0.214{Key10} - 0.064{Key11} + 0.065{Loudness} + 2.178{Speechiness} + 0.002{Tempo} - 0.474{Valence}
-$$
-
-Elastic Net 10 Cross Validation
-$$
-log(\frac{\hat \pi}{1 - \hat \pi}) = -1.031 - 0.202{Duration} - 0.103{Acousticness} + 0.159{Deanceability} - 0.270{Energy} - 0.817{Instrumentalness}
-\\
-+ 0.027{Key1} + 0.007{Key2} + 0.266{Key3} - 0.114{Key4} - 0.025{Key5} - 0.032{Key6} + 0.078{Key7} + 0.138{Key 8}
-\\ 
-+ 0.130{Key9} - 0.214{Key10} - 0.064{Key11} + 0.065{Loudness} + 2.178{Speechiness} + 0.002{Tempo} - 0.474{Valence}
-$$
 
 Diagnostic measures
 ```{r}
@@ -1343,3 +1571,17 @@ results.logit1 <- data.frame(model = c("Full", "Step 10CV", "All Subsets", "Ridg
 results.logit1
 ```
 
+The Full logistic model yields the best performance in Accuracy and optimal balance between sensitivity and specificity.
+
+Full Logistic Model
+$$
+log(\frac{\hat \pi}{1 - \hat \pi}) = 3.198 - 0.008{Duration} - 0.747{Acousticness} + 0.935{Danceability} - 3.457{Energy} - 12.325{Instrumentalness}
+\\
++ 0.134{Key1} + 0.070{Key2} + 0.586{Key3} - 0.159{Key4} + 0.031{Key5} + 0.052{Key6} + 0.174{Key7} + 0.344{Key8} + 0.275{Key9}
+\\
+\\
+\\
+- 0.385{Key10} - 0.071{Key11} + 0.330{Loudness} + 4.734{Speechiness} + 0.003{Tempo} - 1.386{Valence}
+$$
+
+Variables Duration, Acousticness, Danceability, Energy, Key3 (D#/E-flat Major), Key8 (G#/A-flat Major), Loudness, Speechiness, and Valence are significant variables in the model.
