@@ -35,7 +35,7 @@ data <- fread("kpopdata.csv")
 data <- mutate(data, ArtistType = as.factor(ArtistType),
                ArtistGender = as.factor(ArtistGender),
                ArtistGen = factor(ArtistGen),
-               release_date = as.POSIXct(release_date, format = "%m/%d/%y"),
+               release_date = as.POSIXct(str_sub(data$release_date, 1, 10)),
                key = factor(key, levels = 0:11),
                mode = as.factor(mode),
                time_signature = factor(time_signature, levels = c(1,3,4,5)),
@@ -121,9 +121,9 @@ kurtosis(data$popularity^0.5)
 # Multiple Linear Model
 select just audio features
 ```{r}
-kpop <- select(data, popularity, duration, acousticness, danceability, energy, instrumentalness, key, loudness, mode, speechiness, tempo, valence)
-kpop0 <- kpop %>% filter(mode == 0)%>% select(-mode)
-kpop1 <- kpop %>% filter(mode == 1) %>% select(-mode)
+kpop <- dplyr::select(data, popularity, duration, acousticness, danceability, energy, instrumentalness, key, loudness, mode, speechiness, tempo, valence)
+kpop0 <- kpop %>% filter(mode == 0)%>% dplyr::select(-mode)
+kpop1 <- kpop %>% filter(mode == 1) %>% dplyr::select(-mode)
 
 ### Kpop mode 0 train and test
 smpl.size0 <- floor(0.75*nrow(kpop0))
@@ -269,6 +269,49 @@ data.frame(
 Both of the models have RMSE scores of around 2. This isn't terrible since the range of the transformed popularity scores is 0-10.
 
 
+## Variable Selection: All Subsets Regression (Not using K-folds CV)
+
+```{r}
+set.seed(123)
+allreg.models0 <- regsubsets(popularity ~., data = train0 %>% mutate(popularity = popularity^0.5), nvmax = 21)
+summary(allreg.models0)
+```
+
+Assess models
+```{r}
+allreg.res0 <- summary(allreg.models0)
+allreg.compare0 <- data.frame(model = c(1:20),
+                              Adj.R2 = allreg.res0$adjr2,
+                              CP = allreg.res0$cp)
+allreg.compare0
+```
+
+Optimal combination of low CP and Adj.R2, is associated with model number 11.
+
+```{r}
+set.seed(123)
+mlr.allreg0 <- lm(popularity ~ duration + energy + instrumentalness +
+  key2+key3+key4 +key6 +key11 +loudness +speechiness+valence, data = key.dummy(train0 %>% mutate(popularity = popularity^0.5)))
+summary(mlr.allreg0)
+```
+
+The All subsets regression returns a nearly identical model as the stepwise regression method, the only difference is the coefficient for valence
+$$
+\hat {\sqrt {popularity}} = 12.404 - 0.010{Duration} - 3.801{Energy} - 2.244{Instrumentalness} - 0.259{Key2} + 0.305{Key3} - 0.424{Key4}
+\\
+ + 0.262{Key6}  - 0.169{Key11} + 0.421{Loudness} + 2.100{Speechiness} - 1.233{Valence}
+$$
+
+prediction on test data
+```{r}
+# prediction on test data
+yhat.allreg0 = predict(mlr.allreg0, newdata=key.dummy(test0 %>% mutate(popularity = popularity^0.5)))
+data.frame(
+  RMSE = RMSE(yhat.allreg0, test0$popularity^0.5),
+  R2 = R2(yhat.allreg0, test0$popularity^0.5)
+)
+```
+
 ### Regularized Regression: Ridge
 ```{r}
 lm.ridge0 <- train(popularity ~. , data = train0 %>% mutate(popularity = popularity^0.5), method = "glmnet",
@@ -388,11 +431,11 @@ data.frame(
 
 ### Deciding the best MLR model for mode 0 songs
 ```{r}
-mlr0.results <- data.frame(Model = c("Full", "Step 10CV", "Ridge 10CV", "Lasso 10CV", "ElasticNet 10CV"),
+mlr0.results <- data.frame(Model = c("Full", "Step 10CV", "All Subsets", "Ridge 10CV", "Lasso 10CV", "ElasticNet 10CV"),
                            #AIC = c(),
-                           adjR2 = c(0.1546, 0.1560, NA, NA,NA),
-                           RMSE = c(1.8635, 1.8612,1.8611, 1.8588, 1.8592),
-                           Pred.R2 = c( 0.1333, 0.1351, 0.1340, 0.1352, 0.1351))
+                           adjR2 = c(0.1546, 0.1560, 0.1560, NA, NA,NA),
+                           RMSE = c(1.8635, 1.8612, 1.8612, 1.8611, 1.8588, 1.8592),
+                           Pred.R2 = c( 0.1333, 0.1351,  0.1351, 0.1340, 0.1352, 0.1351))
 mlr0.results
 ```
 
@@ -505,6 +548,53 @@ data.frame(
   R2 = R2(yhat.step_kcv, test1$popularity^0.5)
 )
 ```
+
+
+### Variable Selection: All Subsets Regression (Not using K-folds CV)
+
+```{r}
+set.seed(123)
+allreg.models1 <- regsubsets(popularity ~., data = train1 %>% mutate(popularity = popularity^0.5), nvmax = 21)
+summary(allreg.models1)
+```
+
+Assess models
+```{r}
+allreg.res1 <- summary(allreg.models1)
+allreg.compare1 <- data.frame(model = c(1:20),
+                              Adj.R2 = allreg.res1$adjr2,
+                              CP = allreg.res1$cp)
+allreg.compare1
+```
+
+The model with the best balance for high adjusted r2 and low CP value is model 16
+```{r}
+set.seed(123)
+mlr.allreg1 <- lm(popularity ~ duration + energy + instrumentalness +
+ key1 + key2+key3+key5 +key6 + key7 + key8 + key9 +key11 +loudness +speechiness+ tempo + valence, data = key.dummy(train1 %>% mutate(popularity = popularity^0.5)))
+summary(mlr.allreg1)
+```
+
+$$
+\hat {\sqrt {popularity}} = 10.985 - 0.009{Duration} - 3.161{Energy} - 1.884{Instrumentalness} 
+\\
++ 0.312{Key1} + 0.199{Key2} + 0.425{Key3} + 0.196{Key5} + 0.210{Key6} + 0.275{Key7} 
+\\ 
++ 0.289{Key8} + 0.262{Key9} + 0.383{Key11} + 0.387{Loudness} + 4.579{Speechiness}
+\\
+-0.002{Tempo} - 0.837{Valence}
+$$
+
+prediction on test data
+```{r}
+# prediction on test data
+yhat.allreg1 = predict(mlr.allreg1, newdata=key.dummy(test1 %>% mutate(popularity = popularity^0.5)))
+data.frame(
+  RMSE = RMSE(yhat.allreg1, test1$popularity^0.5),
+  R2 = R2(yhat.allreg1, test1$popularity^0.5)
+)
+```
+
 
 ### Regularized Regression: Ridge
 ```{r}
@@ -626,30 +716,40 @@ data.frame(
 
 ### Deciding the best MLR model for mode 1 songs
 ```{r}
-mlr1.results <- data.frame(Model = c("Full", "Step 10CV", "Ridge 10CV", "Lasso 10CV", "ElasticNet 10CV"),
+mlr1.results <- data.frame(Model = c("Full", "Step 10CV", "All Subsets","Ridge 10CV", "Lasso 10CV", "ElasticNet 10CV"),
                            #AIC = c(),
-                           adjR2 = c(0.1468, 0.1453, NA, NA, NA),
-                           RMSE = c(1.8585, 1.8585, 1.8582, 1.8584, 1.8583),
-                           Pred.R2 = c(0.1258, 0.1257, 0.1254, 0.1256, 0.1256))
+                           adjR2 = c(0.1468, 0.1453, 0.1473,NA, NA, NA),
+                           RMSE = c(1.858473, 1.858518, 1.858518, 1.858182, 1.858393, 1.858386),
+                           Pred.R2 = c(0.1257546, 0.1257011, 0.1257011, 0.1253763, 0.1255584, 0.1255727))
 mlr1.results
 ```
 
-The model with the lowest RMSE and highest R2...
+The model with the lowest RMSE and highest R2 is the Full multiple linear regression model.
+
+The full Multiple Linear Regression model can be written 
+$$
+\hat {\sqrt {popularity}} = 10.857 - 0.010{Duration} + 0.081{Acousticness} + 0.051{Danceability} - 3.078{Energy} - 1.877{Instrumentalness} 
+\\
++ 0.321{Key1} + 0.207{Key2} + 0.431{Key3} - 0.029{Key4} + 0.204{Key5} + 0.217{Key6} + 0.283{Key7} 
+\\ 
++ 0.297{Key8} + 0.271{Key9} + 0.080{Key10} + 0.390{Key11} + 0.386{Loudness} + 4.580{Speechiness}
+\\
+-0.001{Tempo} - 0.849{Valence}
+$$
+
+The variables that have significant contribution in predicting the popularity score is Duration, Energy, Instrumentalness, Key1 (C#/D-flat Major), Key2, Key3, Key6, Key7, Key8, Key9, Key11, Loudness, Speechiness, and Valence. 
+
+An increase in Duration, Energy, Instrumentalness, Tempo, Valence and choosing  Key4 (E Major) instead of Key0(C Major) decreases the square root popularity score, on average. An increase in Acousticness, Danceability, Loudness, Speechiness and choosing Key1 (C#/D-flat Major), Key2 (D Major), Key3 (D#/E-flat Major), Key5 (F Major), Key6 (F#/G-flat Minor), Key7 (G Major), Key8 (G#/A-flat Major), Key9 (A Major), Key10 (A#/B-flat Major),or Key11 (B Major) over Key0 (C Major) increases the square root popularity score, on average.
+
 
 # Logistic (classification approach)
 
 Use 70% train, 15% validation, 15% test,  to use validation for finding optimal cutoff value.
 ```{r}
-kpop.logit <- select(data, popular, duration, acousticness, danceability, energy, instrumentalness, key, loudness, mode, speechiness, tempo, valence)
-logit.kpop0 <- kpop.logit %>% filter(mode == 0)%>% select(-mode)
-logit.kpop1 <- kpop.logit %>% filter(mode == 1) %>% select(-mode)
+kpop.logit <- dplyr::select(data, popular, duration, acousticness, danceability, energy, instrumentalness, key, loudness, mode, speechiness, tempo, valence)
+logit.kpop0 <- kpop.logit %>% filter(mode == 0)%>% dplyr::select(-mode)
+logit.kpop1 <- kpop.logit %>% filter(mode == 1) %>% dplyr::select(-mode)
 
-### Kpop mode 0 train and test
-# smpl.size0 <- floor(0.75*nrow(logit.kpop0))
-# set.seed(123)
-# smpl0 <- sample(nrow(logit.kpop0), smpl.size0, replace = FALSE)
-# og.logit.train0 <- logit.kpop0[smpl0,]
-# og.logit.test0 <- logit.kpop0[-smpl0,]
 set.seed(123)
 p3 <- partition.3(logit.kpop0, 0.70, 0.15)
 logit.train0 <- p3$data.train
@@ -657,12 +757,6 @@ logit.valid0 <- p3$data.val
 logit.test0 <- p3$data.test
 all.train0 <- rbind(logit.train0, logit.valid0)
 
-# ### Kpop mode 1 train and test
-# smpl.size1 <- floor(0.75*nrow(logit.kpop1))
-# set.seed(123)
-# smpl1 <- sample(nrow(logit.kpop1), smpl.size1, replace = FALSE)
-# logit.train1 <- logit.kpop1[smpl1,]
-# logit.test1 <- logit.kpop1[-smpl1,]
 set.seed(123)
 p3 <- partition.3(logit.kpop1, 0.70, 0.15)
 logit.train1 <- p3$data.train
