@@ -1,0 +1,136 @@
+---
+title: "Model Results"
+author: "Mary Solomon"
+date: "2/28/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+```
+
+# Methodology
+
+## Binary Logistic Regression: 
+
+Assumptions:
+
+* Outcome variable is a binary random variable
+
+* Observations are independent from one another
+
+* Little to no multicollinearity between dependent/predictor variables   
+
+* Independent variables should be linearly dependent on the log odds
+
+* Large sample size
+
+Assumptions that DON'T have to be met :D :
+
+* Does NOT require a linear relaitonship between the dependent and independent variables.
+
+* Error terms (residuals) do NOT need to be normally distributed
+
+* Homoscedacity is not required.
+
+
+
+The Binary Random Variable is defined as ...
+
+where probability of 'success' is defined as $P(Z = 1) = \pi$ and probability of 'failure' is defined as $P(Z = 0) = 1- \pi$.
+
+Thus, the odds of success is defined as the ratio of probability of success over failure : $\frac{\pi}{1 - \pi}$, where we can interpret that if $\frac{\pi}{1 - \pi} > 1$, the success probability is greater than the failure probability and the observation that yields these odds is categorized into the success group.
+
+Logistic Regression models the logit transformation of these odds, called log odds as $log(\frac{\pi}{1 - \pi})$.
+
+Thus, the logit model can be defined as: 
+$$
+log(\frac{\pi}{1 - \pi}) = \beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_px_p + \epsilon
+$$
+
+where $\beta_0, ... , \beta_p$ are the coefficients for $x_1, ..., x_p$ predictor variables and $\epsilon$ are the error terms.
+
+The interpretation of the model can be understood in the scale of odds:
+$$
+\frac{\pi}{1 - \pi} = e^{\beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_px_p + \epsilon}
+$$
+
+where the $\beta_1, ... ,\beta_p$ can be interpreted in the following manner: As the unit of $x_i$ increases by one unit, the odds of success increase or decrease multiplicatively by $e^{\beta_i}$
+
+# Classification: New vs Old Generation
+
+## Mode 0
+```{r}
+mode0.newgen <- data.frame(Model = c("Full Logistic", "Stepwise 10CV", "All Subsets", "Ridge 10CV", "Lasso 10CV", "Elastic Net 10CV"),
+                            cutoff = c(0.35, 0.35, 0.36, 0.37, 0.35, 0.35), #optimal balance between sensitivity and specificity
+                            AIC = c(3815.2, 3804.3, 3813.4, NA, NA, NA),
+                            Accuracy = c(0.7175, 0.7218, 0.7247, 0.7261, 0.7361, 0.7375),
+                            Kappa = c(0.4222, 0.4320, 0.4342, 0.4360, 0.4597, 0.4616),
+                            Sensitivity = c(0.7143, 0.7253, 0.7106, 0.7070, 0.7363, 0.7326),
+                            Specificity = c(0.7196, 0.7196, 0.7336, 0.7383, 0.7360, 0.7407))
+kable(mode0.newgen)
+```
+
+Elastic Net 10 fold Cross Validation model:
+
+Compared to the full model, the elastic net model removes the variables of danceability, energy, Key4 - Key6, Key8, Key9, and Key11
+
+$$
+log(\frac{\hat {\pi}}{1 - \hat {\pi}}) = 0.116 + 0.070{Popularity} - 0.008{Duration} + 0.737{Acousticness} + 1.771{Instrumentalness}
+\\  
++ 0.305{Key1} + 0.174{Key2} - 0.129{Key3} + 0.454{Key7} - 0.0004{Key10}
+\\  
++ 0.170{Loudness} + 1.154{Speechiness} - 0.001{Tempo} -0.847{Valence}
+$$
+
+The audio features in this model that increase the odds of being categorized as a new generation kpop song multiplicativley are Popularity, Acousticness, Instrumentalness, Loudness, Speechiness, and choosing Key1 (C#/D-flat Minor), Key2 (D Minor), or Key7 (G Minor) instead of Key0 (C Minor). The features that decrease the odds multiplicatively of being categorized as a new generation kpop song are Duration, Tempo, Valence and choosing, Key3(D#/E-flat Minor) or Key10(A#/B-flat Minor) instead of Key0(C Minor).
+
+## Mode 1
+
+```{r}
+mode1.newgen <- data.frame(Model = c("Full", "Step 10CV", "AllReg", "Ridge 10CV", "Lasso 10CV", "ElasticNet 10CV"),
+                            cutoff = c(0.34, 0.34, 0.34, 0.35, 0.34, 0.35), #Best balance between sensitivity and specificity
+                            AIC = c(5936.1, 5925.4, 5934, NA, NA, NA),
+                            Accuracy = c(0.7575, 0.7557, 0.7566, 0.7566, 0.7520, 0.7566),
+                            Kappa = c(0.5006, 0.4974, 0.4995, 0.4985, 0.4894, 0.4952),
+                            Sensitivity = c(0.7689, 0.7689, 0.7713, 0.7664, 0.7616, 0.7494),
+                            Specificity = c(0.7507, 0.7478, 0.7478, 0.7507, 0.7464, 0.7609))
+kable(mode1.newgen)
+```
+
+The best model is the full logistic model.
+
+Full Logistic model 
+
+$$
+log(\frac{\hat {\pi}}{1 - \hat {\pi}}) = -0.783 + 0.079{Popularity} - 0.009{Duration} + 0.882{Acousticness} + 0.665{Danceability} 
+\\ + 0.537{Energy} + 2.471{Instrumentalness} - 0.415{Key1} + 0.002{Key2} 
+\\ + 0.149{Key3} + 0.280{Key4} - 0.217{Key5} - 0.280{Key6} - 0.161{Key7} 
+\\ - 0.185{Key8} + 0.006{Key9} - 0.071{Key10} - 0.094{Key11} + 0.154{Loudness}
+\\ + 0.792{Speechiness} + 0.0002{Tempo} - 0.742{Valence}
+$$
+
+The audio features in this model that increase the odds of being categorized as a new generation kpop song multiplicativley are Popularity, Acousticness, Danceability, Energy, Instrumentalness, Loudness, Speechiness, Tempo and choosing Key2(D major), Key3(D#/E-flat Major), Key4(E Major), Key9(A Major), instead of Key0 (C Major). The features that decrease the odds multiplicatively of being categorized as a new generation kpop song are Duration, Valence and choosing, Key5(F Major), Key6(F#/G-flat Major), Key7 (G Major), Key8 (G#/A-flat Major), Key10(A#/B-flat Major), Key11(B Major) instead of Key0(C Major).
+
+Only the variables Popularity, Duration, Acousticness, Danceability, Instrumentalness, Key1(C#/D-flat major), Loudness, Speechiness, and Valence are significant predictors in contributing to the log of odds for categorizing a song into the newer generations of kpop versus the older generation for songs composed in the major mode. 
+
+The $\beta_0$ coefficient of -0.783, means that if a song's audio features all had the value of zero, the odds of the song being classified into the new generation would be about $e^{-0.783} = 0.457$ on average.
+
+## Conclusions and Comparisons of Mode 0 and Mode 1
+
+Between the two models, Popularity, Duration, Acousticness, Instrumentalness,  Key2, Loudness, Speechiness and Valence all impacted the models in the same direction multiplicatively. All increasing the odds multiplicatively with every unit increase on average, except for valence which decreases the odds multiplicatively on average. 
+
+For both major and minor songs an increase of the variables Popularity, Acousticness, Instrumentalness, Loudness, Speechiness or being composed in Key2 (D Major or Minor) rather than Key0(C Major or Minor), increase the odds of being classified as a new generation song on average. Whereas an increase in duration or valence will decrease the odds of being classified as a new generatio song on average. 
+
+Since higher values of valence indicate a happier or more positive mood in a song, it is interesting that an increase in this feature would decrease the odds multiplicatively of being categorized into the newer generation. This tells us that perhaps the music in the older generations have a higher tendancy to be composed with a musical sound that conveyed happiness and joy compared to the newer generation. The decrease in odds multiplicatively due to an increase in duration tells us that older generation songs tended to be longer and those in the newer generation are shorter on average.
+
+The increase in popularity multiplicatively increasing the odds of being a new generation song matches the definition of Spotify's popularity measure as well as the observations made in the exploratory data analysis. Since Spotify measures popularity in relation to time, considering recent songs that have been streamed most frequently to have higher popularity, we would expect this trend that popularity would increase the odds of the song belonging to the new generation.Interestingly, however, the multiplicative increase is not as great as the increase caused by other variables such as Acousticness, Danceability, Instrumentalness and Energy.
+
+[explain those here]
+
+# MLR: Release Date
+
+# Popularity Prediction (MLR)
+
+# Popularity Classification (Logistic)
