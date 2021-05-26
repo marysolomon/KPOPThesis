@@ -276,8 +276,12 @@ Fit final model on combination of training and validation data
 ```{r}
 set.seed(123)
 # Fit K-fold CV model  
-bye2 <- capture.output(step0_kcv.final <- train(newgen ~ ., data = all.train0, family = "binomial", 
-                 method = "glmStepAIC", trControl = train_control, verbose = FALSE)) 
+bye2 <- capture.output(step0_kcv.final <- train(newgen ~ ., data = all.train0, 
+                                                family = "binomial",
+                                                method = "glmStepAIC", 
+                                                trControl = train_control, 
+                                                verbose = FALSE)
+                  ) 
 ```
 
 ```{r}
@@ -383,9 +387,11 @@ glmulti.out0.final <- glmulti(newgen ~ ., data = all.train0,
             plotty = F, report = F,  # No plot or interim reports
             fitfunction = "glm",     # lm function
             family = binomial)       # binomial to run logistic regression 
+allreg.logit0.final <- glmulti.out0.final@objects[[1]]
+
+
 glmulti.out0.final@formulas
 summary(glmulti.out0.final@objects[[1]])
-allreg.logit0.final <- glmulti.out0.final@objects[[1]]
 ```
 
 

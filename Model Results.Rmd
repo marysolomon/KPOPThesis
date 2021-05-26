@@ -2,7 +2,9 @@
 title: "Model Results"
 author: "Mary Solomon"
 date: "2/28/2021"
-output: html_document
+output: 
+  html_document:
+    toc: TRUE
 ---
 
 ```{r setup, include=FALSE}
@@ -12,23 +14,38 @@ library(knitr)
 
 # Methodology
 
+## Overview
+
+This chapter will provide an overview of the Linear and Logistic Regression modeling methodology that is used in multiple chapters of this thesis. Furthermore, optimization of these models through variable selection and regularized regression methods will be explored. Assessing the performance of these models must determine the model's ability to describe the population data. In otherwords, the model is assessed on how well it predicts or classifies unknown subset of data, representing a random sample from the population.  
+
+This is achieved by splitting the sample data into a training and test set. The training data is used to fit the models and the test data, which represents an unknown random sample from the population, is used to evaluate the performance. Furthermore, a third split into a validation set is made for the Logistic Regression models in order to choose optimal cut off values for classification. 
+
+Even with data splitting, the model performance may be dependent on the training set, or the method may require parameter tuning. These concerns are addressed with 10-fold Cross Validation such that by the end of the procedure, all data will have served as the test and training data. The steps of Cross Validation are: 
+
+* Data is partitioned into 10 non overlapping sub samples called 'folds'.
+
+* Model is fit 10 times. Each time, one of the folds is used as the test data and the remaining 9 folds are used as the training data.
+
+* The average of the 10 test errors is obtained. 
+
+
 ## Binary Logistic Regression: 
 
 Assumptions:
 
-* Outcome variable is a binary random variable
+* Outcome variable is a binary random variable.
 
-* Observations are independent from one another
+* Observations are independent from one another.
 
-* Little to no multicollinearity between dependent/predictor variables   
+* Little to no multicollinearity between dependent/predictor variables.   
 
-* Independent variables should be linearly dependent on the log odds
+* Independent variables should be linearly dependent on the log odds.
 
 * Large sample size
 
-Assumptions that DON'T have to be met :D :
+Assumptions that don't have to be met:
 
-* Does NOT require a linear relaitonship between the dependent and independent variables.
+* Does NOT require a linear relationship between the dependent and independent variables.
 
 * Error terms (residuals) do NOT need to be normally distributed
 
@@ -38,9 +55,9 @@ Assumptions that DON'T have to be met :D :
 
 The Binary Random Variable is defined as ...
 
-where probability of 'success' is defined as $P(Z = 1) = \pi$ and probability of 'failure' is defined as $P(Z = 0) = 1- \pi$.
+where the probability of 'success' is defined as $P(Z = 1) = \pi$ and probability of 'failure' is defined as $P(Z = 0) = 1- \pi$.
 
-Thus, the odds of success is defined as the ratio of probability of success over failure : $\frac{\pi}{1 - \pi}$, where we can interpret that if $\frac{\pi}{1 - \pi} > 1$, the success probability is greater than the failure probability and the observation that yields these odds is categorized into the success group.
+Thus, the odds of success are defined as the ratio of probability of success over failure : $\frac{\pi}{1 - \pi}$, where we can interpret that if $\frac{\pi}{1 - \pi} > 1$, the success probability is greater than the failure probability and the observation that yields these odds is categorized into the success group.
 
 Logistic Regression models the logit transformation of these odds, called log odds as $log(\frac{\pi}{1 - \pi})$.
 
@@ -58,7 +75,86 @@ $$
 
 where the $\beta_1, ... ,\beta_p$ can be interpreted in the following manner: As the unit of $x_i$ increases by one unit, the odds of success increase or decrease multiplicatively by $e^{\beta_i}$
 
+## Multiple Linear Regression
+
+The goal of Multiple Linear regression os the model the relationship of multiple dependent variables in predicting the value of a single continuous response variable, where every predictor variable x is related to the response variable y. Furthermore, Multiple Linear Regression serves to measure the strength of association between the predictors and response variable. 
+
+Assumptions:
+
+* The error terms also known as Residuals, $\epsilon_i = \hat y_i - y$, are normally distributed.
+
+* There exists a linear relationship between the dependent variables and the independent variable.
+
+* The error terms or residuals are homoscedastic. In otherwords the residuals exhibit equal variance. 
+
+* There is no multicollinearity between independent variables. In other words, the independent variables are not correlated to one another.
+
+The model is given as: 
+$$
+y_i = \beta_0 + \beta_1x_{i1} + \beta_2{x_{i2}} + ... + \beta_p{x_{ip}} + \epsilon_i
+$$
+for $i = 1, ... , n$, observations where $n$ is the total sample size and $p$ is the number of predictor variables. 
+
+
+## Variable Selection
+
+Fitting all of the predictor variables to create a full Linear or Logistic Regression model may not be the optimal model for a prediction or classification task. The prediction or classification accuracy of a model as well as its interpretability can be improved through variable selection methods. This section will introduce the methods of All Subsets Regression and Stepwise Regression.
+
+All Subsets aims to find a subset of size $k$ for each $k = 1, ..., p$ that gives the smallest Residual Sum of Squares (RSS). Then, the optimal $k$ variable model that optimizes the trade off of bias and variance is chosen. This thesis uses the Akaike Information Criterion (AIC) to choose the optimal model. AIC gives the estimate of the irreducible error $\hat \sigma^2$:
+
+$$
+AIC = \frac{1}{n}(RSS + 2k\hat \sigma^2)
+$$
+
+where  $RSS = \Sigma_{i = 1}^N (y_i - \beta_0 - \Sigma_{j = 1}^p\beta_jx_{ij})^2$.
+
+However, this method is computationally expensive since it searches through all possible subsets. There are $\binom{p}{k} = \frac{p!}{k!(p - k)!}$ possible methods which becomes computationally difficult for large values of $p$. An alternative variable selection method is the Stepwise selection method which is computationally more feasible since it limits the scope on the quantity of model subsets fitted. 
+
+The Stepwise method has three different approaches: forward, backwards and bi-directional. This research utilizes the backward approach which initially fits the full model and sequentially deletes the variable with the least impact towards the fit of the model. This judgement is made according to whether dropping the variable will minimize the overall AIC of the model. 
+
+Because the Stepwise selection method requires less subsets to fit, this method results in a lower variances than the All Subsets approach, but risks the possibility of higher bias. This method is highly dependent on the training data, so in order to minimize the dependency of the model's performance on the data, Cross Validation is used.
+
+## Regularized Regression
+
+The All Subsets and Stepwise Regression methods that are discrete in nature, characterized by the simplicity of keeping or discarding predictor variables from the model. However, this attribute often yields high variance and does not reduce prediction error in comparison to the full model. Regularized Regression, also referred to as Shrinkage Methods, offers an alternative approach that does not suffer as much from high variability. By decreasing the variance of the estimates, Regular Regression methods can decrease the test error observed. Three regularized regression methods will be applied to both MLR and Logistic Regression. The methods of Ridge, Lasso, and Elastic Net will be explained in the context of Linear Regression, but an extension to its setting in logistic regression can easily be understood via a model of the log odds.
+
+Ridge Regression shrinks the regression coefficients towards zero and each other by imposing a penalty term.
+
+$$
+\hat\beta_{Ridge} = min_{\beta}\{\Sigma_{i = 1}^N (y_i - \beta_0 - \Sigma_{j = 1}^p\beta_jx_{ij})^2 + \lambda\Sigma_{j = 1}^p \beta_j^2\}
+$$
+
+where $\Sigma_{i = 1}^N (y_i - \beta_0 - \Sigma_{j = 1}^p\beta_jx_{ij})^2$ is the residual sum of squares (RSS) for the model at $\beta$ and $\lambda\Sigma_{j = 1}^p \beta_j^2$ is the penalty term. This penalty term is also referred to as $L_2$ since it represents a second order penalty used on the coefficients. The tuning parameter $\lambda$ controls the penalty term. When $\lambda = 0$, no regularizaiton is performed and the model is equivalent to Ordinary Least Squares Regression. As the penalty increases, $\lambda \rightarrow \infty$, the coefficeints are shrunk towards zero. The optimal tuning parameter $\lambda$ that minimizes erroris chosen through Cross Validation.
+
+This method is not scale invariant, so normalization of the data is required prior to fitting the model. Packages in R such as glmnet(), will do this automatically. It is important to note that Ridge Regression does not perform feature selection. Rather, Ridge keeps all variables in the model and minimizes the coefficients of variables with minor contribution towards zero. 
+
+A Regularized Regression approach that does perform variable selection as well as shrinkage, is the Lasso method. In comparison to the Ridge method, Lasso minimizes the coefficients where the least contributing variables are forced to have coefficients of zero. Therefore, these variables are removed from the model. Since this shrinkage method forces some coeffcients to be shrunk towards zero, the Lasso method can be thought of as a continuous alternative to subset selection. The optimization is similar to that of Ridge, however the $L_2$ Ridge penalty $\lambda\Sigma_{j = 1}^p \beta_j^2\}$ is replaced with the $L_1$ Lasso penalty,  $\lambda\Sigma_{j = 1}^p |\beta_j|\}$.
+
+$$
+\hat\beta_{Lasso} = min_{\beta}\{\Sigma_{i = 1}^N (y_i - \beta_0 - \Sigma_{j = 1}^p\beta_jx_{ij})^2 + \lambda\Sigma_{j = 1}^p |\beta_j|\}
+$$
+
+Similarly to the Ridge method, choosing the optimal tuning parameter $\lambda$ that minimizes the error, can be done using Cross Validation.
+
+While Lasso has the advantage of performing feature selection with shrinkage, this can result in difficulties when dealing with correlated predictors. One of the correlated features may be pushed to zero and removed from the model while the other stays. Depending on the dataset, removing the feature at the expense of its correlation to another predictor may not result in the optimal model. In the absence of performing feature selection, Ridge, effectively reduces the correlated features together without the expense of removing one of the variables.
+
+This trade off is balanced by the Elastic Net model which combines the penalties for optimization: 
+$$
+\hat\beta_{Elastic Net} = min_{\beta}\{\Sigma_{i = 1}^N (y_i - \beta_0 - \Sigma_{j = 1}^p\beta_jx_{ij})^2 + \lambda\Sigma_{j = 1}^p \beta_j^2 + \lambda\Sigma_{j = 1}^p |\beta_j|\}
+$$
+
+By combining the penalties, the Elastic Net method keeps the quality of effective regularization from Ridge and feature selection from Lasso. In addition to having the tuning parameter $\lambda$, Elastic Net is also controlled by the $\alpha$ parameter which determines the balance of the two penalties. $\alpha = 0.05$ performs an equal combination of the two penalty terms, $\alpha \rightarrow 0$ applies the ridge penalty more heavily and when $\alpha \rightarrow 1$ will have a heavier Lasso penalty. Both the $\lambda$ and $\alpha$ parameters are tuned during Cross Validation.
+
 # Classification: New vs Old Generation
+
+## Introduction: 
+
+This section explores the ability of the audio features to identify whether a song belongs in a new generation or an old generation of the K-pop genre. For the purposes of this research, generations one and two are considered the older generation of kpop which lasts from about 1992 - 2012. Generations three & four are considered the new generation which can be defined as K-pop artists who are active from 2013 - 2021. However, because generations are defined by the year an artist has debuted rather than the time a song was released, there is some overlap between older generation artists releasing music in the new generation (JYP, SHINHWA, PSY). This could be a source of variation and misclassification in the analysis.
+
+This division of new versus old is made rather than running classification to the 4 groups separately because the newer generation is the era of K-pop where Korean pop music not only achieved mainstream global recognition, but an era that aims to appeal to the global audience. There has been some global success for groups in the older generation via the Hallyu Wave, however, their wider influence had not yet reached recognition on a global scale. With the success of BTS and BlackPink (from the third generation), Korean pop music is now known around the world. This research is mainly interested in the factors of audio features on this global breakthrough rather than modeling the intricacies of the 4 separate generations (although their differences are briefly discussed in the hypothesis testing section). 
+
+To evalutate the contribution and accuracy of the audio feature's ability to classify a song into the new generation versus the old generation, binary logistic regression analysis will be used. Therefore, the response variable is the binary classification of a song into the new generation or the old generation. The predictor variables used are the audio features of Popularity, Duration, Acousticness, Danceability,  Energy, Instrumentalness, Key, Loudness, Speechiness, Tempo and Valence. The data set is split into two groups based on musical mode. Therefore binary logistic regression will be fit to Mode 0 and Mode 1 songs each. For the model building process, each of the Mode data sets are then split into a training, validation and test set by ratio 70:15:15. The training set is used to fit the model, the validation set is used to evaluate the model performance to find the optimal cut off value, and finally the test set is used evaluate the performance of the models. In this section, only the final models will be defined, however, the other models can be found in the appendix.
+
 
 ## Mode 0
 ```{r}
@@ -72,9 +168,7 @@ mode0.newgen <- data.frame(Model = c("Full Logistic", "Stepwise 10CV", "All Subs
 kable(mode0.newgen)
 ```
 
-Elastic Net 10 fold Cross Validation model:
-
-Compared to the full model, the elastic net model removes the variables of danceability, energy, Key4 - Key6, Key8, Key9, and Key11
+The model with the highest classification accuracy and most optimal balance between sensitivity and specificity is the Elastic Net model. 
 
 $$
 log(\frac{\hat {\pi}}{1 - \hat {\pi}}) = 0.116 + 0.070{Popularity} - 0.008{Duration} + 0.737{Acousticness} + 1.771{Instrumentalness}
@@ -85,6 +179,7 @@ log(\frac{\hat {\pi}}{1 - \hat {\pi}}) = 0.116 + 0.070{Popularity} - 0.008{Durat
 $$
 
 The audio features in this model that increase the odds of being categorized as a new generation kpop song multiplicativley are Popularity, Acousticness, Instrumentalness, Loudness, Speechiness, and choosing Key1 (C#/D-flat Minor), Key2 (D Minor), or Key7 (G Minor) instead of Key0 (C Minor). The features that decrease the odds multiplicatively of being categorized as a new generation kpop song are Duration, Tempo, Valence and choosing, Key3(D#/E-flat Minor) or Key10(A#/B-flat Minor) instead of Key0(C Minor).
+
 
 ## Mode 1
 
@@ -99,7 +194,7 @@ mode1.newgen <- data.frame(Model = c("Full", "Step 10CV", "AllReg", "Ridge 10CV"
 kable(mode1.newgen)
 ```
 
-The best model is the full logistic model.
+The model that yields the highest accuracy and optimal balance between the Sensitivity and Specificity is the Full Logistic Regression model.
 
 Full Logistic model 
 
@@ -111,26 +206,333 @@ log(\frac{\hat {\pi}}{1 - \hat {\pi}}) = -0.783 + 0.079{Popularity} - 0.009{Dura
 \\ + 0.792{Speechiness} + 0.0002{Tempo} - 0.742{Valence}
 $$
 
-The audio features in this model that increase the odds of being categorized as a new generation kpop song multiplicativley are Popularity, Acousticness, Danceability, Energy, Instrumentalness, Loudness, Speechiness, Tempo and choosing Key2(D major), Key3(D#/E-flat Major), Key4(E Major), Key9(A Major), instead of Key0 (C Major). The features that decrease the odds multiplicatively of being categorized as a new generation kpop song are Duration, Valence and choosing, Key5(F Major), Key6(F#/G-flat Major), Key7 (G Major), Key8 (G#/A-flat Major), Key10(A#/B-flat Major), Key11(B Major) instead of Key0(C Major).
+The audio features in this model that increase the odds of being categorized as a new generation kpop song multiplicativley are Popularity, Acousticness, Danceability, Energy, Instrumentalness, Loudness, Speechiness, Tempo and choosing Key2(D major), Key3 (D#/E-flat Major), Key4 (E Major), Key9 (A Major), instead of Key0 (C Major). The features that decrease the odds multiplicatively of being categorized as a new generation kpop song are Duration, Valence and choosing, Key5 (F Major), Key6 (F#/G-flat Major), Key7 (G Major), Key8 (G#/A-flat Major), Key10 (A#/B-flat Major), Key11 (B Major) instead of Key0 (C Major).
 
 Only the variables Popularity, Duration, Acousticness, Danceability, Instrumentalness, Key1(C#/D-flat major), Loudness, Speechiness, and Valence are significant predictors in contributing to the log of odds for categorizing a song into the newer generations of kpop versus the older generation for songs composed in the major mode. 
 
-The $\beta_0$ coefficient of -0.783, means that if a song's audio features all had the value of zero, the odds of the song being classified into the new generation would be about $e^{-0.783} = 0.457$ on average.
 
 ## Conclusions and Comparisons of Mode 0 and Mode 1
 
-Between the two models, Popularity, Duration, Acousticness, Instrumentalness,  Key2, Loudness, Speechiness and Valence all impacted the models in the same direction multiplicatively. All increasing the odds multiplicatively with every unit increase on average, except for valence which decreases the odds multiplicatively on average. 
+Overall, classifying songs composed in a major key into the new or old generations requires more information than the songs composed in a minor key. Compared to the full logistic model which optimizes the prediction for the major key songs, the optimal elastic net logistic model for minor key songs removes the variables of Danceability, Energy, Key4 (E Minor), Key5 (F Minor), Key6 (F#/G-flat Minor), Key8 (G#/A-flat Minor), Key9 (A Minor), and Key11 (B Minor).
 
-For both major and minor songs an increase of the variables Popularity, Acousticness, Instrumentalness, Loudness, Speechiness or being composed in Key2 (D Major or Minor) rather than Key0(C Major or Minor), increase the odds of being classified as a new generation song on average. Whereas an increase in duration or valence will decrease the odds of being classified as a new generatio song on average. 
+For both major and minor songs, an increase of the variables Popularity, Acousticness, Instrumentalness, Loudness, Speechiness or being composed in Key2 (D Major or Minor) rather than Key0 (C Major or Minor), increase the odds of being classified as a new generation song on average. Whereas, an increase in Duration or Valence will decrease the odds of being classified as a new generation, song on average. 
 
-Since higher values of valence indicate a happier or more positive mood in a song, it is interesting that an increase in this feature would decrease the odds multiplicatively of being categorized into the newer generation. This tells us that perhaps the music in the older generations have a higher tendancy to be composed with a musical sound that conveyed happiness and joy compared to the newer generation. The decrease in odds multiplicatively due to an increase in duration tells us that older generation songs tended to be longer and those in the newer generation are shorter on average.
+Since higher values of valence indicate a happier or more positive mood in a song, it is interesting that an increase in this feature would decrease the odds multiplicatively of being categorized into the newer generation. Considering the range for Valence is just 0 to 1, a 0.10 increase in valence decreases the odds of categorization to the new generation by $e^{-0.847*0.1} =  0.92$ multiplication. For a Mode 1 song, every increase in 0.1 units of valence, the odds multiplicatively decrease is comparable at $e^{-0.742*0.1} =  0.93$. This tells us that perhaps the music in the older generations have a higher tendency to be composed with a musical sound that conveyed happiness and joy compared to the newer generation. The decrease in odds multiplicatively due to an increase in duration tells us that older generation songs tended to be longer and those in the newer generation are shorter on average.
 
-The increase in popularity multiplicatively increasing the odds of being a new generation song matches the definition of Spotify's popularity measure as well as the observations made in the exploratory data analysis. Since Spotify measures popularity in relation to time, considering recent songs that have been streamed most frequently to have higher popularity, we would expect this trend that popularity would increase the odds of the song belonging to the new generation.Interestingly, however, the multiplicative increase is not as great as the increase caused by other variables such as Acousticness, Danceability, Instrumentalness and Energy.
+The increase in popularity multiplicatively increasing the odds of being a new generation song matches the definition of Spotify's popularity measure as well as the observations made in the exploratory data analysis. Since Spotify measures popularity in relation to time, considering recent songs that have been streamed most frequently to have higher popularity, we would expect this trend that popularity would increase the odds of the song belonging to the new generation. With each unit increase in popularity, the odds increase multiplicatively by $e^{0.070} = 1.07$ for songs in a minor key and by $e^{0.079} = 1.08$ for songs in a major key. Interestingly, however, the multiplicative increase is not as great as the increase caused by other variables such as Acousticness and Instrumentalness.
 
-[explain those here]
+Acousticness, defined as the confidence of detecting acoustic qualities in the music. Acoustic music, is music that primarily uses musical instruments with the absence of electronic influence. With coefficients around 0.8, the odds of categorization as a new generation song increases by $e^{0.737*0.1} = 1.076$ for songs in a minor key and $e^{0.882*0.1} = 1.092$ for songs in a major key with every 0.1 increase in Acousticness. Instrumentalness, which is colloquially discussed with Acousticness, predicts the proportion of a song that does not contain vocals or rap. This is the most heavily weighted factor in the model. A 0.1 unit increase in  Instrumentalness of a song increases the odds of classification into the new generation by $e^{1.771*0.1} = 1.194$ for songs in a minor key and $e^{2.471*0.1} = 1.280$ for songs in a major key. These observations of Acousticness and Instrumentalness being very influential in prediction the odds of being classified into the new generation can possibly be explained by the heavy techno, electronic dance influence for music in the older generations. Although new electronic music influences such as EDM play an influential role in the music of the newer generations, the Korean pop music genre has diversified to include many other musical influences such as House, Tropical, Rock and more. Furthermore, it has become more common to use a musical excerpt as the chorus rather than the main vocals in the newer generation. 
+
+Some differences in variable influence on the models between the two song types include the weight of Speechiness on the odds ratio. Speechiness is more influential to the minor key songs where the $\beta_{Speechiness} = 1.154$. The Speechiness variable for the major key songs, however has a coefficient of $\beta_{Speechiness} = 0.729$. The other discrepancies that exist are the direction of the coefficients of Key1, Key 3, and Key7 being opposite for minor key songs versus major key songs. This makes sense musically since, say for key7, G minor and G major are not equivalent to one another. The lst notable discrepancy is that the direction of tempo is different between the two modes. Songs in the minor keys have a negative coefficient meaning that with every 1 unit increase in tempo, the odds of categorization as a new song decrease multiplicatively, whereas the songs in a major mode have a positive coefficient such that the unit increase in tempo increases the odds multiplicatively. This shows that the relationship between the generation and tempo are opposite for Mode 0 and Mode 1 songs. 
+
 
 # MLR: Release Date
 
+## Introduction
+
+Because a song's assigned K-pop Generation is determined by the Artist's debut date, there can exist a disconnect between the song's date of release and the defined time period of it's categorized K-pop generation. For example, Shinhwa is a 1st Generation male idol group that debuted in the late 1990s, but have released songs from the 1990s to their most recent album in 2018. Therefore, while Shinhwa is labeled as being a 1st Generation K-pop group, their music has been released during the timeline of the 2nd and 3rd generation due to their longevity. Therefore, the analysis could be more indicative of the music’s change over time by exploring the relationship between audio features and the song's release date rather than its classified K-pop Generation. With this approach, we aim to answer the question, Can the audio features predict a song’s month of release? with a multiple linear regressions approach.
+
+
+## Data Preparation
+
+The variable release date is stored in the data set as a “yyyy-mm-dd” timestamp. To convert the song’s release date to a continuous variable, the timestamp is converted into the number of months that have passed since the reference date of January 1992. January 1992 is used as the reference date because the first song in the data set is released in March of 1992 by Seo Taiji and Boys. The data collected spans from Seo Taiji and Boy's release in March 1992 to the newest song released by Baekhyun in January 2021. Therefore, the smallest value of month of song release is 3 and the largest value is 349. 
+
+The response variable for this analysis is Months, representing the month since January 1992 that the song was released. The predictor variables are Popularity, Duration, Acousticness, Danceability, Energy, Instrumentalness, Key, Loudness, Speechiness, Tempo, and Valence. Key is a factor variable which is modeled as dummy variables Key1 - Key11 where Key0 is the reference category. Furthermore, the analysis is divided into two parts to build and predict on a model for songs composed in mode0 (Minor Key) and mode1 (Major Key).
+
+For model building and evaluation, the mode0 and mode1 songs are each split into a 75% training data set and 25% test data set. 
+
+## Model Assumptions
+
+The distribution of months is moderately skewed left [INSERT FIGURE OF THE DENSITY HISTOGRAM FOR MONTHS], therefore, the residuals of the multiple linear model will not meet the model assumptions. A transformation is need.
+
+The transformation of $log(360 - months)$ is ideal for variable transformation in order to meet the assumptions about the residual for the multiple linear regression model. However, this transformation makes the interpret-ability of the final model more difficult. It is important to discuss the interpretation prior to the model performance evaluation. 
+
+[INSERT FIGURES OF THE DENSITY HISTOGRAM FOR TRANSFORMATION OF MONTHS]
+
+This means, our final model will be in the form of 
+$$
+log(360 - \hat {months}) = \beta_0 + \beta_1x_1 + ... + \beta_px_p + \epsilon
+$$
+
+Which can be re-expressed by 'undoing' the log transform with exponentiation:
+$$
+\\360 - \hat {months} = e^{\beta_0 + \beta_1x_1 + ... + \beta_px_p + \epsilon}
+\\or
+\\360 - \hat {months} = exp( \beta_0 + \beta_1x_1 + ... + \beta_px_p + \epsilon)
+$$
+
+Therefore we would interpret the coefficient of $\beta_1$ as: "With all other variables held constant, with one unit increase in $x_1$, the outcome of $360 - \hat{months}$ will increase (decrease if the coefficient is negative) multiplicatively by about $e^{\beta_1}$ on average".
+
+Because the outcome of this transformed equation is $360 - \hat{months}$, a coefficient that has a multiplicative increase on this transformed outcome corresponds to a lower or earlier estimate for month of release. On the other hand a multiplicative decrease to the transformed outcome, $360 - \hat{months}$, corresponds to a higher or later estimated month of release.
+
+
+## Mode 0
+Prior to fitting the multiple linear models, the assumptions for the model must be checked. With the transformed months response fitted to a full multiple linear model on all predictor variables, the following diagnostic plots can be assessed: 
+
+[INSERT MODEL ASSUMPTION CHECKING]
+
+
+Interpreting the diagnostic plots: 
+
+* Residuals vs. Fitted: The line through this plot is horizontal straight line through 0. This indicates that the assumption for the predictor variables being linearly related to the response is met.
+
+* Normal Q-Q: The residuals roughly follow the diagonal Normal-QQ line, indicating that the residuals are roughly normally distributed. Thus the normality of residuals assumption is met.
+
+* Scale Location: The red line passes through the scale-location graph horizontally. Therefore, the residuals satisfy the heteroscedasticity assumption. In otherwords, the MLR requirement of equal variance across residuals is satisfied.
+
+* Residuals vs. Leverage: There are some residuals that sit below standard residual 3, however not an alarming amount compared to the rest of the data set.
+
+Since the assumptions for the multiple linear regression model are met, model fitting and evalutaion can be performed.
+
+The following table reports the Root Mean Square Error (RMSE) and the R-Squared statistics to evaluate the performance of the models. We will want to choose a model that has a combination of the lowest RMSE and highest R-squared.
+```{r}
+results0 <- data.frame(Model = c("FullMLR", "Stepwise", "AllSubsets","Ridge", "Lasso", "Elastic Net"),
+                       RMSE = round(c(0.5976752 , 0.5980156, 0.5980156,0.5981751,0.5975859, 0.5976055), 5),
+                       R2 = round(c(0.3932124, 0.3925419, 0.3925419,0.3921513,0.3932411, 0.3931638), 5))
+kable(results0)
+```
+
+With the lowest RMSE and the Highest R2 value resulting from the prediction assessments, Lasso Provides the best model for predicting the month a song was released based on the Spotify audio features. 
+
+The Lasso model keeps all of the predictor variables except for Key2 and Key5.
+
+$$
+log(360 - \hat{months}) = 2.837 - 0.022{popularity} + 0.003{duration} - 0.240{acousticness} + 0.409{danceability} + 0.533{energy} 
+\\ - 0.808{instrumentalness} - 0.027{key1} + 0.004{key3} + 0.092{key4} + 0.024{key6} 
+\\ - 0.056{key7} - 0.068{key8} + 0.082{key9} + 0.099{key10} + 0.077{key11}
+\\  
+\\ - 0.084{loudness} - 0.280{speechiness} + 0.001{tempo} + 0.321{valence}
+$$
+
+
+The equation below is the Lasso model re-written with the log transformation reversed by exponentiation.
+
+$$
+360 - \hat{months} = exp(2.837 - 0.022{popularity} + 0.003{duration} - 0.240{acousticness} + 0.409{danceability} + 0.533{energy} 
+\\ - 0.808{instrumentalness} - 0.027{key1} + 0.004{key3} + 0.092{key4} + 0.024{key6} 
+\\ - 0.056{key7} - 0.068{key8} + 0.082{key9} + 0.099{key10} + 0.077{key11}
+\\  
+\\ - 0.084{loudness} - 0.280{speechiness} + 0.001{tempo} + 0.321{valence})
+$$
+
+
+With all other variables held constant, the following variables that would multiplicatively increase the pseudo months outcome with a unit increase in the predictor variable are: Duration, Danceability, Energy,  Tempo, Valence or having a Minor Key of Key3 (D#/E-flat Minor), Key4 (E Minor), Key6 (F#/G-flat Minor), Key9 (A Minor), Key10 (A#/B-flat Minor),or Key11 (B Minor), instead of Key0 (C Minor). For these positive coefficients, Danceability, Energy, and Valence have the greatest multiplicative effect on the outcome.
+
+With all other varibales held constant, a unit increase in the variables Popularity, Acousticness, Instrumentalness,  Loudness, Speechiness, or being composed in the Key of Key1 (C#/D-flat Minor), Key7 (G Minor), Key8 (G#/A-flat Minor) instead of Key0 (C Minor) would multiplicatively decrease the predicted outcome of the transformed months. The variable Instrumentalist is estimated to have the greatest weight in multiplicatively decreasing the predicted transformed outcome followed by Speechiness and Acousticness.
+
+
+
+
+
+## Mode 1
+
+[INSERT MODEL ASSUMPTION CHECKING]
+
+```{r}
+results1 <- data.frame(Model = c("FullMLR", "Stepwise 10CV", "AllSubsets","Ridge 10CV", "Lasso 10CV", "Elastic Net 10CV"),
+                       RMSE = round(c(0.6078257, 0.6070693,0.6071187,0.607864,0.6073883, 0.6073717),5),
+                       R2 = round(c(0.3312429, 0.3329448, 0.3328339,0.332307,0.3322821, 0.3323557), 5))
+kable(results1)
+```
+
+The model with the smallest RMSE (on the log(360 - y) scale) and largest R-Squared values is the Multiple Linear Regression from the Stepwise method using 10 fold cross validation. The stewise multiple regression leaves out the dummy variables of Key2, Key3, Key4, Key11 and Speechiness. All of the variables in the model besides Key5 and Key10 have a significant relationship with transformed month of song release when the level of significance is $\alpha = 0.05$.
+
+$$
+log(360 - \hat{months}) = 3.020 - 0.020{popularity} + 0.002{duration} - 0.124{acousticness} + 0.630{danceability} +  0.357{energy}
+\\ - 0.765{instrumentalness} + 0.062{key1} + 0.053{key5} + 0.073{key6} + 0.079{key7} 
+\\ + 0.096{key8} + 0.060{key10} - 0.074{loudness}   + 0.001{tempo} + 0.289{valence}
+$$
+
+Converting it back to normal scale would result in the following 
+$$
+360 - \hat{months} = exp(3.020 - 0.020{popularity} + 0.002{duration} - 0.124{acousticness} + 0.630{danceability} +  0.357{energy}
+\\ - 0.765{instrumentalness} + 0.062{key1} + 0.053{key5} + 0.073{key6} + 0.079{key7} 
+\\ + 0.096{key8} + 0.060{key10} - 0.074{loudness}   + 0.001{tempo} + 0.289{valence})
+$$
+
+With all other variables held constant, the following variables that would multiplicatively increase the pseudo months outcome of 360 with a unit increase in the predictor variable are: Duration, Danceability, Energy, Tempo, Valence or having a major key of Key1 (C#/D-flat Major), Key5 (F Major), Key6 (F#/G-flat Major), or Key10 (A#/B-flat Major) instead of Key0 (C Major). For these positive coefficients, Danceability, Energy, and Valence have the greatest multiplicative effect on the outcome.
+
+With all other variabales held constant, a unit increase in the variables Popularity, Acousticness, Instrumentalness, or Loudness would multiplicatively decrease the predicted outcome of the transformed months. The variable Instrumentalness is estimated to have the greatest weight in multiplicatively decreasing the predicted transformed outcome with a coefficient of -0.765.
+
+
+## Conclusions and Comparisons of Mode 0 and Mode 1
+
+Generally, the performance of the models for Mode 0 songs is slightly better due to the R-Squared values being around 0.39 compared to the R-Squared values of the Mode 1 songs around 0.33. The RMSE values are comparable at around 0.60 for all of the models.
+
+The signs of the coefficients for the optimal mode0 and mode 1 song are all comparable with the exceptions of Key1 and Key7. These variables cause a multiplicative decrease to the response for the Mode0 model while being Key1 or Key7 rather than Key0 create the effect of a multiplicative increase in the Mode1 songs. Therefore, Minor key songs are more likely to have been released later in the timeline of K-pop if composed in the Key of D Minor or Key G Minor rather than Key of C Minor. However, songs are more likely to have been released earlier in the timeline of k-pop if composed in the key of D Major or G Major rather than the key of C Major.
+
+Otherwise, the model coefficients for Major and Minor Key song have the same sign direction for each of the predictor variables. Unit increases from variables Popularity, Acousticness, Instrumentalness or Loudness corresponds to the song being predicted to have been released later in the timeline of k-pop, whereas the increase in unit of variables Duration, Danceability, Energy, and Tempo corresponds to the song being predicted to have an earlier release.  
+
+
+
+
+# Popularity Prediction: Introduction 
+
+The Spotify popularity score ranges from 0 - 100, where 100 is the most popular. The Spotify's algorithm calculates the popularity score by considering the total number of plays the song has and how recent those plays are. Korean pop is a diverse genre with a rich history. The recent rise of its global popularity have made many wonder what makes Korean pop music so appealing? What qualities of the music are fans so crazy about? This section explores how audio features contribute to a K-pop song's popularity score on Spotify from both a prediction and classification approach. 
+
+Multiple Linear Regression will be used to compare models for predicting the exact popularity score. This will allow us to investigate how precisely the audio features contribute to the song's popularity. After that, Binary Logistic Regression will be used to see how audio features more broadly determine if a song will be popular or not. Popular songs are defined as songs who have a popularity score 50 or above and those with a popularity score below 50 are not considered popular. 
+
+
 # Popularity Prediction (MLR)
 
+## Introduction/Data Preparation
+
+The goal of predicting popularity from a Multiple Linear Regressions approach is to analyze the effect and relationship of the audio features towards the exact value of the popularity score. Before building the models, we must gain a general understanding of the overall distribution of popularity. As observed in the exploratory data analysis, the overall distribution of the popularity scores is moderately right skewed with few songs having a popularity score above 70 and the majority of data points having a popularity score below 20. The distribution with a fitted density curve can be observed below:
+
+[INSERT DENSITY PLOT].
+
+The distribution is clearly not normal, therefore the data is unlikely to meet the assumptions of the multiple linear regression model. In order to meet these assumptions, we will need to transform the response variable to be roughly normally distributed. Luckily a simple square root transformation makes the popularity distribution roughly normal as you can see by the density plot below.
+
+[INSERT SQUARE ROOT TRANSFORM DENSITY PLOT]
+
+While the distribution is not perfectly normal, it will likely improve the ability of the data to meet the assumptions to build the multiple linear regression model. The model assumptions will be evaluated in the analysis with the report of the mode 0 and mode 1 model results.
+
+Prior to building the model, the data set is split 75\% into the training set and 25\% allocated to the test set. This split is done for each of the mode groups. The response variable is the continuous variable of Popularity and the predictor variables are the continuous values of Duration, Acousticness, Danceability, Energy, Instrumentalness, Loudness, Mode, Speechiness, Tempo, Valence and the categorical variable of Key.
+
+
+
+## Mode 0
+
+Before fitting and evaluating the MLR model, the assumptions of the model are checked.
+Diagnostic results for the transformed data: 
+
+[INSERT DIAGNOSTIC PLOTS HERE]
+
+* Residuals vs. Fitted: The line through this plot is somewhat horizontal but still exhibits some curvature. Overall though, there is roughly a linear relationship between the predictors and outcome variables.
+
+* Normal-QQ: The residuals roughly follow the diagonal Normal-QQ line, indicating that the residuals are normally distributed. In comparison to the original scale of the data, there is slightly more deviance on the upper tail with the points falling below the Normal-QQ line.
+
+* Scale Location: The red line is roughly more horizontal. Therefore, our residuals exhibit heteroscedasticity. In other words, the model now satisfies the MLR requirement of equal variance across residuals.
+
+* Residuals vs. Leverage: Most of the residuals fall with in the standardized residual values of -3 and 3, therefore, we have few outliers in the data set.
+
+
+
+
+```{r}
+mlr0.results <- data.frame(Model = c("Full", "Step 10CV", "All Subsets", "Ridge 10CV", "Lasso 10CV", "ElasticNet 10CV"),
+                           #AIC = c(),
+                           adjR2 = c(0.1546, 0.1560, 0.1560, NA, NA,NA),
+                           RMSE = c(1.8635, 1.8612, 1.8612, 1.8611, 1.8588, 1.8592),
+                           Pred.R2 = c( 0.1333, 0.1351,  0.1351, 0.1340, 0.1352, 0.1351))
+mlr0.results
+```
+
+
+The model that yields the lowest RMSE and highest R2 from predictions is the Lasso Multiple Linear Regularized Regression model.
+
+The Lasso Multiple Linear Regularized Regression model can be written 
+$$
+\hat {\sqrt {popularity}} = 11.897 - 0.010{Duration} - 3.492{Energy} - 2.047{Instrumentalness} 
+\\
+- 0.155{Key2} + 0.212{Key3} - 0.359{Key4} + 0.221{Key6} - 0.033{Key7} - 0.040{Key10} 
+\\ 
+- 0.118{Key11} + 0.398{Loudness} + 1.755{Speechiness} - 1.135{Valence}
+$$
+
+The Lasso model leaves out the following predictor variables: Acousticness, Danceability, Key1, Key5, Key8, Key9, and Tempo
+
+An increase in Duration, Energy, Instrumentalness, Valence and choosing Key2 (D Minor), Key4 (E Minor), Key7 (G Minor), Key10 (A#/B-flat Minor), Key11 (B minor) instead of Key0(Cminor) decreases the square root of the popularity score, on average. An increase in Loudness, Speechiness and choosing Key3 (D#/E-flat Minor) or Key6 (F#/G-flat Minor)over Key0 (C Minor) increases the square root of the popularity score, on average.
+
+
+
+## Mode 1
+
+Before fitting and evaluating the MLR model, the assumptions of the model are checked.
+
+[insert assumption checking]
+
+    \item Residuals vs. Fitted: The line through this plot is somewhat horizontal but still exhibits some curvature. Overall though, there is roughly a linear relationship between the predictors and outcome variables.
+    \item Normal-QQ: The residuals roughly follow the diagonal Normal-QQ line, indicating that the residuals are normally distributed. In comparison to the original scale of the data, there is slightly more deviance on the upper tail with the points falling below the Normal-QQ line.
+    \item Scale Location: The red line is roughly more horizontal. Therefore, our residuals exhibit heteroscedasticity. In other words, the model now satisfies the MLR requirement of equal variance across residuals.
+    \item Residuals vs. Leverage: Some of the residuals fall outside of the standardized residual range of -3 and 3, therefore, there exist some outliers in the data set.
+    
+
+```{r}
+mlr1.results <- data.frame(Model = c("Full", "Step 10CV", "All Subsets","Ridge 10CV", "Lasso 10CV", "ElasticNet 10CV"),
+                           #AIC = c(),
+                           adjR2 = c(0.1468, 0.1453, 0.1473,NA, NA, NA),
+                           RMSE = c(1.858473, 1.858518, 1.858518, 1.858182, 1.858393, 1.858386),
+                           Pred.R2 = c(0.1257546, 0.1257011, 0.1257011, 0.1253763, 0.1255584, 0.1255727))
+mlr1.results
+```
+
+The model with the lowest RMSE and highest R2 is the Full multiple linear regression model.
+
+The full Multiple Linear Regression model can be written 
+$$
+\hat {\sqrt {popularity}} = 10.857 - 0.010{Duration} + 0.081{Acousticness} + 0.051{Danceability} - 3.078{Energy} - 1.877{Instrumentalness} 
+\\
++ 0.321{Key1} + 0.207{Key2} + 0.431{Key3} - 0.029{Key4} + 0.204{Key5} + 0.217{Key6} + 0.283{Key7} 
+\\ 
++ 0.297{Key8} + 0.271{Key9} + 0.080{Key10} + 0.390{Key11} + 0.386{Loudness} + 4.580{Speechiness}
+\\
+-0.001{Tempo} - 0.849{Valence}
+$$
+
+The variables that have significant contribution at a significance level of $\alpha = 0.05$ in predicting the popularity score is Duration, Energy, Instrumentalness, Key1, Key2, Key3, Key6, Key7, Key8, Key9, Key11, Loudness, Speechiness, and Valence. 
+
+A unit increase in Duration, Energy, Instrumentalness, Tempo, Valence and choosing  Key4 (E Major) instead of Key0(C Major) decreases the square root popularity score, on average. A unit increase in Acousticness, Danceability, Loudness, Speechiness and choosing Key1 (C#/D-flat Major), Key2 (D Major), Key3 (D#/E-flat Major), Key5 (F Major), Key6 (F#/G-flat Minor), Key7 (G Major), Key8 (G#/A-flat Major), Key9 (A Major), Key10 (A#/B-flat Major),or Key11 (B Major) over Key0 (C Major) increases the square root popularity score, on average.
+
+## Conclusions and Comparisons of Mode 0 and Mode 1
+
+
+
 # Popularity Classification (Logistic)
+
+## Mode 0
+
+```{r}
+results.logit0 <- data.frame(model = c("Full", "Step 10CV", "All Subsets", "Ridge 10CV", "Elastic Net 10CV"),
+                             cutoff = c(0.14, 0.14, 0.14, 0.14, 0.14),
+                             AIC = c(2946, 2928, 2938.2, NA, NA),
+                             Accuracy =c(0.6205, 0.6362, 0.6505, 0.6405, 0.6405),
+                             Kappa = c(0.1013, 0.1007, 0.1269, 0.0901, 0.0901),
+                             Sensitivity = c(0.55319, 0.5213, 0.55319, 0.48936, 0.48936),
+                             Specificity = c(0.63097, 0.6540, 0.66557, 0.66392, 0.66392))
+results.logit0
+```
+
+The best model is the all subsets regression method model as it has the highest accuracy, sensitivity and specificity values. 
+
+All Possible Regression:
+
+Compared to the full Logistic model, the Model from All subsets regression leaves out the variables Danceability, all Key dummy variables, and Tempo. All variables in this model, except for Instrumentalness are considered significant predictors.
+
+$$
+log(\frac{\hat {\pi}}{1 - \hat {\pi}}) = 5.369 - 0.009{Duration} - 1.537{Acousticness} - 3.955{Energy} - 2.722{Instrumentalness}
+\\
+ + 0.354{Loudness} + 3.278{Speechiness} - 1.445{Valence}
+$$ 
+
+A unit increase in Duration, Acousticness Energy, Instrumentalness, or Valence multiplicatively decreases the odds of classification as a popular song. Whereas, a unit increase in Loudness or Speechiness multiplicatively increases the odds of categorization as a popular song.
+
+## Mode 1
+
+```{r}
+results.logit1 <- data.frame(model = c("Full", "Step 10CV", "All Subsets", "Ridge 10CV", "Elastic Net 10CV"),
+                             cutoff = c(0.11, 0.11, 0.11, 0.11, 0.11),
+                             AIC = c(4131.1, 4121, 4127.6, NA, NA),
+                             Accuracy =c(0.6167, 0.6013, 0.6022, 0.5758, 0.5758),
+                             Kappa = c(0.1018, 0.0857, 0.0893, 0.0962, 0.0962),
+                             Sensitivity = c(0.61947, 0.60177, 0.61062, 0.68142, 0.68142),
+                             Specificity = c(0.61640, 0.60121, 0.60121, 0.56377, 0.56377))
+results.logit1
+```
+
+The Full logistic model yields the best performance in Accuracy and optimal balance between sensitivity and specificity.
+
+Full Logistic Model
+$$
+log(\frac{\hat {\pi}}{1 - \hat {\pi}}) = 3.198 - 0.008{Duration} - 0.747{Acousticness} + 0.935{Danceability} - 3.457{Energy} - 12.325{Instrumentalness}
+\\
++ 0.134{Key1} + 0.070{Key2} + 0.586{Key3} - 0.159{Key4} + 0.031{Key5} + 0.052{Key6} + 0.174{Key7} + 0.344{Key8} + 0.275{Key9}
+\\
+- 0.385{Key10} - 0.071{Key11} + 0.330{Loudness} + 4.734{Speechiness} + 0.003{Tempo} - 1.386{Valence}
+$$
+
+The variables Duration, Acousticness, Danceability, Energy, Key3 (D#/E-flat Major), Key8 (G#/A-flat Major), Loudness, Speechiness, and Valence are significant variables in the model given that the level of significance is $\alpha = 0.05$.
+
+A unit increase in Duration, Acousticness Energy, Instrumentalness, Valence or choosing  Key4 (E Major), Key10 or Key11 instead of Key0 (C Major) multiplicatively decreases the odds of classification as a popular song. Whereas, a unit increase in Loudness, Speechiness, Tempo, or choosing Key1 - Key3, Key5 - Key9 instead of Key0 (C Major) multiplicatively increases the odds.
+
+## Conclusions and Comparisons of Mode 0 and Mode 1

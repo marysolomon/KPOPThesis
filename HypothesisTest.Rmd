@@ -36,18 +36,18 @@ data <- mutate(data, ArtistType = as.factor(ArtistType),
 colnames(data)
 ```
 
+# Introduction
 
-
-For this section, we are going to perform hypothesis tests to compare audio features based on different groups. We will do so one audio feature at a time based on attributes such as Artist Gen, Artist Gender, Artist Type.
+For this section, nonparametric hypothesis tests are performed to compare audio features based on different artist attributes. We will do so for each audio feature, comparing attributes such as artist generation (1,2,3, and 4), artist gender (male and female), and artist type (group and solo).
 
 First let's see the breakdown of number of observations in each gorup.
 ```{r}
 #songs per kpop generation
-table(data$ArtistGen)/nrow(data)
+table(data$ArtistGen)
 #songs per gender of artist
-table(data$ArtistGender)/nrow(data)
+table(data$ArtistGender)
 #songs per Artist Type (group v solo)
-table(data$ArtistType)/nrow(data)
+table(data$ArtistType)
 ```
 
 Breakdown of proportions of observations in each group
@@ -60,7 +60,7 @@ round(table(data$ArtistGender)/nrow(data),3)
 round(table(data$ArtistType)/nrow(data), 3)
 ```
 
-The groups are in very unequal balance making a very uneven comparison. The Kruskal Wallis and Mann Whitney Wilcoxon tests are robust to uneven group sizes. As long as there is a large enough sample in each group, it is okay to have uneven group sizes. While 4th generation and soloists make up a much smaller proportion of the data in their attribute comparisons, the sample sizes are both large enough. However, for the case of coed artists, there are only 12 songs in the entire dataset, making the sample size too small for analysis. 
+The groups are in very unequal balance making a very uneven comparison. The Kruskal Wallis and Mann Whitney Wilcoxon tests are robust to uneven group sizes. As long as there is a large enough sample in each group, it is okay to have uneven group sizes. While 4th generation and soloists make up a much smaller proportion of the data in their attribute comparisons, the sample sizes are both large enough. However, for the case of coed artists, there are only 170 songs in the entire dataset, making the sample size too small to compare to the sample sizes which are in the thousands. 
 
 
 ```
@@ -78,6 +78,78 @@ round(table(data$oldgen)/nrow(data),3)
 round(table(data$bg)/nrow(data),3)
 ```
 
+# Methodology
+
+In order to compare the differences of audio features between groups, a method that does not make assumption of the underlying distribution normality as many of the distributions of the audio features are skewed. To conduct analysis that is free of these assumptions of an underlying distribution, Non parametric hypothesis testing and confidence interval methods will be used. The methods used in this section are the the Wilcoxon Rank Sum Test for comparisons of two independent samples and the Kruskal-Wallis Test for comparisons of two or more independent samples.
+
+## Wilcoxon Rank Sum Test
+
+The Wilcoxon Rank Sum Test is a nonparametric test to compare the centrality of two independent samples, where population 1 is expressed as : $x_1, ..., x_n$ and population 2: $y_1,...,y_n$. The Wilcoxon Rank Sum Test is also considered equivalent to the Mann-Whitney-Wilcoxon test. This paper will be conducting a two-sided Wilcoxon Rank Sum Test.
+
+The assumptions of this test are as follows:
+
+* Observations $x_1, ..., x_n$ and $y_1,...,y_n$ are independent and identically distributed for population x and y respectively.
+
+* The median completely characterizes the distribution of each independent sample. Therefore, if a population difference exists, it will be completely characterized by the difference in population medians. 
+
+* Populations X and Y are continuous and symmetrically distributed about the population medians notated $\theta_x$ and $\theta_y$, respectively.
+
+The null hypothesis is that the population medians are the same between groups and the alternative hypothesis is that the population medians are different from one another.
+
+The hypothesis for a two-sided Wilcoxon Rank Sum Test is notated as follows:
+$$
+H_0: \theta_x =\theta_y
+\\
+H_1: \theta_x \neq \theta_y
+$$
+
+which can also be expressed in the population median differences 
+$$
+H_0: \theta_x - \theta_y = 0
+\\
+H_1: \theta_x - \theta_y \neq 0
+$$
+
+The statistic of this test, the Wilcoxon statistic (W) is computed by first create a joint ranking of observations $x_1, ..., x_n$ and $y_1,...,y_n$ in increasing order. Then W is calculated by summing all of the ranks of observations from the y population.
+
+The null hypothesis is rejected when the p-value of the W statistic indicates that one of the population medians is significantly larger than the other. 
+
+
+## Kruskal Wallis Test
+
+The Kruskal Wallis test is an extension of the Wilcoxon Mann Whitney test by extending the Wilcoxon Statistic formulation to three or more samples. 
+
+The Kruskal Wallis test compares $k$ independent random samples ranging from population 1 is represented as $x_{11}, ...,x_{1n_1}$ to population $k$ which is represented as $x_{k1}, ...,x{kn_k}$. The assumptions of this test are identical to that of the Wilcoxon test, but expanded to a larger number of samples.
+
+The assumptions of this test are as follows:
+
+* Observations $x_{11}, ...,x_{1n_1}$ to $x_{k1}, ...,x_{kn_k}$ are independent and identically distributed for populations $x_1 ... x_k$ respectively.
+
+* The median completely characterizes the distribution of each independent sample. Therefore, if a population difference exists, it will be completely characterized by the difference in population medians. 
+
+* Populations $X_1 ... X_k$ are continuous and symmetrically distributed about the population medians notated $\theta_1$ and $\theta_k$, respectively.
+
+The null hypothesis can be written such that all of the population medians are equivalent and the alternative hypothesis is that at least one population median is different than the rest. 
+
+The hypothesis for the Kruskal-Wallis test is notated:
+$$
+H_0 : \theta_1 =...=\theta_k
+\\
+H_1: \theta_i \neq \theta_j
+$$
+
+
+
+The Kruskal Wallis H statistic is equivalent to the "Kruskal Wallis Chi-Squared Statistic" which is calulcated with the kruskal.test() function in R. The H statistic calculations are performed by the following procedures:
+
+* order a joint ranking of all $N = \Sigma_{j = 1}^k n_j$ observations. Let $r_{ij}$ to denote the rank of observation $x_{ij}$ in the joint ranking.
+
+* Statistic H is defined as $H = \frac{12}{N(N+1)}\sum_{j=1}^k n_j(\bar R_j - \frac{N + 1}{2})^2$
+
+* where $R_j = \sum_{j=1}^n r_{ij}$ and $\bar {R_j} = \frac{r_i}{n_j}$ for each $j = 1, ..., k$
+
+The null hypothesis is rejected in the even that high or low ranks dominate in one or more samples.
+
 
 # Hypothesis testing across kpop generations
 ```{r}
@@ -90,6 +162,199 @@ gen4 <- filter(data, ArtistGen == 4)
 # oldgen <- filter(data, oldgen == 1)
 # newgen <- filter(data, oldgen == 0)
 ```
+
+
+## Kruskal Wallis test p-values.
+
+"Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1"
+
+```{r}
+gen.results <- data.frame(AudioFeature <- c("Popularity", "Duration", "Acousticness", "Danceability",
+                                            "Energy", "Instrumentalness", "Speechiness", "Loudness",
+                                            "Tempo", "Valence"),
+                          Stat <- c(4079.2, 749.45, 81.984, 184.52,
+                                    28.023, 681.01, 258.186, 681.81,
+                                    36.012, 92.884),
+                          Pval <- c("< 2.2e-16", "< 2.2e-16", "< 2.2e-16", "< 2.2e-16", 
+                                    "3.591e-06", "< 2.2e-16", "< 2.2e-16", "< 2.2e-16",
+                                    "7.444e-08", "< 2.2e-16"),
+                          Significant <- c("***", "***", "***", "***",
+                                           "***", "***", "***", "***",
+                                           "***", "***"))
+colnames(gen.results) <- c("Audio Feature", "Kruskal-Wallis Chi-Squared", "P-Value", "Significant")
+gen.results
+```
+
+All of the hypothesis tests for each audio feature are significant under a level of significance $\alpha = 0.05$ which means there is sufficient evidence to reject the null hypothesis and conclude that at least one of the generations has a population median that differs from the others.
+
+Now, to investigate which of the generations significantly differ from one another and the estimated differences, pairwise comparisons of the Wilcoxon test will be performed for each of the audio features with a bonferroni correction of $\alpha/6 = 0.05/6 = 0.0083$. 
+
+The audio features that yield results in which all of the pairwise comparisons are significant at the $\alpha/6 = 0.0083$ significance level are Popularity, Duration, Speechiness and Loudness. In other words, these are the audio features in which every pair of generations are significantly different from one another. For example, the Popularity table shows the results for the Wilcoxon statistic, P-value, 99.17% confidence interval and the whether the result is significant according to the significance level codes used in R: "Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1". Note that the differences are calculated in the manner that the pair is listed. For example, the difference in population medians for generation pair "1 - 2" can be expressed as $\theta_1 - \theta_2$. The Popularity table is shown as an example of the results, but the rest of the discussion for pairwise comparisons will reference the remaining pairwise Wilcoxon test results in the appendix.
+
+** Popularity **
+```{r}
+popularity.pairs <- data.frame(Pair = c("1-2", "1-3", "1-4",
+                                        "2-3", "2-4", "3-4"),
+                               W = c(3315856, 808533, 40423,
+                                     4827719, 364107, 856299),
+                               pval = c("< 2.2e-16", "< 2.2e-16", "< 2.2e-16",
+                                        "< 2.2e-16", "< 2.2e-16", "< 2.2e-16"),
+                               ci = c("(-9.000078, -7.999948)", "(-27.00002, -25.00003)", "(-36.99996, -34.00001)",
+                                      "(-18.00001, -16.00003)", "(-28.00005, -25.00000)", "(-10.999985,  -7.000043)"),
+                               sig = c("***", "***", "***",
+                                       "***", "***", "***"))
+colnames(popularity.pairs) <- c("Generation Pair", "W", "P-Value", "99.17% Confidence Interval", "Significant")
+popularity.pairs
+```
+
+As seen in the exploratory data analysis, there are significant differences in popularity between different K-pop generations. One attribute of this difference can be explained by Spotify's popularity score which considers both number of plays and how recent those plays are. Therefore, any song that is newly released is going to be more popular than an older song with the same number of plays, but more recent activity. As expected, the detected differences increase as the gap between generations increase. What is notable however, is that, while the differences between neighboring generations such as generation one versus generation two and generation three compared to generation four have 99.17% confidence intervals that estimate the difference to be between about (-9, -8) and (-11, -7) respectively, the difference between generation two and generation three popularity is much larger at a 99.17% confidence such that the popularity of generation 2 songs is between about 16 - 18 units less than generation 3. This may provide evidence that there is a distinction of popularity difference between the older generations (1 & 2) and the new (3 & 4).
+
+** Duration **
+```{r}
+duration.pairs <- data.frame(Pair = c("1-2", "1-3", "1-4",
+                                        "2-3", "2-4", "3-4"),
+                               W = c(6716006, 5168638, 1013108,
+                                     12237926, 2507990, 1526027),
+                               pval = c("< 2.2e-16", "< 2.2e-16", "< 2.2e-16",
+                                        "< 2.2e-16", "< 2.2e-16", "2.905e-16"),
+                               ci = c("(9.60805, 13.81404)", "(16.98804, 21.08295)", "(23.40404, 29.84504)",
+                                      "(5.546969, 8.319974)", "(11.65498, 16.90297)", "(4.960046, 9.662030)"),
+                               sig = c("***", "***", "***",
+                                       "***", "***", "***"))
+colnames(duration.pairs) <- c("Generation Pair", "W", "P-Value", "99.17% Confidence Interval", "Significant")
+duration.pairs
+```
+
+The pairs are significantly different in median Duration such that the older generation in the pair is estimated to have a longer duration than the newer generation. Furthermore, as the gap in generation is larger, so is the difference in median duration. We can see this trend as we follow the estimated confidence interval for the pairs involving the first generation. With 99.17% confidence, the median of generation one song duration is between about 10 to 14 seconds more than the second generation, about 17 to 21 seconds longer than the third generation, and finally about 23 to 30 seconds longer than the fourth generation. This evidence supports the overall trend that duration of music is decreasing as time increases.
+
+
+
+** Acousticness **
+```{r}
+acousticness.pairs <- data.frame(Pair = c("1-2", "1-3", "1-4",
+                                        "2-3", "2-4", "3-4"),
+                               W = c(5082732, 3231122, 648436,
+                                     9997900, 1985756, 1432583),
+                               pval = c("1.12e-07", "< 2.2e-16", "0.2567",
+                                        "2.263e-05", "0.01084", "2.727e-07"),
+                               ci = c("(-0.019403049, -0.005477621)", "(-0.03282232, -0.01646448)", "(-0.013777980,  0.005443325)", 
+                                      "(-0.015168099, -0.003189845)", "(-0.0002510459  0.0220042216)", "(0.01017743, 0.03571814)"),
+                               sig = c("***", "***", " ",
+                                       "***", "*", "***"))
+colnames(acousticness.pairs) <- c("Generation Pair", "W", "P-Value", "99.17% Confidence Interval", "Significant")
+acousticness.pairs
+```
+
+The pairs that are statistically different in their median Acousticness are generation pairs 1-2, 1-3, 2-3, and 3-4. Comparisons with a notable difference in context of the range for Acousticness are pairs 1-3 and 3-4. There is 99.17\% confidence that the median Acousticness of generation one and three differ between an interval of about (-0.033, -0.016), where the Acousticness of generation three is greater. However, there is 99.17\% confidence that the median Acousticness of generation three and four differ between an interval of about (0.01, 0.036), where the Acousticness of generation three is greater than generation 4. Furthermore, the difference in Acousticness between generations one and four are not significant, nor is the difference between generation two and four. Since the definition of acoustic references a musical sound with the absence of electronic modification, this implies that the electronic sound that trended in the older generations is making a comeback in the newest generation of music. However, these estimated differences in the population median are not particularly large in context of the range of Acousticness which is a continuous measure between 0 and 1.
+
+
+** Energy **
+```{r}
+energy.pairs <- data.frame(Pair = c("1-2", "1-3", "1-4",
+                                        "2-3", "2-4", "3-4"),
+                               W = c(5582152, 3715470, 597314,
+                                     10327704, 1643106, 1135920),
+                               pval = c("0.495", "0.4733", "4.032e-05",
+                                        "0.09598", "1.841e-07", "6.909e-06"),
+                               ci = c("(-0.007971006,  0.013086582)", "(-0.014031869,  0.007970819)", "(-0.04394520, -0.00902158)",
+                                      "(-0.011964001,  0.002963283)", "(-0.03904493, -0.01295186)", "(-0.033008665, -0.008978771)"),
+                               sig = c(" ", " ", "***",
+                                       " ", "***", "***"))
+colnames(energy.pairs) <- c("Generation Pair", "W", "P-Value", "99.17% Confidence Interval", "Significant")
+energy.pairs
+```
+
+Only the comparison of median differences in the measurement for energy between generations 1 and 4, Generation 2 and 4, as well as Generation 3 and 4 are statistically significant, where generation 4 has higher levels of energy compared to all previous generations. This shows us that the Newest generation of kpop can be distinguished from all previous generations by having estimated higher levels of energy.
+
+** Instrumentalness **
+```{r}
+instrumentalness.pairs <- data.frame(Pair = c("1-2", "1-3", "1-4",
+                                        "2-3", "2-4", "3-4"),
+                               W = c(6827255, 4962824, 845691,
+                                     11428636, 1938095, 1212845),
+                               pval = c("< 2.2e-16", "< 2.2e-16", "< 2.2e-16",
+                                        "< 2.2e-16", "0.05353", "0.002867"),
+                               ci = c("(5.330529e-06, 3.635337e-05)", "(6.242531e-05, 1.324542e-05)", "(2.214427e-05, 3.656347e-05)",
+                                      "(1.562298e-05, 6.900444e-06)", "(-1.880325e-05,  6.295205e-05)", "(-1.116460e-05,  3.371762e-05)"),
+                               sig = c("***", "***", "***",
+                                       "***", " ", "**"))
+colnames(instrumentalness.pairs) <- c("Generation Pair", "W", "P-Value", "99.17% Confidence Interval", "Significant")
+instrumentalness.pairs
+```
+
+With the level of significance $\alpha/6 = 0.0083$, all of the pairwise comparisons are statistically significant with the exception of the pairwise comparison for generations 2 and 4. Furthermore, the rejection of the null hypothesis in favor of the alternative is less signifcant for the comparison of generation 3 and 4 compared to the rest of the pairwise comparisons due to a higher p-value. However, these statistically significant differences are very miniscule in context of the instrumentalness measure. For example, there is 99.17% confidence that the instrumentalness value of generation 1 is between about 0.0000053 to 0.000036 larger than that of generation 2.
+
+** Speechiness **
+```{r}
+speechiness.pairs <- data.frame(Pair = c("1-2", "1-3", "1-4",
+                                        "2-3", "2-4", "3-4"),
+                               W = c(5967231, 3443958, 553926,
+                                     8765167, 1386588, 1160456),
+                               pval = c("1.16e-07", "1.676e-07", "3.415e-11", 
+                                        "< 2.2e-16", "< 2.2e-16", "0.0002162"),
+                               ci = c("(0.001754788, 0.005245966)", "(-0.006280242, -0.002035958)", "(-0.013304688, -0.005701992)",
+                                      "(-0.009428564, -0.006263813)", "(-0.01704981, -0.01034887)", "(-0.008878170, -0.001443872)"),
+                               sig = c("***", "***", "***"))
+colnames(speechiness.pairs) <- c("Generation Pair", "W", "P-Value", "99.17% Confidence Interval", "Significant")
+speechiness.pairs
+```
+
+With the level of significance $\alpha/6 = 0.0083$, all of the pairwise comparisons are statistically significant meaning the population median for speechiness is significantly different in comparison between all generation pairs. For all the pairs, the newer generation had higher levels of speechiness, with the exception of the pairwise comparison of Generation 1 and Generation 2. In this case, the 1st generation had significantly higher values of speechiness. However, none of the limits of the confidence intervals indicate a difference greater than about 0.02, which is not large considering the range of 0 - 1 for speechiness. 
+
+** Loudness **
+```{r}
+loudness.pairs <- data.frame(Pair = c("1-2", "1-3", "1-4",
+                                        "2-3", "2-4", "3-4"),
+                               W = c(3987612, 2325016, 341425,
+                                     9432992, 1451189, 1117533),
+                               pval = c("< 2.2e-16", "< 2.2e-16", "< 2.2e-16",
+                                        "< 2.2e-16", "< 2.2e-16", "3.509e-07"),
+                               ci = c("(-1.0690260, -0.8050314)", "(-1.380008, -1.110075)", "(-1.783976, -1.359077)",
+                                      "(-0.3900043, -0.2079796)", "(-0.7900220, -0.4470353)", "(-0.4850057, -0.1540285)"),
+                               sig = c("***", "***", "***",
+                                       "***", "***", "***"))
+colnames(loudness.pairs) <- c("Generation Pair", "W", "P-Value", "99.17% Confidence Interval", "Significant")
+loudness.pairs
+```
+
+Overall, the pairwise comparisons for difference in median loudness show that the older generation in the pair has a more negative loudness measure than the newer generation it is being compared to. In other words, the newer generation songs are estimated to be louder than the older generation songs. However, the difference in loudness is observed to be greater in the pairwise comparisons to generation one, where the generation one's median loudness is significantly more negative than the newer generations. For example the there is 99.17% confidence that the median difference between generation one and generation two is between about -1.069 and -0.805 decibels while there is 99.17% confidence that the median difference between generation two and generation three is between about -0.390 and -0.208 decibels. While the loudness measure ranges from -60 to 0, the large majority of the data falls within the range of -10 to 0, which makes a 1 decibal difference fairly notable in context. These observations in median differences could be contributed to the changes in audio technology over time which allow music producers to master music with higher decibels. The considerable difference in generation one comparisons to the rest of the pairs may indicate that the more significant change in audio technology could have happened after the first generation.
+
+
+** Tempo **
+```{r}
+tempo.pairs <- data.frame(Pair = c("1-2", "1-3", "1-4",
+                                        "2-3", "2-4", "3-4"),
+                               W = c(5147904, 3672100, 593010,
+                                     11044058, 1802280, 1165645),
+                               pval = c("6.052e-06", "0.1503", "1.326e-05",
+                                        "8.742e-05", "0.1077", "0.0004144"),
+                               ci = c("(-4.948980, -1.075945)", "( -2.983978,  0.874021)", "(-8.044934, -1.998050)",
+                                      "(0.2600649, 3.1589815)", "(-4.2850588,  0.9970885)", "(-6.587050, -0.946052)"),
+                               sig = c("***", " ", "***",
+                                       "***", " ", "**"))
+colnames(tempo.pairs) <- c("Generation Pair", "W", "P-Value", "99.17% Confidence Interval", "Significant")
+tempo.pairs
+```
+
+The comparisons that are statistically significant are generations 1 and 2, generations 1 and 4, generations 2 and 3, and finally generations 3 and 4.
+
+** Valence **
+```{r}
+valence.pairs <- data.frame(Pair = c("1-2", "1-3", "1-4",
+                                        "2-3", "2-4", "3-4"),
+                               W = c(6145471, 4319974, 778713,
+                                     10865590, 1958912, 1294594),
+                               pval = c("1.031e-13", "< 2.2e-16", "1.213e-10",
+                                        "0.01137", "0.05243", "0.5102"),
+                               ci = c("(0.02893193, 0.06002026)", "(0.04198552, 0.07405643)", "(0.03800416, 0.09000625)",
+                                      "(-0.0009727786,  0.0240385187)", "(-0.006001465,  0.041033561)", "(-0.01798393,  0.02894915)"),
+                               sig = c("***","***","***",
+                                       "*", " ", " "))
+colnames(valence.pairs) <- c("Generation Pair", "W", "P-Value", "99.17% Confidence Interval", "Significant")
+valence.pairs
+```
+
+For Valence, only pairwise comparisons involving the first generation are statistically significant which provide sufficient evidence to reject the null hypothesis and conclude that the first generation's median valence score is significantly different in comparison to generations two, three and four. With 99.17% confidence, the median valence score of the first generation is between 0.029 - 0.060 greater than the second generation, 0.042 to 0.074 units greater than the third generation and 0.038 to 0.09 units greater than the 4th generation. Overall, the music released by the first generation conveys more 'musical positiveness' than all generations after it. One theory for this could be that South Korea's IMF financial crisis occurred in 1997 during the first generation and the music being released might have served the purpose of providing a source of positivity to the public.
 
 
 ### Popularity Difference by Generations
@@ -335,17 +600,79 @@ wilcox.test(oldgen$valence, newgen$valence, paired = FALSE, alternative = "two.s
 
 
 
-# Hypothesis comparing male/female/coed kpop artists
+# Hypothesis comparing male/female kpop artists
+
+There are three categories for artist gender: Male, Female, and Coed. Coed refers to a group that has a mix of Male and Female artists. Songs by Male artists make up 59.6% of the data, Female artists make up  39%, and Coed groups only make up 1.4% of the data. While the non parametric analysis used in this section can be done with unequal sample sizes, the sample sizes must be large enough. In this case, the number of songs released by a Coed group is just 170, which is too small to be comopared to groups with a sample size in the thousands. It would be ideal to have sample sizes that are at least 500 observations or more. For this reason, this section will only make comparisons on the audio features between Male and Female artists.
+
+
+
 ```{r}
 #coed <- filter(data, ArtistGender == "coed")
-female <- filter(data, ArtistGender == "female")
-male <- filter(data, ArtistGender == "male")
+female <- filter(data, ArtistGender == "female") # x 
+male <- filter(data, ArtistGender == "male") # y
 ```
+
+Hypothesis is as follows,
+
+$$
+H_0 : \theta_x = \theta_y
+\\
+H_1 : \theta_x \neq \theta_y
+$$
+
+which can alternatively be written:
+$$
+H_0 : \theta_x - \theta_y = 0
+\\
+H_1 : \theta_x - \theta_y \neq 0
+$$
+
+Where $x_i$ are the female artist observations and $y_i$ are the male artist observations. The median is the statistic that completely characterizes the population for female and male artists respectfully.
+
+Where $\theta_x$ and $\theta_y$ represent the population median of female artist audio features and male artists' audio features, respectfully.
+
+This hypothesis test is conducted for each of the audio features separately. The 95% Confidence intervals are also calculated in order to investigate the estimated differences that exist in the group medians. If 0 is contained within the interval then this is further support for the lack of evidence for rejecting the null. In other words, if 0 is contained in the 95% confidence interval, the male and female medians of the audio feature being analyzed are not significantly different from one another.
+
+## Gender Results
+
+"Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1"
+
+```{r}
+gender.results <- data.frame(AudioFeature <- c("Popularity", "Duration", "Acousticness", "Danceability",
+                                            "Energy", "Instrumentalness", "Speechiness", "Loudness",
+                                            "Tempo", "Valence"),
+                          Stat <- c(17269160, 15023888, 18778150, 18947920,
+                                    17019986, 19834072, 15815847, 19152022,
+                                    17524256, 18084946),
+                          Pval <- c("0.00584", "< 2.2e-16", "< 2.2e-16", "< 2.2e-16",
+                                    "0.1656", "< 2.2e-16", "1.674e-07", "< 2.2e-16",
+                                    "3.205e-05", "4.475e-13"),
+                          CI <- c("(6.619757e-05, 1.999983)", "(-5.841980, -3.863938)", "(0.01747208, 0.02615184)", "(0.02104514, 0.02903244)",
+                                  "(-0.001047909, 0.008038362)", "(5.152227e-05 2.934808e-05)", "(-0.003534776 -0.001553387)", "(0.364007 0.491073)",
+                                  "(0.9780129, 2.9559491)", "(0.02201195, 0.03899812)"),
+                          Significant <- c("***", "***", "***", "***", 
+                                           " ", "***", "***", "***",
+                                           "***", "***"))
+colnames(gender.results) <- c("Audio Feature", "W", "P-Value", "95% Confidence Interval", "Significant")
+gender.results
+```
+
+
+The differences in audio feature medians between songs produced by female artists and those produced by male artists are statistically for all features with the exception of Energy. This means that Male and Female artists produce music with a similar median level for Energy.
+
+The features in which the female artists have a significantly higher median in audio feature are Populairty, Acousticness, Danceability, Instrumentalness, Loudness, Tempo and Valence. Whereas, for the features of Duration, Energy, and Speechiness, the male artists have a significantly higher median for these measurements on average.
+
+However, the estimated interval of difference for these features are small in the context of the range for each feature. For example, there is 95% confidence that the popularity score of songs produced by Female artists are between 0.0000662 to 1.99998 units greater than the popularity scores of the Male artists. While the difference is significant, when considering the fact that the popularity score ranges from 0-100, an upper limit difference of being 2 popularity units greater than the male artists is not impactful in context.
+
+Overall, we can conclude that while there exist significant differences in the median measurements for the audio features of songs made by Male and Female artists, the significant differences, in context are minimal. 
+
+
+
 
 ### Popularity Difference by Artist Gender
 
 ```{r}
-wilcox.test(female$popularity, male$popularity, paired = FALSE, alternative = "two.sided")
+wilcox.test(female$popularity, male$popularity, paired = FALSE, alternative = "two.sided",conf.int = TRUE, conf.level = 0.95)
 ```
 
 
@@ -353,48 +680,48 @@ wilcox.test(female$popularity, male$popularity, paired = FALSE, alternative = "t
 ### Duration Difference by Artist Gender
 
 ```{r}
-wilcox.test(female$duration, male$duration, paired = FALSE, alternative = "two.sided")
+wilcox.test(female$duration, male$duration, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
 ### Acousticness Difference by Artist Gender
 
 ```{r}
-wilcox.test(female$acousticness, male$acousticness, paired = FALSE, alternative = "two.sided")
+wilcox.test(female$acousticness, male$acousticness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
 ### Danceability Difference by Artist Gender
 
 ```{r}
-wilcox.test(female$danceability, male$danceability, paired = FALSE, alternative = "two.sided")
+wilcox.test(female$danceability, male$danceability, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
 ### Energy Difference by Artist Gender
 
 ```{r}
-wilcox.test(female$energy, male$energy, paired = FALSE, alternative = "two.sided")
+wilcox.test(female$energy, male$energy, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 ### Instrumentalness Difference by Artist Gender
 
 ```{r}
-wilcox.test(female$instrumentalness, male$instrumentalness, paired = FALSE, alternative = "two.sided")
+wilcox.test(female$instrumentalness, male$instrumentalness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
 ### Speechiness Difference by Artist Gender
 
 ```{r}
-wilcox.test(female$speechiness, male$speechiness, paired = FALSE, alternative = "two.sided")
+wilcox.test(female$speechiness, male$speechiness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
 ### Loudness Difference by Artist Gender
 
 ```{r}
-wilcox.test(female$loudness, male$loudness, paired = FALSE, alternative = "two.sided")
+wilcox.test(female$loudness, male$loudness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
@@ -402,7 +729,7 @@ wilcox.test(female$loudness, male$loudness, paired = FALSE, alternative = "two.s
 ### Tempo Difference by Artist Gender
 
 ```{r}
-wilcox.test(female$tempo, male$tempo, paired = FALSE, alternative = "two.sided")
+wilcox.test(female$tempo, male$tempo, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
@@ -410,16 +737,72 @@ wilcox.test(female$tempo, male$tempo, paired = FALSE, alternative = "two.sided")
 ### Valence Difference by Artist Gender
 
 ```{r}
-wilcox.test(female$valence, male$valence, paired = FALSE, alternative = "two.sided")
+wilcox.test(female$valence, male$valence, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
 ```
 
 
 # Hypothesis testing between Kpop Artist types (group or solo)
 ```{r}
 ## Reducing the groups
-group <- filter(data, ArtistType == "group")
-solo <- filter(data, ArtistType == "solo")
+group <- filter(data, ArtistType == "group") #x
+solo <- filter(data, ArtistType == "solo") #y
 ```
+
+
+Hypothesis is as follows,
+
+$x_i$ are the group artist observations and $y_i$ are the solo artist observations. The median is the statistic that completely characterizes the population for group and solo artists respectfully. Therefore, with the Wilcoxon Sum Rank test hypotheses are as follows:
+
+$$
+H_0 : \theta_x = \theta_y
+\\
+H_1 : \theta_x \neq \theta_y
+$$
+
+which can alternatively be written:
+$$
+H_0 : \theta_x - \theta_y = 0
+\\
+H_1 : \theta_x - \theta_y \neq 0
+$$
+
+Where $\theta_x$ and $\theta_y$ represent the population median of group artist audio features and solo artists' audio features, respectfully.
+
+
+
+## Artist Type Results
+"Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1"
+
+```{r}
+type.results <- data.frame(AudioFeature <- c("Popularity", "Duration", "Acousticness", "Danceability",
+                                            "Energy", "Instrumentalness", "Speechiness", "Loudness",
+                                            "Tempo", "Valence"),
+                          Stat <- c(9236738, 8820586, 7796532, 9778026,
+                                    12570686, 8729034, 10189583, 11851162,
+                                    10606602, 10771683),
+                          Pval <- c("0.03005", "2.21e-07", "< 2.2e-16", "0.08042",
+                                    "< 2.2e-16", "4.864e-14", "2.282e-06", "< 2.2e-16",
+                                    "9.587e-15", "< 2.2e-16"),
+                          CI <- c("(-1.999938, -5.320767e-05)", "(-5.251045, -2.372974)", "(-0.05300053, -0.03538317)", "(-0.000967768,  0.011008498)",
+                                  "(0.07899757, 0.09498637)", "(-3.225573e-05, -4.457195e-05)", "(0.001700548, 0.004244932)", "(0.6829554, 0.8619889)",
+                                  "(3.931052, 6.029029)", "(0.04101360, 0.06407435)"),
+                          Significant <- c("*", "***", "***", " ",
+                                           "***", "***", "***", "***",
+                                           "***", "***"))
+colnames(type.results) <- c("Audio Feature", "W", "P-Value", "95% Confidence Interval", "Significant")
+type.results
+```
+
+Judging significance with a level of $\alpha = 0.05$, all of the differences between Group and Solo artist music are significant with the exception of Danceability. This is an interesting observation since the element of dancing and attractive choreography is an expected element of k-pop groups rather than soloists. Although the feature of having dancing involved in performances is separate from Spotify's danceability score, one would expect that the danceability of group kpop artists to be greater than that of the soloists since the music is purposefuly paired with choreography. However, the data shows that there is no significant difference in the median of the Danceability measure. Some rationale for this could be due to the fact that there are solosits who do release music that is paired with catchy dances such as Rain, Psy, and JYP. In addition, there are K-pop groups in this dataset that do not pair their songs with dances, mainly bands such as F.T. Island, CNBlue and Day6.
+
+The group songs have significantly greater medians than soloists for the features of Energy, Speechiness, Loudness, Tempo, and Valence. In Turn, soloists have significantly greader medians than the groups for the features of Popularity, Duration, Acousticness, and Instrumentalness. It is interesting that soloists have significantly higher median scores for Popularity despite only making up around 16% of songs in the dataset. Perhaps soloists that are included in the mainstream kpop market are significantly higher in popularity is because they either have had to achieve high success just to break into the high saturated market of kpop groups (Such as IU, BoA, or Rain), or they are soloists who are also active or were previously active in very popular K-pop groups (such as HyunA from 4Minute, Taeyeon from Girls Generation, CL from 2NE1, or Taeyang from BigBang).
+
+Similar to the observations of the estimated differences between the Male and Female artists, the estimated significant differences for some of the audio features between group and solo artists are not particularly large in context. The 95% Confidence Interval for the difference in median popularity can also be used as an example here. There is 95% confidence that the solo artists have a median popularity score that is between about 0.000053 and 1.99998 units greater than the group artists. But considering the range of popularity is between 0 and 100 this is a relatively small difference in context.
+
+However, unlike the male and female comparison, there do exist significant differences that are notable in context of the audio feature's range. The most notable one being Energy, where there is 95% confidence that the difference between the population medians is estimated to be about 0.079 to 0.095 units larger for group artists than solo artists. Considering the range for the Energy measure is 0 - 1, the upper limit difference of 0.095 is nearly a tenth of an increase in Energy. This is a more notable difference than say an upper limit difference of 0.01. This significant and notable difference in Energy could possibly be explained by the fact that solo artists are likely to have more ballad style songs in their own discography or will contribute ballad style songs to Korean television soundtracks. Furthermore, this higher level of detected energy could possibly be related to the trend that K-pop groups commonly pair their songs to dance for performances, which is not a common expectation for soloists. Other variables with a notable size of difference are Valence and Acousticness.
+
+Overall, one can differentiate the audio features between group and solo artists where groups are likely to have higher Energy, Speechiness, Loudness, Tempo and Valence measures where the differences of Energy and Valence are notable in context. Whereas, solo artists are likely to have higher Popularity, Duration, Acousticness and Instrumentalness measures where the difference in Acousticness is notable.  
+
 
 
 ### Popularity Difference by Artist Type
@@ -492,84 +875,3 @@ wilcox.test(group$valence, solo$valence, paired = FALSE, alternative = "two.side
 ```
 
 
-
-
-# Hypothesis testing between Kpop Group types (Girl Group vs Boy Group)
-
-This grouping is used since the balance between categories of groups and soloists are VERY uneven. In the kpop industry groups are dominant in the genre. 
-
-```{r}
-## Reducing the groups
-boy.group <- filter(data, ArtistType == "group" & ArtistGender == "male")
-girl.group <- filter(data, ArtistType == "group" & ArtistGender == "female")
-```
-
-
-### Popularity Difference by Group Type
-
-```{r}
-wilcox.test(boy.group$popularity, girl.group$popularity, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
-```
-
-### Duration Difference by Group Type
-
-```{r}
-wilcox.test(boy.group$duration, girl.group$duration, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
-```
-
-
-### Acousticness Difference by Group Type
-
-```{r}
-wilcox.test(boy.group$acousticness, girl.group$acousticness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
-```
-
-
-
-### Danceability Difference by Group Type
-
-```{r}
-wilcox.test(boy.group$danceability, girl.group$danceability, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
-```
-
-
-### Energy Difference by Group Type
-
-```{r}
-wilcox.test(boy.group$energy, girl.group$energy, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
-```
-
-
-### Instrumentalness Difference by Group Type
-
-```{r}
-wilcox.test(boy.group$instrumentalness, girl.group$instrumentalness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
-```
-
-
-### Speechiness Difference by Group Type
-
-```{r}
-wilcox.test(boy.group$speechiness, girl.group$speechiness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
-```
-
-
-### Loudness Difference by Group Type
-
-```{r}
-wilcox.test(boy.group$loudness, girl.group$loudness, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
-```
-
-
-### Tempo Difference by Group Type
-
-```{r}
-wilcox.test(boy.group$tempo, girl.group$tempo, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
-```
-
-
-### Valence Difference by Group Type
-
-```{r}
-wilcox.test(boy.group$valence, girl.group$valence, paired = FALSE, alternative = "two.sided", conf.int = TRUE, conf.level = 0.95)
-```

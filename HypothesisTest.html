@@ -185,7 +185,13 @@ summary {
 
 <div id="TOC">
 <ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#methodology">Methodology</a><ul>
+<li><a href="#wilcoxon-rank-sum-test">Wilcoxon Rank Sum Test</a></li>
+<li><a href="#kruskal-wallis-test">Kruskal Wallis Test</a></li>
+</ul></li>
 <li><a href="#hypothesis-testing-across-kpop-generations">Hypothesis testing across kpop generations</a><ul>
+<li><a href="#kruskal-wallis-test-p-values.">Kruskal Wallis test p-values.</a><ul>
 <li><a href="#popularity-difference-by-generations">Popularity Difference by Generations</a></li>
 <li><a href="#duration-difference-by-generations">Duration Difference by Generations</a></li>
 <li><a href="#acousticness-difference-by-generations">Acousticness Difference by Generations</a></li>
@@ -197,7 +203,9 @@ summary {
 <li><a href="#tempo-difference-by-generations">Tempo Difference by Generations</a></li>
 <li><a href="#valence-difference-by-generations">Valence Difference by Generations</a></li>
 </ul></li>
-<li><a href="#hypothesis-comparing-malefemalecoed-kpop-artists">Hypothesis comparing male/female/coed kpop artists</a><ul>
+</ul></li>
+<li><a href="#hypothesis-comparing-malefemale-kpop-artists">Hypothesis comparing male/female kpop artists</a><ul>
+<li><a href="#gender-results">Gender Results</a><ul>
 <li><a href="#popularity-difference-by-artist-gender">Popularity Difference by Artist Gender</a></li>
 <li><a href="#duration-difference-by-artist-gender">Duration Difference by Artist Gender</a></li>
 <li><a href="#acousticness-difference-by-artist-gender">Acousticness Difference by Artist Gender</a></li>
@@ -209,7 +217,9 @@ summary {
 <li><a href="#tempo-difference-by-artist-gender">Tempo Difference by Artist Gender</a></li>
 <li><a href="#valence-difference-by-artist-gender">Valence Difference by Artist Gender</a></li>
 </ul></li>
+</ul></li>
 <li><a href="#hypothesis-testing-between-kpop-artist-types-group-or-solo">Hypothesis testing between Kpop Artist types (group or solo)</a><ul>
+<li><a href="#artist-type-results">Artist Type Results</a><ul>
 <li><a href="#popularity-difference-by-artist-type">Popularity Difference by Artist Type</a></li>
 <li><a href="#duration-difference-by-artist-type">Duration Difference by Artist Type</a></li>
 <li><a href="#acousticness-difference-by-artist-type">Acousticness Difference by Artist Type</a></li>
@@ -221,17 +231,6 @@ summary {
 <li><a href="#tempo-difference-by-artist-type">Tempo Difference by Artist Type</a></li>
 <li><a href="#valence-difference-by-artist-type">Valence Difference by Artist Type</a></li>
 </ul></li>
-<li><a href="#hypothesis-testing-between-kpop-group-types-girl-group-vs-boy-group">Hypothesis testing between Kpop Group types (Girl Group vs Boy Group)</a><ul>
-<li><a href="#popularity-difference-by-group-type">Popularity Difference by Group Type</a></li>
-<li><a href="#duration-difference-by-group-type">Duration Difference by Group Type</a></li>
-<li><a href="#acousticness-difference-by-group-type">Acousticness Difference by Group Type</a></li>
-<li><a href="#danceability-difference-by-group-type">Danceability Difference by Group Type</a></li>
-<li><a href="#energy-difference-by-group-type">Energy Difference by Group Type</a></li>
-<li><a href="#instrumentalness-difference-by-group-type">Instrumentalness Difference by Group Type</a></li>
-<li><a href="#speechiness-difference-by-group-type">Speechiness Difference by Group Type</a></li>
-<li><a href="#loudness-difference-by-group-type">Loudness Difference by Group Type</a></li>
-<li><a href="#tempo-difference-by-group-type">Tempo Difference by Group Type</a></li>
-<li><a href="#valence-difference-by-group-type">Valence Difference by Group Type</a></li>
 </ul></li>
 </ul>
 </div>
@@ -253,23 +252,25 @@ colnames(data)</code></pre>
 ## [17] &quot;instrumentalness&quot; &quot;key&quot;              &quot;liveness&quot;         &quot;loudness&quot;        
 ## [21] &quot;mode&quot;             &quot;speechiness&quot;      &quot;tempo&quot;            &quot;time_signature&quot;  
 ## [25] &quot;valence&quot;          &quot;duration_mmss&quot;</code></pre>
-<p>For this section, we are going to perform hypothesis tests to compare audio features based on different groups. We will do so one audio feature at a time based on attributes such as Artist Gen, Artist Gender, Artist Type.</p>
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>For this section, nonparametric hypothesis tests are performed to compare audio features based on different artist attributes. We will do so for each audio feature, comparing attributes such as artist generation (1,2,3, and 4), artist gender (male and female), and artist type (group and solo).</p>
 <p>First let's see the breakdown of number of observations in each gorup.</p>
 <pre class="r"><code>#songs per kpop generation
-table(data$ArtistGen)/nrow(data)</code></pre>
+table(data$ArtistGen)</code></pre>
 <pre><code>## 
-##          1          2          3          4 
-## 0.16525142 0.46345321 0.31526807 0.05602731</code></pre>
+##    1    2    3    4 
+## 1985 5567 3787  673</code></pre>
 <pre class="r"><code>#songs per gender of artist
-table(data$ArtistGender)/nrow(data)</code></pre>
+table(data$ArtistGender)</code></pre>
 <pre><code>## 
-##       coed     female       male 
-## 0.01415251 0.39019314 0.59565435</code></pre>
+##   coed female   male 
+##    170   4687   7155</code></pre>
 <pre class="r"><code>#songs per Artist Type (group v solo)
-table(data$ArtistType)/nrow(data)</code></pre>
+table(data$ArtistType)</code></pre>
 <pre><code>## 
-##     group      solo 
-## 0.8432401 0.1567599</code></pre>
+## group  solo 
+## 10129  1883</code></pre>
 <p>Breakdown of proportions of observations in each group</p>
 <pre class="r"><code>#songs per kpop generation
 round(table(data$ArtistGen)/nrow(data),3)</code></pre>
@@ -286,7 +287,7 @@ round(table(data$ArtistType)/nrow(data), 3)</code></pre>
 <pre><code>## 
 ## group  solo 
 ## 0.843 0.157</code></pre>
-<p>The groups are in very unequal balance making a very uneven comparison. The Kruskal Wallis and Mann Whitney Wilcoxon tests are robust to uneven group sizes. As long as there is a large enough sample in each group, it is okay to have uneven group sizes. While 4th generation and soloists make up a much smaller proportion of the data in their attribute comparisons, the sample sizes are both large enough. However, for the case of coed artists, there are only 12 songs in the entire dataset, making the sample size too small for analysis.</p>
+<p>The groups are in very unequal balance making a very uneven comparison. The Kruskal Wallis and Mann Whitney Wilcoxon tests are robust to uneven group sizes. As long as there is a large enough sample in each group, it is okay to have uneven group sizes. While 4th generation and soloists make up a much smaller proportion of the data in their attribute comparisons, the sample sizes are both large enough. However, for the case of coed artists, there are only 170 songs in the entire dataset, making the sample size too small to compare to the sample sizes which are in the thousands.</p>
 <pre><code>#1 is old gen 0 is new generation
 data$oldgen &lt;- as.factor(ifelse(data$ArtistGen == 1 | data$ArtistGen == 2, 1, 0))
 # 1 is boy groups and 2 is girl groups, 0 is all others.
@@ -296,6 +297,58 @@ data$bg &lt;- as.factor(ifelse(data$ArtistType == &quot;group&quot; &amp; data$A
 round(table(data$oldgen)/nrow(data),3)
 # songs per boygroup/girlgroup
 round(table(data$bg)/nrow(data),3)</code></pre>
+</div>
+<div id="methodology" class="section level1">
+<h1>Methodology</h1>
+<p>In order to compare the differences of audio features between groups, a method that does not make assumption of the underlying distribution normality as many of the distributions of the audio features are skewed. To conduct analysis that is free of these assumptions of an underlying distribution, Non parametric hypothesis testing and confidence interval methods will be used. The methods used in this section are the the Wilcoxon Rank Sum Test for comparisons of two independent samples and the Kruskal-Wallis Test for comparisons of two or more independent samples.</p>
+<div id="wilcoxon-rank-sum-test" class="section level2">
+<h2>Wilcoxon Rank Sum Test</h2>
+<p>The Wilcoxon Rank Sum Test is a nonparametric test to compare the centrality of two independent samples, where population 1 is expressed as : <span class="math inline">\(x_1, ..., x_n\)</span> and population 2: <span class="math inline">\(y_1,...,y_n\)</span>. The Wilcoxon Rank Sum Test is also considered equivalent to the Mann-Whitney-Wilcoxon test. This paper will be conducting a two-sided Wilcoxon Rank Sum Test.</p>
+<p>The assumptions of this test are as follows:</p>
+<ul>
+<li><p>Observations <span class="math inline">\(x_1, ..., x_n\)</span> and <span class="math inline">\(y_1,...,y_n\)</span> are independent and identically distributed for population x and y respectively.</p></li>
+<li><p>The median completely characterizes the distribution of each independent sample. Therefore, if a population difference exists, it will be completely characterized by the difference in population medians.</p></li>
+<li><p>Populations X and Y are continuous and symmetrically distributed about the population medians notated <span class="math inline">\(\theta_x\)</span> and <span class="math inline">\(\theta_y\)</span>, respectively.</p></li>
+</ul>
+<p>The null hypothesis is that the population medians are the same between groups and the alternative hypothesis is that the population medians are different from one another.</p>
+<p>The hypothesis for a two-sided Wilcoxon Rank Sum Test is notated as follows: <span class="math display">\[
+H_0: \theta_x =\theta_y
+\\
+H_1: \theta_x \neq \theta_y
+\]</span></p>
+<p>which can also be expressed in the population median differences <span class="math display">\[
+H_0: \theta_x - \theta_y = 0
+\\
+H_1: \theta_x - \theta_y \neq 0
+\]</span></p>
+<p>The statistic of this test, the Wilcoxon statistic (W) is computed by first create a joint ranking of observations <span class="math inline">\(x_1, ..., x_n\)</span> and <span class="math inline">\(y_1,...,y_n\)</span> in increasing order. Then W is calculated by summing all of the ranks of observations from the y population.</p>
+<p>The null hypothesis is rejected when the p-value of the W statistic indicates that one of the population medians is significantly larger than the other.</p>
+</div>
+<div id="kruskal-wallis-test" class="section level2">
+<h2>Kruskal Wallis Test</h2>
+<p>The Kruskal Wallis test is an extension of the Wilcoxon Mann Whitney test by extending the Wilcoxon Statistic formulation to three or more samples.</p>
+<p>The Kruskal Wallis test compares <span class="math inline">\(k\)</span> independent random samples ranging from population 1 is represented as <span class="math inline">\(x_{11}, ...,x_{1n_1}\)</span> to population <span class="math inline">\(k\)</span> which is represented as <span class="math inline">\(x_{k1}, ...,x{kn_k}\)</span>. The assumptions of this test are identical to that of the Wilcoxon test, but expanded to a larger number of samples.</p>
+<p>The assumptions of this test are as follows:</p>
+<ul>
+<li><p>Observations <span class="math inline">\(x_{11}, ...,x_{1n_1}\)</span> to <span class="math inline">\(x_{k1}, ...,x_{kn_k}\)</span> are independent and identically distributed for populations <span class="math inline">\(x_1 ... x_k\)</span> respectively.</p></li>
+<li><p>The median completely characterizes the distribution of each independent sample. Therefore, if a population difference exists, it will be completely characterized by the difference in population medians.</p></li>
+<li><p>Populations <span class="math inline">\(X_1 ... X_k\)</span> are continuous and symmetrically distributed about the population medians notated <span class="math inline">\(\theta_1\)</span> and <span class="math inline">\(\theta_k\)</span>, respectively.</p></li>
+</ul>
+<p>The null hypothesis can be written such that all of the population medians are equivalent and the alternative hypothesis is that at least one population median is different than the rest.</p>
+<p>The hypothesis for the Kruskal-Wallis test is notated: <span class="math display">\[
+H_0 : \theta_1 =...=\theta_k
+\\
+H_1: \theta_i \neq \theta_j
+\]</span></p>
+<p>The Kruskal Wallis H statistic is equivalent to the &quot;Kruskal Wallis Chi-Squared Statistic&quot; which is calulcated with the kruskal.test() function in R. The H statistic calculations are performed by the following procedures:</p>
+<ul>
+<li><p>order a joint ranking of all <span class="math inline">\(N = \Sigma_{j = 1}^k n_j\)</span> observations. Let <span class="math inline">\(r_{ij}\)</span> to denote the rank of observation <span class="math inline">\(x_{ij}\)</span> in the joint ranking.</p></li>
+<li><p>Statistic H is defined as <span class="math inline">\(H = \frac{12}{N(N+1)}\sum_{j=1}^k n_j(\bar R_j - \frac{N + 1}{2})^2\)</span></p></li>
+<li><p>where <span class="math inline">\(R_j = \sum_{j=1}^n r_{ij}\)</span> and <span class="math inline">\(\bar {R_j} = \frac{r_i}{n_j}\)</span> for each <span class="math inline">\(j = 1, ..., k\)</span></p></li>
+</ul>
+<p>The null hypothesis is rejected in the even that high or low ranks dominate in one or more samples.</p>
+</div>
+</div>
 <div id="hypothesis-testing-across-kpop-generations" class="section level1">
 <h1>Hypothesis testing across kpop generations</h1>
 <pre class="r"><code>## all generations
@@ -306,6 +359,224 @@ gen4 &lt;- filter(data, ArtistGen == 4)
 # ## Reducing the groups
 # oldgen &lt;- filter(data, oldgen == 1)
 # newgen &lt;- filter(data, oldgen == 0)</code></pre>
+<div id="kruskal-wallis-test-p-values." class="section level2">
+<h2>Kruskal Wallis test p-values.</h2>
+<p>&quot;Signif. codes: 0 '<em><strong>' 0.001 '</strong>' 0.01 '</em>' 0.05 '.' 0.1 ' ' 1&quot;</p>
+<pre class="r"><code>gen.results &lt;- data.frame(AudioFeature &lt;- c(&quot;Popularity&quot;, &quot;Duration&quot;, &quot;Acousticness&quot;, &quot;Danceability&quot;,
+                                            &quot;Energy&quot;, &quot;Instrumentalness&quot;, &quot;Speechiness&quot;, &quot;Loudness&quot;,
+                                            &quot;Tempo&quot;, &quot;Valence&quot;),
+                          Stat &lt;- c(4079.2, 749.45, 81.984, 184.52,
+                                    28.023, 681.01, 258.186, 681.81,
+                                    36.012, 92.884),
+                          Pval &lt;- c(&quot;&lt; 2.2e-16&quot;, &quot;&lt; 2.2e-16&quot;, &quot;&lt; 2.2e-16&quot;, &quot;&lt; 2.2e-16&quot;, 
+                                    &quot;3.591e-06&quot;, &quot;&lt; 2.2e-16&quot;, &quot;&lt; 2.2e-16&quot;, &quot;&lt; 2.2e-16&quot;,
+                                    &quot;7.444e-08&quot;, &quot;&lt; 2.2e-16&quot;),
+                          Significant &lt;- c(&quot;***&quot;, &quot;***&quot;, &quot;***&quot;, &quot;***&quot;,
+                                           &quot;***&quot;, &quot;***&quot;, &quot;***&quot;, &quot;***&quot;,
+                                           &quot;***&quot;, &quot;***&quot;))
+colnames(gen.results) &lt;- c(&quot;Audio Feature&quot;, &quot;Kruskal-Wallis Chi-Squared&quot;, &quot;P-Value&quot;, &quot;Significant&quot;)
+gen.results</code></pre>
+<pre><code>##       Audio Feature Kruskal-Wallis Chi-Squared   P-Value Significant
+## 1        Popularity                   4079.200 &lt; 2.2e-16         ***
+## 2          Duration                    749.450 &lt; 2.2e-16         ***
+## 3      Acousticness                     81.984 &lt; 2.2e-16         ***
+## 4      Danceability                    184.520 &lt; 2.2e-16         ***
+## 5            Energy                     28.023 3.591e-06         ***
+## 6  Instrumentalness                    681.010 &lt; 2.2e-16         ***
+## 7       Speechiness                    258.186 &lt; 2.2e-16         ***
+## 8          Loudness                    681.810 &lt; 2.2e-16         ***
+## 9             Tempo                     36.012 7.444e-08         ***
+## 10          Valence                     92.884 &lt; 2.2e-16         ***</code></pre>
+<p>All of the hypothesis tests for each audio feature are significant under a level of significance <span class="math inline">\(\alpha = 0.05\)</span> which means there is sufficient evidence to reject the null hypothesis and conclude that at least one of the generations has a population median that differs from the others.</p>
+<p>Now, to investigate which of the generations significantly differ from one another and the estimated differences, pairwise comparisons of the Wilcoxon test will be performed for each of the audio features with a bonferroni correction of <span class="math inline">\(\alpha/6 = 0.05/6 = 0.0083\)</span>.</p>
+<p>** Popularity **</p>
+<pre class="r"><code>popularity.pairs &lt;- data.frame(Pair = c(&quot;1-2&quot;, &quot;1-3&quot;, &quot;1-4&quot;,
+                                        &quot;2-3&quot;, &quot;2-4&quot;, &quot;3-4&quot;),
+                               W = c(3315856, 808533, 40423,
+                                     4827719, 364107, 856299),
+                               pval = c(&quot;&lt; 2.2e-16&quot;, &quot;&lt; 2.2e-16&quot;, &quot;&lt; 2.2e-16&quot;,
+                                        &quot;&lt; 2.2e-16&quot;, &quot;&lt; 2.2e-16&quot;, &quot;&lt; 2.2e-16&quot;),
+                               ci = c(&quot;(-9.000078, -7.999948)&quot;, &quot;(-27.00002, -25.00003)&quot;, &quot;(-36.99996, -34.00001)&quot;,
+                                      &quot;(-18.00001, -16.00003)&quot;, &quot;(-28.00005, -25.00000)&quot;, &quot;(-10.999985,  -7.000043)&quot;),
+                               sig = c(&quot;***&quot;, &quot;***&quot;, &quot;***&quot;,
+                                       &quot;***&quot;, &quot;***&quot;, &quot;***&quot;))
+colnames(popularity.pairs) &lt;- c(&quot;Generation Pair&quot;, &quot;W&quot;, &quot;P-Value&quot;, &quot;99.17% Confidence Interval&quot;, &quot;Significant&quot;)
+popularity.pairs</code></pre>
+<pre><code>##   Generation Pair       W   P-Value 99.17% Confidence Interval Significant
+## 1             1-2 3315856 &lt; 2.2e-16     (-9.000078, -7.999948)         ***
+## 2             1-3  808533 &lt; 2.2e-16     (-27.00002, -25.00003)         ***
+## 3             1-4   40423 &lt; 2.2e-16     (-36.99996, -34.00001)         ***
+## 4             2-3 4827719 &lt; 2.2e-16     (-18.00001, -16.00003)         ***
+## 5             2-4  364107 &lt; 2.2e-16     (-28.00005, -25.00000)         ***
+## 6             3-4  856299 &lt; 2.2e-16   (-10.999985,  -7.000043)         ***</code></pre>
+<p>All of the pairwise comparisons are significant at the <span class="math inline">\(\alpha/6 = 0.0083\)</span> significance level. As we saw in the Exploratory data analysis there are significant differences between the popularity of the generations of K-pop. One attribute of this difference can be explained by Spotify's popularity score which considers both number of plays and how recent those plays are. Therefore, any song that is newly released is going to be more popular than an older song with the same number of plays, but more recent activity. As expected, the detected differences increase as the gap between generations increase. What is notable however, is that, while the differences between neighboring generations such as Gen1 versus Gen 2 and Gen 3 compared to Gen 4 have 99.17% confidence intervals that estimate the difference to be between about (-9, -8) and (-11, -7) respectively, the difference between Gen2 and Gen3 popularity is much larger at a 99.17% confidence that the popularity of generation 2 songs is between about 16 - 18 units less than generation 3. This is further evidence that there is a distinction of popularity difference between the old and the new generation...</p>
+<p>** Duration **</p>
+<pre class="r"><code>duration.pairs &lt;- data.frame(Pair = c(&quot;1-2&quot;, &quot;1-3&quot;, &quot;1-4&quot;,
+                                        &quot;2-3&quot;, &quot;2-4&quot;, &quot;3-4&quot;),
+                               W = c(6716006, 5168638, 1013108,
+                                     12237926, 2507990, 1526027),
+                               pval = c(&quot;&lt; 2.2e-16&quot;, &quot;&lt; 2.2e-16&quot;, &quot;&lt; 2.2e-16&quot;,
+                                        &quot;&lt; 2.2e-16&quot;, &quot;&lt; 2.2e-16&quot;, &quot;2.905e-16&quot;),
+                               ci = c(&quot;(9.60805, 13.81404)&quot;, &quot;(16.98804, 21.08295)&quot;, &quot;(23.40404, 29.84504)&quot;,
+                                      &quot;(5.546969, 8.319974)&quot;, &quot;(11.65498, 16.90297)&quot;, &quot;(4.960046, 9.662030)&quot;),
+                               sig = c(&quot;***&quot;, &quot;***&quot;, &quot;***&quot;,
+                                       &quot;***&quot;, &quot;***&quot;, &quot;***&quot;))
+colnames(duration.pairs) &lt;- c(&quot;Generation Pair&quot;, &quot;W&quot;, &quot;P-Value&quot;, &quot;99.17% Confidence Interval&quot;, &quot;Significant&quot;)
+duration.pairs</code></pre>
+<pre><code>##   Generation Pair        W   P-Value 99.17% Confidence Interval Significant
+## 1             1-2  6716006 &lt; 2.2e-16        (9.60805, 13.81404)         ***
+## 2             1-3  5168638 &lt; 2.2e-16       (16.98804, 21.08295)         ***
+## 3             1-4  1013108 &lt; 2.2e-16       (23.40404, 29.84504)         ***
+## 4             2-3 12237926 &lt; 2.2e-16       (5.546969, 8.319974)         ***
+## 5             2-4  2507990 &lt; 2.2e-16       (11.65498, 16.90297)         ***
+## 6             3-4  1526027 2.905e-16       (4.960046, 9.662030)         ***</code></pre>
+<p>All of the pairs are statistically significant at the level of significance <span class="math inline">\(\alpha/6 = 0.0083\)</span>, such that the older generation in the pair is estimated to have a longer duration than the newer generation. Furthermore, as the gap in generation is larger, so is the differnce. This evidence supports the overall trend that duration is decreasing as time increases.</p>
+<p>** Acousticness **</p>
+<pre class="r"><code>acousticness.pairs &lt;- data.frame(Pair = c(&quot;1-2&quot;, &quot;1-3&quot;, &quot;1-4&quot;,
+                                        &quot;2-3&quot;, &quot;2-4&quot;, &quot;3-4&quot;),
+                               W = c(5082732, 3231122, 648436,
+                                     9997900, 1985756, 1432583),
+                               pval = c(&quot;1.12e-07&quot;, &quot;&lt; 2.2e-16&quot;, &quot;0.2567&quot;,
+                                        &quot;2.263e-05&quot;, &quot;0.01084&quot;, &quot;2.727e-07&quot;),
+                               ci = c(&quot;(-0.019403049, -0.005477621)&quot;, &quot;(-0.03282232, -0.01646448)&quot;, &quot;(-0.013777980,  0.005443325)&quot;, 
+                                      &quot;(-0.015168099, -0.003189845)&quot;, &quot;(-0.0002510459  0.0220042216)&quot;, &quot;(0.01017743, 0.03571814)&quot;),
+                               sig = c(&quot;***&quot;, &quot;***&quot;, &quot; &quot;,
+                                       &quot;***&quot;, &quot;*&quot;, &quot;***&quot;))
+colnames(acousticness.pairs) &lt;- c(&quot;Generation Pair&quot;, &quot;W&quot;, &quot;P-Value&quot;, &quot;99.17% Confidence Interval&quot;, &quot;Significant&quot;)
+acousticness.pairs</code></pre>
+<pre><code>##   Generation Pair       W   P-Value    99.17% Confidence Interval Significant
+## 1             1-2 5082732  1.12e-07  (-0.019403049, -0.005477621)         ***
+## 2             1-3 3231122 &lt; 2.2e-16    (-0.03282232, -0.01646448)         ***
+## 3             1-4  648436    0.2567  (-0.013777980,  0.005443325)            
+## 4             2-3 9997900 2.263e-05  (-0.015168099, -0.003189845)         ***
+## 5             2-4 1985756   0.01084 (-0.0002510459  0.0220042216)           *
+## 6             3-4 1432583 2.727e-07      (0.01017743, 0.03571814)         ***</code></pre>
+<p>With the level of significance <span class="math inline">\(\alpha/6 = 0.0083\)</span>, the pairs that are statistically different in their acousticness population median are gen1 and gen2, gen1 and gen3, gen2 and gen3, and gen3 and gen4. Interestingly when comparing all the older generations to gen 2 or gen 3, the older generations have significantly less detected measure of acousticness, whereas Generation 4 does not have any significant acousticness measures with generation 1 and generation 2. Generation 3, in fact has significantly higher levels of acousticness. This implies that the electronic osund that trended in the older generations is making a comeback in the newest generation of music. However, these estimated differences in the population median are not particualrly large in context of the range of acousticness.</p>
+<p>** Energy **</p>
+<pre class="r"><code>energy.pairs &lt;- data.frame(Pair = c(&quot;1-2&quot;, &quot;1-3&quot;, &quot;1-4&quot;,
+                                        &quot;2-3&quot;, &quot;2-4&quot;, &quot;3-4&quot;),
+                               W = c(5582152, 3715470, 597314,
+                                     10327704, 1643106, 1135920),
+                               pval = c(&quot;0.495&quot;, &quot;0.4733&quot;, &quot;4.032e-05&quot;,
+                                        &quot;0.09598&quot;, &quot;1.841e-07&quot;, &quot;6.909e-06&quot;),
+                               ci = c(&quot;(-0.007971006,  0.013086582)&quot;, &quot;(-0.014031869,  0.007970819)&quot;, &quot;(-0.04394520, -0.00902158)&quot;,
+                                      &quot;(-0.011964001,  0.002963283)&quot;, &quot;(-0.03904493, -0.01295186)&quot;, &quot;(-0.033008665, -0.008978771)&quot;),
+                               sig = c(&quot; &quot;, &quot; &quot;, &quot;***&quot;,
+                                       &quot; &quot;, &quot;***&quot;, &quot;***&quot;))
+colnames(energy.pairs) &lt;- c(&quot;Generation Pair&quot;, &quot;W&quot;, &quot;P-Value&quot;, &quot;99.17% Confidence Interval&quot;, &quot;Significant&quot;)
+energy.pairs</code></pre>
+<pre><code>##   Generation Pair        W   P-Value   99.17% Confidence Interval Significant
+## 1             1-2  5582152     0.495 (-0.007971006,  0.013086582)            
+## 2             1-3  3715470    0.4733 (-0.014031869,  0.007970819)            
+## 3             1-4   597314 4.032e-05   (-0.04394520, -0.00902158)         ***
+## 4             2-3 10327704   0.09598 (-0.011964001,  0.002963283)            
+## 5             2-4  1643106 1.841e-07   (-0.03904493, -0.01295186)         ***
+## 6             3-4  1135920 6.909e-06 (-0.033008665, -0.008978771)         ***</code></pre>
+<p>Only the comparison of median differences in the measurement for energy between generations 1 and 4, Generation 2 and 4, as well as Generation 3 and 4 are statistically significant, where generation 4 has higher levels of energy compared to all previous generations. This shows us that the Newest generation of kpop can be distinguished from all previous generations by having estimated higher levels of energy.</p>
+<p>** Instrumentalness **</p>
+<pre class="r"><code>instrumentalness.pairs &lt;- data.frame(Pair = c(&quot;1-2&quot;, &quot;1-3&quot;, &quot;1-4&quot;,
+                                        &quot;2-3&quot;, &quot;2-4&quot;, &quot;3-4&quot;),
+                               W = c(6827255, 4962824, 845691,
+                                     11428636, 1938095, 1212845),
+                               pval = c(&quot;&lt; 2.2e-16&quot;, &quot;&lt; 2.2e-16&quot;, &quot;&lt; 2.2e-16&quot;,
+                                        &quot;&lt; 2.2e-16&quot;, &quot;0.05353&quot;, &quot;0.002867&quot;),
+                               ci = c(&quot;(5.330529e-06, 3.635337e-05)&quot;, &quot;(6.242531e-05, 1.324542e-05)&quot;, &quot;(2.214427e-05, 3.656347e-05)&quot;,
+                                      &quot;(1.562298e-05, 6.900444e-06)&quot;, &quot;(-1.880325e-05,  6.295205e-05)&quot;, &quot;(-1.116460e-05,  3.371762e-05)&quot;),
+                               sig = c(&quot;***&quot;, &quot;***&quot;, &quot;***&quot;,
+                                       &quot;***&quot;, &quot; &quot;, &quot;**&quot;))
+colnames(instrumentalness.pairs) &lt;- c(&quot;Generation Pair&quot;, &quot;W&quot;, &quot;P-Value&quot;, &quot;99.17% Confidence Interval&quot;, &quot;Significant&quot;)
+instrumentalness.pairs</code></pre>
+<pre><code>##   Generation Pair        W   P-Value     99.17% Confidence Interval Significant
+## 1             1-2  6827255 &lt; 2.2e-16   (5.330529e-06, 3.635337e-05)         ***
+## 2             1-3  4962824 &lt; 2.2e-16   (6.242531e-05, 1.324542e-05)         ***
+## 3             1-4   845691 &lt; 2.2e-16   (2.214427e-05, 3.656347e-05)         ***
+## 4             2-3 11428636 &lt; 2.2e-16   (1.562298e-05, 6.900444e-06)         ***
+## 5             2-4  1938095   0.05353 (-1.880325e-05,  6.295205e-05)            
+## 6             3-4  1212845  0.002867 (-1.116460e-05,  3.371762e-05)          **</code></pre>
+<p>With the level of significance <span class="math inline">\(\alpha/6 = 0.0083\)</span>, all of the pairwise comparisons are statistically significant with the exception of the pairwise comparison for generations 2 and 4. Furthermore, the rejection of the null hypothesis in favor of the alternative is less signifcant for the comparison of generation 3 and 4 compared to the rest of the pairwise comparisons due to a higher p-value. However, these statistically significant differences are very miniscule in context of the instrumentalness measure. For example, there is 99.17% confidence that the instrumentalness value of generation 1 is between about 0.0000053 to 0.000036 larger than that of generation 2.</p>
+<p>** Speechiness **</p>
+<pre class="r"><code>speechiness.pairs &lt;- data.frame(Pair = c(&quot;1-2&quot;, &quot;1-3&quot;, &quot;1-4&quot;,
+                                        &quot;2-3&quot;, &quot;2-4&quot;, &quot;3-4&quot;),
+                               W = c(5967231, 3443958, 553926,
+                                     8765167, 1386588, 1160456),
+                               pval = c(&quot;1.16e-07&quot;, &quot;1.676e-07&quot;, &quot;3.415e-11&quot;, 
+                                        &quot;&lt; 2.2e-16&quot;, &quot;&lt; 2.2e-16&quot;, &quot;0.0002162&quot;),
+                               ci = c(&quot;(0.001754788, 0.005245966)&quot;, &quot;(-0.006280242, -0.002035958)&quot;, &quot;(-0.013304688, -0.005701992)&quot;,
+                                      &quot;(-0.009428564, -0.006263813)&quot;, &quot;(-0.01704981, -0.01034887)&quot;, &quot;(-0.008878170, -0.001443872)&quot;),
+                               sig = c(&quot;***&quot;, &quot;***&quot;, &quot;***&quot;))
+colnames(speechiness.pairs) &lt;- c(&quot;Generation Pair&quot;, &quot;W&quot;, &quot;P-Value&quot;, &quot;99.17% Confidence Interval&quot;, &quot;Significant&quot;)
+speechiness.pairs</code></pre>
+<pre><code>##   Generation Pair       W   P-Value   99.17% Confidence Interval Significant
+## 1             1-2 5967231  1.16e-07   (0.001754788, 0.005245966)         ***
+## 2             1-3 3443958 1.676e-07 (-0.006280242, -0.002035958)         ***
+## 3             1-4  553926 3.415e-11 (-0.013304688, -0.005701992)         ***
+## 4             2-3 8765167 &lt; 2.2e-16 (-0.009428564, -0.006263813)         ***
+## 5             2-4 1386588 &lt; 2.2e-16   (-0.01704981, -0.01034887)         ***
+## 6             3-4 1160456 0.0002162 (-0.008878170, -0.001443872)         ***</code></pre>
+<p>With the level of significance <span class="math inline">\(\alpha/6 = 0.0083\)</span>, all of the pairwise comparisons are statistically significant meaning the population median for speechiness is significantly different in comparison between all generation pairs. For all the pairs, the newer generation had higher levels of speechiness, with the exception of the pairwise comparison of Generation 1 and Generation 2. In this case, the 1st generation had significantly higher values of speechiness. However, none of the limits of the confidence intervals indicate a difference greater than about 0.02, which is not large considering the range of 0 - 1 for speechiness.</p>
+<p>** Loudness **</p>
+<pre class="r"><code>loudness.pairs &lt;- data.frame(Pair = c(&quot;1-2&quot;, &quot;1-3&quot;, &quot;1-4&quot;,
+                                        &quot;2-3&quot;, &quot;2-4&quot;, &quot;3-4&quot;),
+                               W = c(3987612, 2325016, 341425,
+                                     9432992, 1451189, 1117533),
+                               pval = c(&quot;&lt; 2.2e-16&quot;, &quot;&lt; 2.2e-16&quot;, &quot;&lt; 2.2e-16&quot;,
+                                        &quot;&lt; 2.2e-16&quot;, &quot;&lt; 2.2e-16&quot;, &quot;3.509e-07&quot;),
+                               ci = c(&quot;(-1.0690260, -0.8050314)&quot;, &quot;(-1.380008, -1.110075)&quot;, &quot;(-1.783976, -1.359077)&quot;,
+                                      &quot;(-0.3900043, -0.2079796)&quot;, &quot;(-0.7900220, -0.4470353)&quot;, &quot;(-0.4850057, -0.1540285)&quot;),
+                               sig = c(&quot;***&quot;, &quot;***&quot;, &quot;***&quot;,
+                                       &quot;***&quot;, &quot;***&quot;, &quot;***&quot;))
+colnames(loudness.pairs) &lt;- c(&quot;Generation Pair&quot;, &quot;W&quot;, &quot;P-Value&quot;, &quot;99.17% Confidence Interval&quot;, &quot;Significant&quot;)
+loudness.pairs</code></pre>
+<pre><code>##   Generation Pair       W   P-Value 99.17% Confidence Interval Significant
+## 1             1-2 3987612 &lt; 2.2e-16   (-1.0690260, -0.8050314)         ***
+## 2             1-3 2325016 &lt; 2.2e-16     (-1.380008, -1.110075)         ***
+## 3             1-4  341425 &lt; 2.2e-16     (-1.783976, -1.359077)         ***
+## 4             2-3 9432992 &lt; 2.2e-16   (-0.3900043, -0.2079796)         ***
+## 5             2-4 1451189 &lt; 2.2e-16   (-0.7900220, -0.4470353)         ***
+## 6             3-4 1117533 3.509e-07   (-0.4850057, -0.1540285)         ***</code></pre>
+<p>With our adjusted level of significance for pairwise comparisons of <span class="math inline">\(\alpha/6 = 0.0083\)</span>, all of the pairwise comparisons are statistically significant. Therefore, we have sufficient evidence to reject the null and conclude that the population medians for the measurement of loudness are significantly different between pairs of generations. The difference in loudness is observed to be greater in the pairwise comparisons of later generations to generation 1, where generation 1 is significantly more negative than the newer generations. Therefore, the older generations are generally quieter by about 1 dB measure. This could be contributed to the changes in audio technology, allowing for producers to master music with higher dB.</p>
+<p>** Tempo **</p>
+<pre class="r"><code>tempo.pairs &lt;- data.frame(Pair = c(&quot;1-2&quot;, &quot;1-3&quot;, &quot;1-4&quot;,
+                                        &quot;2-3&quot;, &quot;2-4&quot;, &quot;3-4&quot;),
+                               W = c(5147904, 3672100, 593010,
+                                     11044058, 1802280, 1165645),
+                               pval = c(&quot;6.052e-06&quot;, &quot;0.1503&quot;, &quot;1.326e-05&quot;,
+                                        &quot;8.742e-05&quot;, &quot;0.1077&quot;, &quot;0.0004144&quot;),
+                               ci = c(&quot;(-4.948980, -1.075945)&quot;, &quot;( -2.983978,  0.874021)&quot;, &quot;(-8.044934, -1.998050)&quot;,
+                                      &quot;(0.2600649, 3.1589815)&quot;, &quot;(-4.2850588,  0.9970885)&quot;, &quot;(-6.587050, -0.946052)&quot;),
+                               sig = c(&quot;***&quot;, &quot; &quot;, &quot;***&quot;,
+                                       &quot;***&quot;, &quot; &quot;, &quot;**&quot;))
+colnames(tempo.pairs) &lt;- c(&quot;Generation Pair&quot;, &quot;W&quot;, &quot;P-Value&quot;, &quot;99.17% Confidence Interval&quot;, &quot;Significant&quot;)
+tempo.pairs</code></pre>
+<pre><code>##   Generation Pair        W   P-Value 99.17% Confidence Interval Significant
+## 1             1-2  5147904 6.052e-06     (-4.948980, -1.075945)         ***
+## 2             1-3  3672100    0.1503    ( -2.983978,  0.874021)            
+## 3             1-4   593010 1.326e-05     (-8.044934, -1.998050)         ***
+## 4             2-3 11044058 8.742e-05     (0.2600649, 3.1589815)         ***
+## 5             2-4  1802280    0.1077   (-4.2850588,  0.9970885)            
+## 6             3-4  1165645 0.0004144     (-6.587050, -0.946052)          **</code></pre>
+<p>The comparisons that are statistically significant are generations 1 and 2, generations 1 and 4, generations 2 and 3, and finally generations 3 and 4. The comparison</p>
+<p>** Valence **</p>
+<pre class="r"><code>valence.pairs &lt;- data.frame(Pair = c(&quot;1-2&quot;, &quot;1-3&quot;, &quot;1-4&quot;,
+                                        &quot;2-3&quot;, &quot;2-4&quot;, &quot;3-4&quot;),
+                               W = c(6145471, 4319974, 778713,
+                                     10865590, 1958912, 1294594),
+                               pval = c(&quot;1.031e-13&quot;, &quot;&lt; 2.2e-16&quot;, &quot;1.213e-10&quot;,
+                                        &quot;0.01137&quot;, &quot;0.05243&quot;, &quot;0.5102&quot;),
+                               ci = c(&quot;(0.02893193, 0.06002026)&quot;, &quot;(0.04198552, 0.07405643)&quot;, &quot;(0.03800416, 0.09000625)&quot;,
+                                      &quot;(-0.0009727786,  0.0240385187)&quot;, &quot;(-0.006001465,  0.041033561)&quot;, &quot;(-0.01798393,  0.02894915)&quot;),
+                               sig = c(&quot;***&quot;,&quot;***&quot;,&quot;***&quot;,
+                                       &quot;*&quot;, &quot; &quot;, &quot; &quot;))
+colnames(valence.pairs) &lt;- c(&quot;Generation Pair&quot;, &quot;W&quot;, &quot;P-Value&quot;, &quot;99.17% Confidence Interval&quot;, &quot;Significant&quot;)
+valence.pairs</code></pre>
+<pre><code>##   Generation Pair        W   P-Value     99.17% Confidence Interval Significant
+## 1             1-2  6145471 1.031e-13       (0.02893193, 0.06002026)         ***
+## 2             1-3  4319974 &lt; 2.2e-16       (0.04198552, 0.07405643)         ***
+## 3             1-4   778713 1.213e-10       (0.03800416, 0.09000625)         ***
+## 4             2-3 10865590   0.01137 (-0.0009727786,  0.0240385187)           *
+## 5             2-4  1958912   0.05243   (-0.006001465,  0.041033561)            
+## 6             3-4  1294594    0.5102     (-0.01798393,  0.02894915)</code></pre>
+<p>Only pairwise comparisons involving the first generation are statistically significant which provide sufficient evidence to reject the null hypothesis and conclude that the first generation's median valence score is significantly different in comparison to generations 2, 3, and 4. With 99.17% confidence the median valence score of the first generation is between 0.029 - 0.060 greater than the second generation, 0.042 to 0.074 units greater than the third generation and 0.038 to 0.09 units greater than the 4th generation. Overall, the music released by the first generation conveys more 'musical positiveness' than all generations after it. One theory for this could be that South Korea's IMF financial crisis occurred in 1997 during the first generation, so the music being released might have served the purpose of cheering up the public.</p>
 <div id="popularity-difference-by-generations" class="section level3">
 <h3>Popularity Difference by Generations</h3>
 <p>All four gens</p>
@@ -1157,117 +1428,279 @@ gen4 &lt;- filter(data, ArtistGen == 4)
 <pre><code>wilcox.test(oldgen$valence, newgen$valence, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
 </div>
 </div>
-<div id="hypothesis-comparing-malefemalecoed-kpop-artists" class="section level1">
-<h1>Hypothesis comparing male/female/coed kpop artists</h1>
+</div>
+<div id="hypothesis-comparing-malefemale-kpop-artists" class="section level1">
+<h1>Hypothesis comparing male/female kpop artists</h1>
+<p>There are three categories for artist gender: Male, Female, and Coed. Coed refers to a group that has a mix of Male and Female artists. Songs by Male artists make up 59.6% of the data, Female artists make up 39%, and Coed groups only make up 1.4% of the data. While the non parametric analysis used in this section can be done with unequal sample sizes, the sample sizes must be large enough. In this case, the number of songs released by a Coed group is just 170, which is too small to be comopared to groups with a sample size in the thousands. It would be ideal to have sample sizes that are at least 500 observations or more. For this reason, this section will only make comparisons on the audio features between Male and Female artists.</p>
 <pre class="r"><code>#coed &lt;- filter(data, ArtistGender == &quot;coed&quot;)
-female &lt;- filter(data, ArtistGender == &quot;female&quot;)
-male &lt;- filter(data, ArtistGender == &quot;male&quot;)</code></pre>
+female &lt;- filter(data, ArtistGender == &quot;female&quot;) # x 
+male &lt;- filter(data, ArtistGender == &quot;male&quot;) # y</code></pre>
+<p>Hypothesis is as follows,</p>
+<p><span class="math display">\[
+H_0 : \theta_x = \theta_y
+\\
+H_1 : \theta_x \neq \theta_y
+\]</span></p>
+<p>which can alternatively be written: <span class="math display">\[
+H_0 : \theta_x - \theta_y = 0
+\\
+H_1 : \theta_x - \theta_y \neq 0
+\]</span></p>
+<p>Where <span class="math inline">\(x_i\)</span> are the female artist observations and <span class="math inline">\(y_i\)</span> are the male artist observations. The median is the statistic that completely characterizes the population for female and male artists respectfully.</p>
+<p>Where <span class="math inline">\(\theta_x\)</span> and <span class="math inline">\(\theta_y\)</span> represent the population median of female artist audio features and male artists' audio features, respectfully.</p>
+<p>This hypothesis test is conducted for each of the audio features separately. The 95% Confidence intervals are also calculated in order to investigate the estimated differences that exist in the group medians. If 0 is contained within the interval then this is further support for the lack of evidence for rejecting the null. In other words, if 0 is contained in the 95% confidence interval, the male and female medians of the audio feature being analyzed are not significantly different from one another.</p>
+<div id="gender-results" class="section level2">
+<h2>Gender Results</h2>
+<p>&quot;Signif. codes: 0 '<em><strong>' 0.001 '</strong>' 0.01 '</em>' 0.05 '.' 0.1 ' ' 1&quot;</p>
+<pre class="r"><code>gender.results &lt;- data.frame(AudioFeature &lt;- c(&quot;Popularity&quot;, &quot;Duration&quot;, &quot;Acousticness&quot;, &quot;Danceability&quot;,
+                                            &quot;Energy&quot;, &quot;Instrumentalness&quot;, &quot;Speechiness&quot;, &quot;Loudness&quot;,
+                                            &quot;Tempo&quot;, &quot;Valence&quot;),
+                          Stat &lt;- c(17269160, 15023888, 18778150, 18947920,
+                                    17019986, 19834072, 15815847, 19152022,
+                                    17524256, 18084946),
+                          Pval &lt;- c(&quot;0.00584&quot;, &quot;&lt; 2.2e-16&quot;, &quot;&lt; 2.2e-16&quot;, &quot;&lt; 2.2e-16&quot;,
+                                    &quot;0.1656&quot;, &quot;&lt; 2.2e-16&quot;, &quot;1.674e-07&quot;, &quot;&lt; 2.2e-16&quot;,
+                                    &quot;3.205e-05&quot;, &quot;4.475e-13&quot;),
+                          CI &lt;- c(&quot;(6.619757e-05, 1.999983)&quot;, &quot;(-5.841980, -3.863938)&quot;, &quot;(0.01747208, 0.02615184)&quot;, &quot;(0.02104514, 0.02903244)&quot;,
+                                  &quot;(-0.001047909, 0.008038362)&quot;, &quot;(5.152227e-05 2.934808e-05)&quot;, &quot;(-0.003534776 -0.001553387)&quot;, &quot;(0.364007 0.491073)&quot;,
+                                  &quot;(0.9780129, 2.9559491)&quot;, &quot;(0.02201195, 0.03899812)&quot;),
+                          Significant &lt;- c(&quot;***&quot;, &quot;***&quot;, &quot;***&quot;, &quot;***&quot;, 
+                                           &quot; &quot;, &quot;***&quot;, &quot;***&quot;, &quot;***&quot;,
+                                           &quot;***&quot;, &quot;***&quot;))
+colnames(gender.results) &lt;- c(&quot;Audio Feature&quot;, &quot;W&quot;, &quot;P-Value&quot;, &quot;95% Confidence Interval&quot;, &quot;Significant&quot;)
+gender.results</code></pre>
+<pre><code>##       Audio Feature        W   P-Value     95% Confidence Interval Significant
+## 1        Popularity 17269160   0.00584    (6.619757e-05, 1.999983)         ***
+## 2          Duration 15023888 &lt; 2.2e-16      (-5.841980, -3.863938)         ***
+## 3      Acousticness 18778150 &lt; 2.2e-16    (0.01747208, 0.02615184)         ***
+## 4      Danceability 18947920 &lt; 2.2e-16    (0.02104514, 0.02903244)         ***
+## 5            Energy 17019986    0.1656 (-0.001047909, 0.008038362)            
+## 6  Instrumentalness 19834072 &lt; 2.2e-16 (5.152227e-05 2.934808e-05)         ***
+## 7       Speechiness 15815847 1.674e-07 (-0.003534776 -0.001553387)         ***
+## 8          Loudness 19152022 &lt; 2.2e-16         (0.364007 0.491073)         ***
+## 9             Tempo 17524256 3.205e-05      (0.9780129, 2.9559491)         ***
+## 10          Valence 18084946 4.475e-13    (0.02201195, 0.03899812)         ***</code></pre>
+<p>The differences in audio feature medians between songs produced by female artists and those produced by male artists are statistically for all features with the exception of Energy. This means that Male and Female artists produce music with a similar median level for Energy.</p>
+<p>The features in which the female artists have a significantly higher median in audio feature are Populairty, Acousticness, Danceability, Instrumentalness, Loudness, Tempo and Valence. Whereas, for the features of Duration, Energy, and Speechiness, the male artists have a significantly higher median for these measurements on average.</p>
+<p>However, the estimated interval of difference for these features are small in the context of the range for each feature. For example, there is 95% confidence that the popularity score of songs produced by Female artists are between 0.0000662 to 1.99998 units greater than the popularity scores of the Male artists. While the difference is significant, when considering the fact that the popularity score ranges from 0-100, an upper limit difference of being 2 popularity units greater than the male artists is not impactful in context.</p>
+<p>Overall, we can conclude that while there exist significant differences in the median measurements for the audio features of songs made by Male and Female artists, the significant differences, in context are minimal.</p>
 <div id="popularity-difference-by-artist-gender" class="section level3">
 <h3>Popularity Difference by Artist Gender</h3>
-<pre class="r"><code>wilcox.test(female$popularity, male$popularity, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(female$popularity, male$popularity, paired = FALSE, alternative = &quot;two.sided&quot;,conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  female$popularity and male$popularity
 ## W = 17269160, p-value = 0.00584
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  6.619757e-05 1.999983e+00
+## sample estimates:
+## difference in location 
+##              0.9999864</code></pre>
 </div>
 <div id="duration-difference-by-artist-gender" class="section level3">
 <h3>Duration Difference by Artist Gender</h3>
-<pre class="r"><code>wilcox.test(female$duration, male$duration, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(female$duration, male$duration, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  female$duration and male$duration
 ## W = 15023888, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  -5.841980 -3.863938
+## sample estimates:
+## difference in location 
+##              -4.853031</code></pre>
 </div>
 <div id="acousticness-difference-by-artist-gender" class="section level3">
 <h3>Acousticness Difference by Artist Gender</h3>
-<pre class="r"><code>wilcox.test(female$acousticness, male$acousticness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(female$acousticness, male$acousticness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  female$acousticness and male$acousticness
 ## W = 18778150, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  0.01747208 0.02615184
+## sample estimates:
+## difference in location 
+##             0.02183668</code></pre>
 </div>
 <div id="danceability-difference-by-artist-gender" class="section level3">
 <h3>Danceability Difference by Artist Gender</h3>
-<pre class="r"><code>wilcox.test(female$danceability, male$danceability, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(female$danceability, male$danceability, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  female$danceability and male$danceability
 ## W = 18947920, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  0.02104514 0.02903244
+## sample estimates:
+## difference in location 
+##             0.02504635</code></pre>
 </div>
 <div id="energy-difference-by-artist-gender" class="section level3">
 <h3>Energy Difference by Artist Gender</h3>
-<pre class="r"><code>wilcox.test(female$energy, male$energy, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(female$energy, male$energy, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  female$energy and male$energy
 ## W = 17019986, p-value = 0.1656
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  -0.001047909  0.008038362
+## sample estimates:
+## difference in location 
+##            0.003048927</code></pre>
 </div>
 <div id="instrumentalness-difference-by-artist-gender" class="section level3">
 <h3>Instrumentalness Difference by Artist Gender</h3>
-<pre class="r"><code>wilcox.test(female$instrumentalness, male$instrumentalness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(female$instrumentalness, male$instrumentalness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  female$instrumentalness and male$instrumentalness
 ## W = 19834072, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  5.152227e-05 2.934808e-05
+## sample estimates:
+## difference in location 
+##           4.716461e-05</code></pre>
 </div>
 <div id="speechiness-difference-by-artist-gender" class="section level3">
 <h3>Speechiness Difference by Artist Gender</h3>
-<pre class="r"><code>wilcox.test(female$speechiness, male$speechiness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(female$speechiness, male$speechiness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  female$speechiness and male$speechiness
 ## W = 15815847, p-value = 1.674e-07
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  -0.003534776 -0.001553387
+## sample estimates:
+## difference in location 
+##           -0.002575182</code></pre>
 </div>
 <div id="loudness-difference-by-artist-gender" class="section level3">
 <h3>Loudness Difference by Artist Gender</h3>
-<pre class="r"><code>wilcox.test(female$loudness, male$loudness, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(female$loudness, male$loudness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  female$loudness and male$loudness
 ## W = 19152022, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  0.364007 0.491073
+## sample estimates:
+## difference in location 
+##              0.4279586</code></pre>
 </div>
 <div id="tempo-difference-by-artist-gender" class="section level3">
 <h3>Tempo Difference by Artist Gender</h3>
-<pre class="r"><code>wilcox.test(female$tempo, male$tempo, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(female$tempo, male$tempo, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  female$tempo and male$tempo
 ## W = 17524256, p-value = 3.205e-05
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  0.9780129 2.9559491
+## sample estimates:
+## difference in location 
+##               1.980078</code></pre>
 </div>
 <div id="valence-difference-by-artist-gender" class="section level3">
 <h3>Valence Difference by Artist Gender</h3>
-<pre class="r"><code>wilcox.test(female$valence, male$valence, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre class="r"><code>wilcox.test(female$valence, male$valence, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  female$valence and male$valence
 ## W = 18084946, p-value = 4.475e-13
-## alternative hypothesis: true location shift is not equal to 0</code></pre>
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  0.02201195 0.03899812
+## sample estimates:
+## difference in location 
+##             0.03098741</code></pre>
+</div>
 </div>
 </div>
 <div id="hypothesis-testing-between-kpop-artist-types-group-or-solo" class="section level1">
 <h1>Hypothesis testing between Kpop Artist types (group or solo)</h1>
 <pre class="r"><code>## Reducing the groups
-group &lt;- filter(data, ArtistType == &quot;group&quot;)
-solo &lt;- filter(data, ArtistType == &quot;solo&quot;)</code></pre>
+group &lt;- filter(data, ArtistType == &quot;group&quot;) #x
+solo &lt;- filter(data, ArtistType == &quot;solo&quot;) #y</code></pre>
+<p>Hypothesis is as follows,</p>
+<p><span class="math inline">\(x_i\)</span> are the group artist observations and <span class="math inline">\(y_i\)</span> are the solo artist observations. The median is the statistic that completely characterizes the population for group and solo artists respectfully. Therefore, with the Wilcoxon Sum Rank test hypotheses are as follows:</p>
+<p><span class="math display">\[
+H_0 : \theta_x = \theta_y
+\\
+H_1 : \theta_x \neq \theta_y
+\]</span></p>
+<p>which can alternatively be written: <span class="math display">\[
+H_0 : \theta_x - \theta_y = 0
+\\
+H_1 : \theta_x - \theta_y \neq 0
+\]</span></p>
+<p>Where <span class="math inline">\(\theta_x\)</span> and <span class="math inline">\(\theta_y\)</span> represent the population median of group artist audio features and solo artists' audio features, respectfully.</p>
+<div id="artist-type-results" class="section level2">
+<h2>Artist Type Results</h2>
+<p>&quot;Signif. codes: 0 '<em><strong>' 0.001 '</strong>' 0.01 '</em>' 0.05 '.' 0.1 ' ' 1&quot;</p>
+<pre class="r"><code>type.results &lt;- data.frame(AudioFeature &lt;- c(&quot;Popularity&quot;, &quot;Duration&quot;, &quot;Acousticness&quot;, &quot;Danceability&quot;,
+                                            &quot;Energy&quot;, &quot;Instrumentalness&quot;, &quot;Speechiness&quot;, &quot;Loudness&quot;,
+                                            &quot;Tempo&quot;, &quot;Valence&quot;),
+                          Stat &lt;- c(9236738, 8820586, 7796532, 9778026,
+                                    12570686, 8729034, 10189583, 11851162,
+                                    10606602, 10771683),
+                          Pval &lt;- c(&quot;0.03005&quot;, &quot;2.21e-07&quot;, &quot;&lt; 2.2e-16&quot;, &quot;0.08042&quot;,
+                                    &quot;&lt; 2.2e-16&quot;, &quot;4.864e-14&quot;, &quot;2.282e-06&quot;, &quot;&lt; 2.2e-16&quot;,
+                                    &quot;9.587e-15&quot;, &quot;&lt; 2.2e-16&quot;),
+                          CI &lt;- c(&quot;(-1.999938, -5.320767e-05)&quot;, &quot;(-5.251045, -2.372974)&quot;, &quot;(-0.05300053, -0.03538317)&quot;, &quot;(-0.000967768,  0.011008498)&quot;,
+                                  &quot;(0.07899757, 0.09498637)&quot;, &quot;(-3.225573e-05, -4.457195e-05)&quot;, &quot;(0.001700548, 0.004244932)&quot;, &quot;(0.6829554, 0.8619889)&quot;,
+                                  &quot;(3.931052, 6.029029)&quot;, &quot;(0.04101360, 0.06407435)&quot;),
+                          Significant &lt;- c(&quot;*&quot;, &quot;***&quot;, &quot;***&quot;, &quot; &quot;,
+                                           &quot;***&quot;, &quot;***&quot;, &quot;***&quot;, &quot;***&quot;,
+                                           &quot;***&quot;, &quot;***&quot;))
+colnames(type.results) &lt;- c(&quot;Audio Feature&quot;, &quot;W&quot;, &quot;P-Value&quot;, &quot;95% Confidence Interval&quot;, &quot;Significant&quot;)
+type.results</code></pre>
+<pre><code>##       Audio Feature        W   P-Value        95% Confidence Interval
+## 1        Popularity  9236738   0.03005     (-1.999938, -5.320767e-05)
+## 2          Duration  8820586  2.21e-07         (-5.251045, -2.372974)
+## 3      Acousticness  7796532 &lt; 2.2e-16     (-0.05300053, -0.03538317)
+## 4      Danceability  9778026   0.08042   (-0.000967768,  0.011008498)
+## 5            Energy 12570686 &lt; 2.2e-16       (0.07899757, 0.09498637)
+## 6  Instrumentalness  8729034 4.864e-14 (-3.225573e-05, -4.457195e-05)
+## 7       Speechiness 10189583 2.282e-06     (0.001700548, 0.004244932)
+## 8          Loudness 11851162 &lt; 2.2e-16         (0.6829554, 0.8619889)
+## 9             Tempo 10606602 9.587e-15           (3.931052, 6.029029)
+## 10          Valence 10771683 &lt; 2.2e-16       (0.04101360, 0.06407435)
+##    Significant
+## 1            *
+## 2          ***
+## 3          ***
+## 4             
+## 5          ***
+## 6          ***
+## 7          ***
+## 8          ***
+## 9          ***
+## 10         ***</code></pre>
+<p>Judging significance with a level of <span class="math inline">\(\alpha = 0.05\)</span>, all of the differences between Group and Solo artist music are significant with the exception of Danceability. This is an interesting observation since the element of dancing and attractive choreography is an expected element of k-pop groups rather than soloists. Although the feature of having dancing involved in performances is separate from Spotify's danceability score, one would expect that the danceability of group kpop artists to be greater than that of the soloists since the music is purposefuly paired with choreography. However, the data shows that there is no significant difference in the median of the Danceability measure. Some rationale for this could be due to the fact that there are solosits who do release music that is paired with catchy dances such as Rain, Psy, and JYP. In addition, there are K-pop groups in this dataset that do not pair their songs with dances, mainly bands such as F.T. Island, CNBlue and Day6.</p>
+<p>The group songs have significantly greater medians than soloists for the features of Energy, Speechiness, Loudness, Tempo, and Valence. In Turn, soloists have significantly greader medians than the groups for the features of Popularity, Duration, Acousticness, and Instrumentalness. It is interesting that soloists have significantly higher median scores for Popularity despite only making up around 16% of songs in the dataset. Perhaps soloists that are included in the mainstream kpop market are significantly higher in popularity is because they either have had to achieve high success just to break into the high saturated market of kpop groups (Such as IU, BoA, or Rain), or they are soloists who are also active or were previously active in very popular K-pop groups (such as HyunA from 4Minute, Taeyeon from Girls Generation, CL from 2NE1, or Taeyang from BigBang).</p>
+<p>Similar to the observations of the estimated differences between the Male and Female artists, the estimated significant differences for some of the audio features between group and solo artists are not particularly large in context. The 95% Confidence Interval for the difference in median popularity can also be used as an example here. There is 95% confidence that the solo artists have a median popularity score that is between about 0.000053 and 1.99998 units greater than the group artists. But considering the range of popularity is between 0 and 100 this is a relatively small difference in context.</p>
+<p>However, unlike the male and female comparison, there do exist significant differences that are notable in context of the audio feature's range. The most notable one being Energy, where there is 95% confidence that the difference between the population medians is estimated to be about 0.079 to 0.095 units larger for group artists than solo artists. Considering the range for the Energy measure is 0 - 1, the upper limit difference of 0.095 is nearly a tenth of an increase in Energy. This is a more notable difference than say an upper limit difference of 0.01. This significant and notable difference in Energy could possibly be explained by the fact that solo artists are likely to have more ballad style songs in their own discography or will contribute ballad style songs to Korean television soundtracks. Furthermore, this higher level of detected energy could possibly be related to the trend that K-pop groups commonly pair their songs to dance for performances, which is not a common expectation for soloists. Other variables with a notable size of difference are Valence and Acousticness.</p>
+<p>Overall, one can differentiate the audio features between group and solo artists where groups are likely to have higher Energy, Speechiness, Loudness, Tempo and Valence measures where the differences of Energy and Valence are notable in context. Whereas, solo artists are likely to have higher Popularity, Duration, Acousticness and Instrumentalness measures where the difference in Acousticness is notable.</p>
 <div id="popularity-difference-by-artist-type" class="section level3">
 <h3>Popularity Difference by Artist Type</h3>
 <pre class="r"><code>wilcox.test(group$popularity, solo$popularity, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
@@ -1418,162 +1851,6 @@ solo &lt;- filter(data, ArtistType == &quot;solo&quot;)</code></pre>
 ## difference in location 
 ##             0.05298886</code></pre>
 </div>
-</div>
-<div id="hypothesis-testing-between-kpop-group-types-girl-group-vs-boy-group" class="section level1">
-<h1>Hypothesis testing between Kpop Group types (Girl Group vs Boy Group)</h1>
-<p>This grouping is used since the balance between categories of groups and soloists are VERY uneven. In the kpop industry groups are dominant in the genre.</p>
-<pre class="r"><code>## Reducing the groups
-boy.group &lt;- filter(data, ArtistType == &quot;group&quot; &amp; ArtistGender == &quot;male&quot;)
-girl.group &lt;- filter(data, ArtistType == &quot;group&quot; &amp; ArtistGender == &quot;female&quot;)</code></pre>
-<div id="popularity-difference-by-group-type" class="section level3">
-<h3>Popularity Difference by Group Type</h3>
-<pre class="r"><code>wilcox.test(boy.group$popularity, girl.group$popularity, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
-<pre><code>## 
-##  Wilcoxon rank sum test with continuity correction
-## 
-## data:  boy.group$popularity and girl.group$popularity
-## W = 10811556, p-value = 0.0006021
-## alternative hypothesis: true location shift is not equal to 0
-## 95 percent confidence interval:
-##  -1.9999586 -0.9999621
-## sample estimates:
-## difference in location 
-##              -1.000057</code></pre>
-</div>
-<div id="duration-difference-by-group-type" class="section level3">
-<h3>Duration Difference by Group Type</h3>
-<pre class="r"><code>wilcox.test(boy.group$duration, girl.group$duration, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
-<pre><code>## 
-##  Wilcoxon rank sum test with continuity correction
-## 
-## data:  boy.group$duration and girl.group$duration
-## W = 13174314, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0
-## 95 percent confidence interval:
-##  6.397087 8.503953
-## sample estimates:
-## difference in location 
-##               7.448076</code></pre>
-</div>
-<div id="acousticness-difference-by-group-type" class="section level3">
-<h3>Acousticness Difference by Group Type</h3>
-<pre class="r"><code>wilcox.test(boy.group$acousticness, girl.group$acousticness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
-<pre><code>## 
-##  Wilcoxon rank sum test with continuity correction
-## 
-## data:  boy.group$acousticness and girl.group$acousticness
-## W = 10248640, p-value = 4.57e-14
-## alternative hypothesis: true location shift is not equal to 0
-## 95 percent confidence interval:
-##  -0.01931052 -0.01079198
-## sample estimates:
-## difference in location 
-##            -0.01499702</code></pre>
-</div>
-<div id="danceability-difference-by-group-type" class="section level3">
-<h3>Danceability Difference by Group Type</h3>
-<pre class="r"><code>wilcox.test(boy.group$danceability, girl.group$danceability, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
-<pre><code>## 
-##  Wilcoxon rank sum test with continuity correction
-## 
-## data:  boy.group$danceability and girl.group$danceability
-## W = 9220526, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0
-## 95 percent confidence interval:
-##  -0.03801430 -0.02990294
-## sample estimates:
-## difference in location 
-##            -0.03403703</code></pre>
-</div>
-<div id="energy-difference-by-group-type" class="section level3">
-<h3>Energy Difference by Group Type</h3>
-<pre class="r"><code>wilcox.test(boy.group$energy, girl.group$energy, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
-<pre><code>## 
-##  Wilcoxon rank sum test with continuity correction
-## 
-## data:  boy.group$energy and girl.group$energy
-## W = 10402828, p-value = 1.391e-10
-## alternative hypothesis: true location shift is not equal to 0
-## 95 percent confidence interval:
-##  -0.02198319 -0.01194126
-## sample estimates:
-## difference in location 
-##            -0.01695425</code></pre>
-</div>
-<div id="instrumentalness-difference-by-group-type" class="section level3">
-<h3>Instrumentalness Difference by Group Type</h3>
-<pre class="r"><code>wilcox.test(boy.group$instrumentalness, girl.group$instrumentalness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
-<pre><code>## 
-##  Wilcoxon rank sum test with continuity correction
-## 
-## data:  boy.group$instrumentalness and girl.group$instrumentalness
-## W = 9228350, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0
-## 95 percent confidence interval:
-##  -1.518201e-05 -2.257189e-05
-## sample estimates:
-## difference in location 
-##          -2.074156e-05</code></pre>
-</div>
-<div id="speechiness-difference-by-group-type" class="section level3">
-<h3>Speechiness Difference by Group Type</h3>
-<pre class="r"><code>wilcox.test(boy.group$speechiness, girl.group$speechiness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
-<pre><code>## 
-##  Wilcoxon rank sum test with continuity correction
-## 
-## data:  boy.group$speechiness and girl.group$speechiness
-## W = 11578040, p-value = 0.02993
-## alternative hypothesis: true location shift is not equal to 0
-## 95 percent confidence interval:
-##  0.0001169902 0.0023156698
-## sample estimates:
-## difference in location 
-##            0.001232193</code></pre>
-</div>
-<div id="loudness-difference-by-group-type" class="section level3">
-<h3>Loudness Difference by Group Type</h3>
-<pre class="r"><code>wilcox.test(boy.group$loudness, girl.group$loudness, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
-<pre><code>## 
-##  Wilcoxon rank sum test with continuity correction
-## 
-## data:  boy.group$loudness and girl.group$loudness
-## W = 8889812, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0
-## 95 percent confidence interval:
-##  -0.6770170 -0.5419829
-## sample estimates:
-## difference in location 
-##             -0.6099901</code></pre>
-</div>
-<div id="tempo-difference-by-group-type" class="section level3">
-<h3>Tempo Difference by Group Type</h3>
-<pre class="r"><code>wilcox.test(boy.group$tempo, girl.group$tempo, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
-<pre><code>## 
-##  Wilcoxon rank sum test with continuity correction
-## 
-## data:  boy.group$tempo and girl.group$tempo
-## W = 10492012, p-value = 8.157e-09
-## alternative hypothesis: true location shift is not equal to 0
-## 95 percent confidence interval:
-##  -3.990048 -1.981069
-## sample estimates:
-## difference in location 
-##              -2.976016</code></pre>
-</div>
-<div id="valence-difference-by-group-type" class="section level3">
-<h3>Valence Difference by Group Type</h3>
-<pre class="r"><code>wilcox.test(boy.group$valence, girl.group$valence, paired = FALSE, alternative = &quot;two.sided&quot;, conf.int = TRUE, conf.level = 0.95)</code></pre>
-<pre><code>## 
-##  Wilcoxon rank sum test with continuity correction
-## 
-## data:  boy.group$valence and girl.group$valence
-## W = 9810082, p-value &lt; 2.2e-16
-## alternative hypothesis: true location shift is not equal to 0
-## 95 percent confidence interval:
-##  -0.05800508 -0.04002576
-## sample estimates:
-## difference in location 
-##            -0.04903355</code></pre>
 </div>
 </div>
 

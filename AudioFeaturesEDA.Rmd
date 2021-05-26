@@ -152,6 +152,77 @@ summary(data)
 ```
 
 
+# Data Distribution (content to include in thesis)
+
+The majority of the data have a skewed distribution for the audio features.
+
+Popularity, Acousticness, Instrumentalness, and Speechiness are all right skewed such that the majority of songs in the dataset have low values of these features. 
+```{r}
+library(gridExtra)
+grid.arrange(
+gghist(data$popularity, 'Popularity'),
+gghist(data$acousticness, 'Acousticness'),
+gghist(log(data$instrumentalness), 'Instrumentalness (log)'),
+gghist(log(data$speechiness), 'Speechiness (log)'), nrow = 2, ncol = 2)
+# ggsave("~/Desktop/KPOPThesis/Figures/EDA/rightskew_dist.png")
+# dev.off()
+```
+
+Since the entire discography for each artist was pulled for this dataset, it is reasonable that the majority of the data have low popularity scores. When an artist releases an album, only a handful of tracks will be popular, furthermore, due to the Popularity's time component, the majority of the data are older songs, therefore few people may be listening to those tracks in recent times. For acousticness, it is no surprise that a genre so heavily influenced by electronic dance and hip hop would tend to have low acousticness values. The same can be concluded on the observation of a right skewed distribution for instrumentalness. For instrumentalness, it is important to note that 8,841 rows of the data have an instrumentalness value of 0, so the distribution shown in figure ____ shows the non-zero values. 
+
+Meanwhile, for Features such as Energy and Loudness, the data tend to have higher values with few lower values creating a left skew.
+```{r}
+grid.arrange(gghist(data$energy, 'Energy'),
+             gghist(data$loudness, 'Loudness'), ncol=2, nrow = 1)
+# ggsave("~/Desktop/KPOPThesis/Figures/EDA/leftskey_dist.png")
+# dev.off()
+```
+
+Although the range for Loudness is between -60 to 0, almost all of the data have loudness measures between -10 to 0. As expected for music that tends to have high levels of Danceability, the energy levels are very high for K-pop songs with the typical value being around 0.85. K-pop is especially known for their upbeat, high energy tracks, so it is no surprise that the distribution has a high typical value with a tail to the left. 
+
+
+Otherwise, the Features of Duration, Danceability, Tempo and Valence are only lightly skewed, but are roughly normal around the center.
+```{r}
+grid.arrange(gghist(data$duration, 'Duration (seconds)'),
+             gghist(data$danceability, 'Danceability'),
+             gghist(data$tempo, 'Tempo'),
+             gghist(data$valence, 'Valence'), ncol=2, nrow = 2)
+# ggsave("~/Desktop/KPOPThesis/Figures/EDA/norm_hists.png")
+# dev.off()
+```
+
+For the duration distribution, the majority of tracks are between 2.5 - 5 minutes long. This is typical as most pop songs are 2-5 minutes. Upon investigation, there are two significantly long songs that have been removed. The first being Turbo's "non-stop summer dj remix" which is 22 minutes long. Likely a track used to play at clubs or party events. The second song being Orange Caramel's "magic - origin" at 13 minutes. The rest of the songs are less than 10 minutes long. For Danceability, it is understandable that we are observing the majority of the tracks to be a majority above 0.50. This could be explained by the fact that K-pop is well known for its focus on eye catching choreography and dance to accompany the song.
+
+
+Categorical Variables: 
+
+The dataset contains three categorical audio features of Mode, Time Signature and Key. For Time Signature, 97% of the songs in this data set are detected to have a time signature of 4 beats per measure. This dominance makes sense in the context of pop music as most of the songs don't adopt complex time signatures out of 4/4 or 3/4 time. Meanwhile, the proportion of musical mode are more fairly represented in the dataset where 38.9% of the songs are composed in a minor key and 61.1% are composed in a major key. In figure ___ you can see the distribution of songs per their musical key. There is a wide variety of songs composed in each key with the key of C being the most popular. In the context of music composition for the pop genre, the key of C for both major and minor modes is very standard in music and is frequently used. Surprisingly the Key of C#/D-flat is the second most frequent in the data set. For pop songs, the keys of C, D and G are the most typical, so it is surprising that one of those keys is not the second most frequent.  
+
+```{r}
+table(data$mode)/nrow(data)
+```
+
+
+```{r}
+table(data$time_signature)/nrow(data)
+```
+
+
+
+```{r}
+ggplot(data, aes(key)) +
+  geom_bar() +
+  theme_bw() +
+  scale_x_discrete(labels = pitch.class)+
+    xlab("Musical Key") + ylab("Frequency") +
+    ggtitle("Musical Key Frequency") 
+ggsave("~/Desktop/KPOPThesis/Figures/EDA/Key_barplot.png")
+dev.off()
+```
+
+
+
+
 ### Release Date
 release date distribution
 ```{r}
@@ -538,10 +609,26 @@ pitch.class
 
 key distribution (categorical 1-12)
 ```{r}
+# key.table <- data.frame(table(data$key))
+# colnames(key.table) <- c("Key", "Count")
+# ggplot(key.table, aes(Count, reorder(Key,-Count), fill = Key)) + 
+#   theme_bw() + theme(legend.position = "none") + 
+#   geom_point() + 
+#   scale_x_discrete(labels = pitch.class)
+# 
+# key.table <- within(key.table, 
+#                    Key <- factor(Key, 
+#                                       levels=names(sort(table(Key), 
+#                                                         decreasing=TRUE))))
+data$key <- factor(data$key, levels = c("0", "1", "2", "3", "4", "5", 
+                                        "6", "7", "8", "9", "10", "11"))
+
 ggplot(data, aes(key)) +
   geom_bar() +
-  theme_minimal() +
-  scale_x_discrete(labels = pitch.class)
+  theme_bw() +
+  scale_x_discrete(labels = pitch.class)+
+    xlab("Musical Key") + ylab("Frequency") +
+    ggtitle("Musical Key Frequency") 
 ```
 
 

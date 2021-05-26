@@ -14,6 +14,7 @@ library(ggthemes)
 library(stringr)
 library(scales) #for formatting with percentage signs
 library(nnet) #for multinomial regression
+deux.pal <- c("#19297C", "#A71D31")
 ```
 
 
@@ -35,61 +36,66 @@ mode0 <- data %>%
   dplyr::select(popularity, duration, acousticness, danceability, energy, 
          instrumentalness, loudness, speechiness, tempo, valence)
 ```
-The previous section aims to determine what kind of model we can build in order to predict which generation a kpop song is from based on audio/song features alone. However, could there be an alternative way to group the songs in the kpop genre based on audio/song features? Kpop Generations are grouped by the time and evolution of the kpop genre. By excluding time period, cultural trends, catchy visuals, dances, and only focusing on the audio features of the songs, what will the groups be defined by and how will it differ from the characteristics of the kpop generations observed in previous chapters?
 
-Before we can start clustering, we will perform dimension reduction which will reduce allow us to analyze the data on fewer dimensions yet retain as much accountability for the variation as possible.
+The previous section aims to determine what kind of model we can build in order to predict which generation a K-pop song is from based on audio features alone. However, could there be an alternative way to group the songs in the K-pop genre based on audio features? K-pop Generations are grouped by the time and evolution of the K-pop genre. By excluding time period, cultural trends, catchy visuals, dances, and only focusing on the audio features of the songs, how will the music be naturally clustered?
+
+Before we can start clustering, we will perform dimension reduction which will allow us to analyze the data on fewer dimensions yet retain as much accountability for the variation as possible. This dimension reduction will be performed using Principal Components Analysis (PCA). By conducting PCA, the dimension reduction can show if there exists a more efficient method of explaining the data set. 
 
 ## Dimension Reduction: PCA ##
 
-PCA is a dimension reduction technique that defines uncorrelated linear combinations that maximize the variance. Or in otherwords, PCA reduces the dimensions by with linear combinations that maximizes the information explained by the data. The assumptions made to perform PCA dimension reduction are as follows:      
+### Methodology
 
-* No assumption on the distribution: this is very good because the majority of the predictors have non-normal skewed distributions       
+PCA is a dimension reduction technique that defines uncorrelated linear combinations that maximize the variance. Or in otherwords, PCA reduces the dimensions by with linear combinations that maximize the information explained by the data. Supposing the predictor variables are represented by matrix $X$. There exists a spectral decomposition of $X'X$,
 
-* No indpendence to be assumed for elements in a random vector: aka colinearity can exist between variables (???)     
+$$
+X'X  = VDV^T
+$$
 
-* Assume independence between observations in the random sample: this is a fair assumption to make. Each song is composed independently from one another, for the most part.   
+where $D_{pxp} = diag[\lambda_1, ..,\lambda_p]$ with $\lambda_1 \geq \lambda_2 \geq ... \geq \lambda_p$, denoting the non-negative eigenvalues which are also known as the principal values of $X'X$
 
-* most appropriate for continuous data: this could be a potential issue since there are categorical variables such as key, mode, time signature. Because of this, we will be analyzing the dimension reduction separately for those with a minor mode versus those with major mode, treating the two divisions of the category as separate groups. Time signature will be removed from the analysis since 97% of the songs are detected as being in 4/4 time. Key signature will also be removed as the integer values 0-11 represent a classification into a musical key where the distance between each are not equal. 
+The columns, of $V$, $v_j's$ are the principal component direction, or PCA loading of $X$. Such that the first principal component direction $v_1$ is associated with the largest eigenvalue, the second principal component direction $v_2$ corresponds to the second largest eigenvalue and so on.
+
+Therefore, $z_j = Xv_j$ is known as the $j^{th}$ principal component of X such that:
+$$
+z_j = Xv_j = (x_1, x_2, ..., x_k)\begin{pmatrix} v_{j1} \\ v_{j2} \\ ⋮ \\ v_{jk} \end{pmatrix} = v_{j1}x_1 + v_{j2}x_2 + ... + v_{jk}x_k
+
+$$
+
+Considering $Z = (z_1, z_2, ..., z_p)$. Then the above can be denoted by $Z=XV$ in vector notation.
+
+We can interpret this linear combination of loadings as the first principal component, $z_1$ has the largest sample variance for all the linear combinations of the columns of $X$. The $2^{nd}$ principal component $z_2$ is orthogonal to the first principal component and has the second highest sample variance. This interpretation is generalized as, the $j^{th}$ principal component $z_j$ is orthogonal to the first (j - 1) principal components and account for the $j^{th}$ highest sample variance.
+
+After reducing the dimension to these linear combinations of the weighted predictors, we can use them to perform clustering using the K-means clustering algorithm. The outline of the K-means algorithm is as follows:
+
+* Choose a pre-specified $K$ number of clusters
+
+* Centroids are initialized by randomly assigneing each sample to a cluster from 1 to $K$.
+
+* Compute the Euclidean distance between all points and the centroids, where the euclidean distance is $d_ij = \sqrt {(x_{i1} - x_{j1})^2 + (x_{i2} - x_{j2})^2 + ... + (x_{ip} - x_{jp})^2}$
+
+* Assign each point to the group of its closest center
+
+* Centroids for each cluster are redefined by calculating the average of all the samples in that cluster.
+
+* Iterate through steps 3 - 5 until the centroid is stabilized.
+
+
+
+### Data Preparation
+To perform PCA, assumptions of independence between observations in the random sample must be met. For this data set, each song is composed independently from one another. Furthermore, any duplicates in songs have been reduced as much as possible. 
+
+Another assumption that must be met is that PCA must be performed on continuous data. This is an issue with some of the variables in the data set. There are categorical variables such as key, mode, and time signature. In order to eliminate the presence of the categorical variables, time signature will be removed from the analysis since 97\% of the songs are detected as being in 4/4 time. Key signature will also be removed as the integer values 0-11 represent a classification into a musical key where the distance between each are not equal. However, the categorical variable of mode will be used to create two divisions of the entire data set into songs with a minor mode versus those with major mode. Therefore, PCA will be performed on the songs composed in minor mode (mode = 0) separately from the songs that are composed in a major mode (mode = 1)   
+
+Unlike many common methods of statistical analysis, no assumptions need to be made on the underlying distribution of the variables. This is good for the this data set as many of the distributions for the predictor variables are skewed. Another benefit of preforming dimension reduction with PCA is that no independence between predictor variables needs to be assumed since the principal components create orthogonal linear combinations of the predictor variables.
+
+The predictor variables used for principal components analysis are: Popularity, Duration, Acousticness, Danceability, Energy, Instrumentalness, Loudness, Speechiness, Tempo, and Valence.
 
 #### PCA for Major mode (mode = 1)
 
 standardized PCA
 ```{r}
 pca1 <- prcomp(mode1, scale=TRUE)
-t(pca1$rotation)
-```
-
-For clearer interpretation, we can express the principal components as linear combinations of the standardized value of each variable. The first 6 PCs are expressed below rounded to 3 decimals: 
-
-$$
-\hat y_1 = -0.087z_{Popularity} + 0.235z_{Duration} + 0.427z_{Acousticness} - 0.330z_{Danceability} - 0.502z_{Energy} + 0.089z_{Instrumantalness} - 0.421z_{Loudness} - 0.178z_{speechiness} -0.066z_{tempo} - 0.415z_{valence} 
-\\
-\hat y_2 = -0.321z_{Popularity} - 0.124z_{Duration} + 0.024z_{Acousticness} + 0.521z_{Danceability} - 0.131z_{Energy} + 0.256z_{Instrumantalness} - 0.269z_{Loudness} - 0.196z_{speechiness} - 0.583z_{tempo} + 0.275z_{valence}
-\\
-\hat y_3 = 0.539z_{Popularity} - 0.570z_{Duration} + 0.221z_{Acousticness} + 0.105z_{Danceability} - 0.211z_{Energy} + 0.095z_{Instrumantalness} - 0.199z_{Loudness} + 0.478z_{speechiness} - 0.056z_{tempo} - 0.012z_{valence}
-\\
-\hat y_4 = -0.432z_{Popularity} - 0.146z_{Duration} - 0.131z_{Acousticness} - 0.148z_{Danceability} + 0.069z_{Energy} + 0.658z_{Instrumantalness} - 0.204z_{Loudness} + 0.274z_{speechiness} + 0.440z_{tempo} + 0.068z_{valence}
-\\
-\hat y_5 = 0.387z_{Popularity} - 0.147z_{Duration} - 0.128z_{Acousticness} - 0.180z_{Danceability} + 0.133z_{Energy} + 0.591z_{Instrumantalness}  + 0.287z_{Loudness} - 0.482z_{speechiness} - 0.202z_{tempo} - 0.240z_{valence}
-$$
-
-INTERPRETATION OF THE PCs:     
-
-* PC1: this Principal component has the variables of duration, acousticness, instrumentalness and key grouped in the positive direction against the variables of Popularity, danceability, energy, loudness, speechiness, tempo and valence which are contributing in the negative direction. The variables that have negative loading factors seem to be variables that are characteristics which would determine if a song is very upbeat and achieves mainstream appeal of pop music to be an exciting song that you can dance and move to. The factors with the greater loadings are Energy at -0.502, loudness at -0.421, valence at -0.415, and acousticness at 0.427.
-
-* PC2: Here, the positive loading factors are associated with standardized scores for acousticness, danceability, instrumentalness and valence. Where danceability has the greatest positive loading factor at 0.521, therefore accounting for the most variation for the positive loading factors. Whereas the negative direction loading values are coefficients for variables of Popularity, Duration, Energy Loudness, Speechiness, Tempo. For the negative direction standardized variables, Tempo has the largest negative coefficient of -0.583.
-
-* PC3: The positive standardized variables are Popularity, Speechiness, Acousticness, Danceability, and Instrumentalness. Popularity and Speechiness have the highest positive loading factors at 0.539 and 0.478, respectively. For the Negative direction, we have variables of PDuration, Energy, Tempo and Valence, where Duration has the most negative weight at -0.570.     
-
-* PC4: The variable that is weighted with the most variation in this component is instrumentalness with a loading factor of 0.658. Other variables weighted in the positive direction are Tempo, with the second largest loading factor at 0.440, followed by Speechiness, Energy and Valence. In the negative direction, we have popularity, duration, acousticness, danceability, and Loudness, which are more equally weighted than the variables with positive loading factors. The exception however, is popularity which has a substantial negative loading factor of -0.432.
-
-* PC5: The variable with the greatest weight in the positive direction is Instrumentalness with a loading factor of 0.591. The second largest positive factor of 0.387 is for the variable popularity, followed by Loudness and Energy. The variables in the negative direction are Speechiness, Valence, Tempo, Danceability, Duration and Acousticness. In the negative direction, the variable Speechiness holds the most influence with a loading factor of -0.482
-
-
-
-biplot
-```{r}
-biplot(pca1, scale = 0, xlabs=rep("·", nrow(mode1)))
+round(pca1$rotation, 3)
 ```
 
 
@@ -108,7 +114,6 @@ pca1.var.explained <- data.frame("Variance" = pca1.var,
 pca1.var.explained
 ```
 
-We can see that by the fifth principal component, 75.5% of the total variation in the data is explained. Therefore, it is reasonable to assume that these 5 principal components are sufficient for capturing the variation and explain the data of kpop songs. Furthermore, we can observe that the first principal component is the most influential by capturing 30% of information from the data. Whereas the remaining principal components explain lesser percentages of the data. This discrepancy in amount of variation explained is also displayed in the Scree plot.
 
 ```{r}
 pca1.var.explained %>%
@@ -118,7 +123,69 @@ pca1.var.explained %>%
   geom_line()+
   labs(title="Scree plot: PCA on scaled data") +
   theme_minimal()
+# ggsave("~/Desktop/KPOPThesis/Figures/PCA/scree_mode1.png")
+# dev.off()
 ```
+
+The "elbow" in this scree plot occurs at the 2nd principal component, however, less than 50% of the variation of the data is explained. Therefore, the number of optimal principal components will be judged by the cummulative proportion of variance explained. Ideally, it is best if the cummulative proportion explained is at least 70%. 
+The table for variance explained by the principal components shows that the first five principal component, explain 75.5% of the total variation in the data. Therefore, it is reasonable to assume that these 5 principal components are sufficient for capturing the variation and explain the data of kpop songs. Furthermore, from the table one observe that the first principal component is the most influential by capturing 30% of information from the data. Whereas the remaining principal components explain lesser percentages of the data. 
+
+This threshold is achieved by the first five principal components in which about 75.52% of the cummulative variation is explained. The first principal component explains most of the variation at 30.38%, the second explains 13.08%, the third 11.87%, the fourth 10.96% and the fifth explains just 9.23%.
+
+
+First 5 Principal Components:
+```{r}
+round(pca1$rotation[,1:5], 3)
+```
+
+The 0.40 threshold for interpreting the most influential loadings for the mode 0 principal components will also be used for interpreting the principal components of the mode 1 songs. The first five principal components and their loading factors are given in the table with the most influential loadings in bold.
+
+For clearer interpretation, we can express the principal components as linear combinations of the standardized value of each variable. The first 6 PCs are expressed below rounded to 3 decimals: 
+
+$$
+\hat y_1 = -0.087z_{Popularity} + 0.235z_{Duration} + 0.427z_{Acousticness} - 0.330z_{Danceability} - 0.502z_{Energy} + 0.089z_{Instrumantalness} - 0.421z_{Loudness} - 0.178z_{speechiness} -0.066z_{tempo} - 0.415z_{valence} 
+\\
+\hat y_2 = -0.321z_{Popularity} - 0.124z_{Duration} + 0.024z_{Acousticness} + 0.521z_{Danceability} - 0.131z_{Energy} + 0.256z_{Instrumantalness} - 0.269z_{Loudness} - 0.196z_{speechiness} - 0.583z_{tempo} + 0.275z_{valence}
+\\
+\hat y_3 = 0.539z_{Popularity} - 0.570z_{Duration} + 0.221z_{Acousticness} + 0.105z_{Danceability} - 0.211z_{Energy} + 0.095z_{Instrumantalness} - 0.199z_{Loudness} + 0.478z_{speechiness} - 0.056z_{tempo} - 0.012z_{valence}
+\\
+\hat y_4 = -0.432z_{Popularity} - 0.146z_{Duration} - 0.131z_{Acousticness} - 0.148z_{Danceability} + 0.069z_{Energy} + 0.658z_{Instrumantalness} - 0.204z_{Loudness} + 0.274z_{speechiness} + 0.440z_{tempo} + 0.068z_{valence}
+\\
+\hat y_5 = 0.387z_{Popularity} - 0.147z_{Duration} - 0.128z_{Acousticness} - 0.180z_{Danceability} + 0.133z_{Energy} + 0.591z_{Instrumantalness}  + 0.287z_{Loudness} - 0.482z_{speechiness} - 0.202z_{tempo} - 0.240z_{valence}
+$$
+
+INTERPRETATION OF THE PCs:     
+
+* PC1: The most influential loading factors for the first principal component are Energy ($\hat {e_{15}} = -0.503$), Loudness ($\hat {e_{17}} = -0.421$), and Valence ($\hat {e_{15}} = -0.415$) in the negative direction and Acousticness ($\hat {e_{13}} = 0.427$) in the positive direction. The grouping of Energy, Loudness and Valence implies that these features are correlated with one another. Since Acousticness is in the negative direction, this means that it has an inverse relationship with the other three variables.
+
+this Principal component has the variables of Duration, Acousticness, Instrumentalness and Key grouped in the positive direction against the variables of Popularity, danceability, energy, loudness, speechiness, tempo and valence which are contributing in the negative direction. The variables that have negative loading factors seem to be variables that are characteristics which would determine if a song is very upbeat and achieves mainstream appeal of pop music to be an exciting song that you can dance and move to. The factors with the greater loadings are Energy at -0.502, loudness at -0.421, valence at -0.415, and acousticness at 0.427.
+
+* PC2: The most influential loading factors for the second principal component are Danceability ($\hat {e_{24}} = 0.521$) in the positive direction and Tempo ($\hat {e_{24}} = -0.583$) in the negative direction. The interpretation of these loading factors would be the same as that observed for the Mode 0 songs. Hwoever the absolute values of the coefficients are more similar for this mode. 
+
+Here, the positive loading factors are associated with standardized scores for acousticness, danceability, instrumentalness and valence. Where danceability has the greatest positive loading factor at 0.521, therefore accounting for the most variation for the positive loading factors. Whereas the negative direction loading values are coefficients for variables of Popularity, Duration, Energy Loudness, Speechiness, Tempo. For the negative direction standardized variables, Tempo has the largest negative coefficient of -0.583. The information carried in the 2nd principal component can be defined by the Danceability, and Tempo.
+
+* PC3: The features with the largest absolute value for the coefficients of principal component three are Popularity ($\hat {e_{31}} = 0.539$) and Speechiness ($\hat {e_{38}} = 0.478$) in the positive direction. Unlike the Mode 0 songs, this principal component has the additional impact of Speechiness. Because both Speechiness and Popularity are in the positive direction for this component, this suggests that songs with high Popularity also have high Speechiness measures and vice versa. In the context of this data, the Speechiness would refer to music that contains rap. Therefore, songs that have more elements of rap would also expect to have higher measurements of Popularity. The Duration ($\hat {e_{32}} = -0.570$) feature has loadings in the negative direction. Therefore Duration has an inverse relationship with Popularity and Speechiness. 
+
+
+
+The positive standardized variables are Popularity, Speechiness, Acousticness, Danceability, and Instrumentalness. Popularity and Speechiness have the highest positive loading factors at 0.539 and 0.478, respectively. For the Negative direction, we have variables of PDuration, Energy, Tempo and Valence, where Duration has the most negative weight at -0.570. The information being explained in this component is attributed to Popularity, Duration and Speechiness.
+
+* PC4: For principal component four, the variable that is weighted with the most variation in this component is Instrumentalness with a loading factor of 0.658. Other variables weighted in the positive direction are Tempo, with the second largest loading factor at 0.440. Therefore, songs with higher Instrumentalness likely have a faster Tempo and vice versa. Popularity, however, has a substantial negative loading factor of -0.432. 
+
+* PC5: Finally, for principal component five, the variable with the greatest weight in the positive direction is Instrumentalness with a loading factor of 0.591. The other largest contributing loading factor is the variable Speechiness in the negative direction. This implies that songs with higher measurements of Instrumentalness have lower levels of Speechiness. Since Spotify's Instrumentalness feature measures the absence of vocal elements, it is logical that it has an inverse relationship with Speechiness as it detects elements of the voice in the context of spoken word.
+
+Overall, there are no clear generatlizations that can be made of what each principal component captures. There's some overlaps in which variables are contained in the principal components. Furthermore, the groupings do not have a particularly obvious theme or quality that distinguishes them from other audio feature predictors. Nonetheless, PCA seems effective in being able to retain around 70% of the variation in the data with just 5 dimensions.
+
+
+biplot
+```{r}
+#png(filename = "~/Desktop/KPOPThesis/Figures/PCA/biplot_mode1.png")
+biplot(pca1, scale = 0, xlabs=rep("·", nrow(mode1)))
+#dev.off()
+```
+
+
+
 
 
 
@@ -129,40 +196,7 @@ pca1.var.explained %>%
 standardized PCA
 ```{r}
 pca0 <- prcomp(mode0, scale=TRUE)
-t(pca0$rotation)
-```
-
-
-$$
-\hat y_1 = 0.043z_{Popularity} - 0.138z_{Duration} - 0.440z_{Acousticness} + 0.222z_{Danceability} + 0.556z_{Energy} - 0.115z_{Instrumantalness} + 0.476z_{Loudness} + 0.116z_{speechiness} + 0.107z_{tempo} + 0.403z_{valence} 
-\\
-\hat y_2 = -0.283z_{Popularity} - 0.102z_{Duration} -0.005z_{Acousticness} + 0.633z_{Danceability} - 0.146z_{Energy} + 0.120z_{Instrumantalness} - 0.253z_{Loudness} -0.264z_{speechiness} -0.448z_{tempo} + 0.371z_{valence}
-\\
-\hat y_3 = 0.654z_{Popularity} - 0.480z_{Duration} + 0.233z_{Acousticness} + 0.161z_{Danceability} - 0.164z_{Energy} - 0.342z_{Instrumantalness} + 0.131z_{Loudness} + 0.109z_{speechiness} - 0.295_{tempo} - 0.049z_{valence}
-\\
-\hat y_4 = -0.017z_{Popularity} - 0.549z_{Duration} - 0.009z_{Acousticness} - 0.046z_{Danceability} - 0.059z_{Energy} + 0.543z_{Instrumantalness} - 0.257z_{Loudness} + 0.469z_{speechiness} + 0.3172z_{tempo} + 0.100z_{valence}
-\\
-\hat y_5 = 0.307z_{Popularity} - 0.173z_{Duration} - 0.147z_{Acousticness} - 0.096z_{Danceability} + 0.094z_{Energy} + 0.572z_{Instrumantalness} + 0.193z_{Loudness} - 0.658z_{speechiness} - 0.047z_{tempo} - 0.192z_{valence} 
-$$
-
-
-INTERPRETATION OF THE PCs:     
-
-* PC1: The variables with positive direction coefficients are: Energy, Loudness, Valence, Danceability, Speechiness, Tempo, and Popularity. Energy, Loudness and Valence having the greatest weights, therefore accounting for the majority of the variation in the positive direction. The negative weighted variables are Acousticness, Duration and Instrumentalness where Acousticness has the highest weight. The variables with the positive direction weights are ones that an average person would assume to be associated with fun, upbeat, pop hits as opposed to the variables that are weighted in the negative direction. A fun observation to point out is the contrast to the songs with mode = 1. Notice how there are similar groupings of variables, but with the signs flipped. This shows that songs that are in a minor key (mode = 0) experience opposite direction for similar groupings as major and minor key songs tend to give off opposite moods/tones from one another musically. 
-
-* PC2: Variables weighted in the positive direction are: Danceability, Valence, Instrumentallness. Danceability being weighted the most heavily with a loading factor of 0.633. The variables weighted in the negative direction are: Tempo, Popularity, Loudness, Speechiness, Energy, Duraiton and Acousticness with Tempo holding the greatest negative weight at -0.448.
-
-* PC3: For this PC, Popularity is weighted very heavily in the positive direction with a loading factor of 0.654 compared to other positively weighted variables such as Acousticness, Danceability, Loudness, and Speechiness. In the negative direction there is Duration, Instrumentalness, Tempo, Energy and Valence, where all variables except valence are weighted fairly equally in the negative direction, except Valence which is weighted much smaller than the rest. 
-
-* PC4: In the negative direction, Duration is weighted the most at -0.549, followed by Loudness, at -0.257 and Energy with a loading factor of just -0.059 and. In the positive direction, Instrumentalness carreis the most weight with a loading factor of 0.543, followed by speechiness with a weight of 0.469, thne Tempo,  and Valence.
-
-* PC5: The variables with weights in the positive direction are the variables Instrumentalness, Popularity, Loudness, and Energy where instrumentalness has the greatest weight due to its loading factor 0.572. The variables weighted in the negative direction are Speechiness, Valence, Duration, Acousticness, Danceability, and Tempo. Speechiness is the most heavily weighted with a loading factor of -0.658.
-
-
-
-biplot
-```{r}
-biplot(pca0, scale = 0, xlabs=rep("·", nrow(mode0)))
+round(pca0$rotation, 3)
 ```
 
 
@@ -182,7 +216,7 @@ pca0.var.explained
 ```
 
 
-
+To determine the optimal number of principal components that capture the variation of the data, we will assess a scree plot using the Elbow Method. 
 ```{r}
 pca0.var.explained %>%
   ggplot(aes(x=PC,y=Proportion_Variation, group=1))+
@@ -191,12 +225,84 @@ pca0.var.explained %>%
   geom_line()+
   labs(title="Scree plot: PCA on scaled data") +
   theme_minimal()
+# ggsave("~/Desktop/KPOPThesis/Figures/PCA/scree_mode0.png")
+# dev.off()
+```
+
+There is no distinct "elbow" where the plot drops to a curve and then stabalizes. Therefore, the Elbow method is ineffective in determining how many Principal Components are the optimal number to explain the data set. It is generally a good rule of thumb that the Principal Components should explain at least 70% of the variation in the data. Therefore, this threshold will be used in determining how many Principal Components to keep. Looking at the table from earlier which provides the variance explained and cummulative variance explained, we can see that the first five principal components capture at least 70% of the variation since the cummulative proportion of variation explianed is about 71.7%, where the first principal component explains about 23.86% of the variation, the second explains 14.72%, the third explains 12.32%, the fourth 11.28% and the fifth explains 9.58% of the total variation.  
+
+
+First 5 principal components rounded to the thousandths.
+```{r}
+round(pca0$rotation[,1:5], 3)
+```
+
+When interpreting the principal components it is typical practice to emphasize the factors that exhibit strong correlation loadings whose absolute values are greater than 0.5. However, this dataset will be evaluated with a lower threshold of 0.4.
+
+Expressing the first 5 principal components as linear combinations.
+
+$$
+\hat y_1 = 0.043z_{Popularity} - 0.138z_{Duration} - 0.440z_{Acousticness} + 0.222z_{Danceability} + 0.556z_{Energy} - 0.115z_{Instrumantalness} + 0.476z_{Loudness} + 0.116z_{speechiness} + 0.107z_{tempo} + 0.403z_{valence} 
+\\
+\hat y_2 = -0.283z_{Popularity} - 0.102z_{Duration} -0.005z_{Acousticness} + 0.633z_{Danceability} - 0.146z_{Energy} + 0.120z_{Instrumantalness} - 0.253z_{Loudness} -0.264z_{speechiness} -0.448z_{tempo} + 0.371z_{valence}
+\\
+\hat y_3 = 0.654z_{Popularity} - 0.480z_{Duration} + 0.233z_{Acousticness} + 0.161z_{Danceability} - 0.164z_{Energy} - 0.342z_{Instrumantalness} + 0.131z_{Loudness} + 0.109z_{speechiness} - 0.295_{tempo} - 0.049z_{valence}
+\\
+\hat y_4 = -0.017z_{Popularity} - 0.549z_{Duration} - 0.009z_{Acousticness} - 0.046z_{Danceability} - 0.059z_{Energy} + 0.543z_{Instrumantalness} - 0.257z_{Loudness} + 0.469z_{speechiness} + 0.3172z_{tempo} + 0.100z_{valence}
+\\
+\hat y_5 = 0.307z_{Popularity} - 0.173z_{Duration} - 0.147z_{Acousticness} - 0.096z_{Danceability} + 0.094z_{Energy} + 0.572z_{Instrumantalness} + 0.193z_{Loudness} - 0.658z_{speechiness} - 0.047z_{tempo} - 0.192z_{valence} 
+$$
+
+
+INTERPRETATION OF THE PCs:     
+
+* PC1: The most influential loading factors for the first principal component are Energy ($\hat {e_{15}} = 0.556$), Loudness ($\hat {e_{17}} = 0.476$), and Valence ($\hat {e_{15}} = 0.403$) in the positive direction and Acousticness ($\hat {e_{13}} = -0.440$) in the negative direction. The grouping of Energy, Loudness and Valence implies that these features are correlated with one another. In this case, if the Loudness of a song is high, the Energy an Valence is likely to be high as well. Since Acousticness is in the negative direction, this means that it has an inverse relationship with the other three variables. 
+
+The variables with positive direction coefficients are: Energy, Loudness, Valence, Danceability, Speechiness, Tempo, and Popularity. Energy, Loudness and Valence having the greatest weights, therefore accounting for the majority of the variation in the positive direction. The negative weighted variables are Acousticness, Duration and Instrumentalness where Acousticness has the highest weight. The variables with the positive direction weights are ones that an average person would assume to be associated with fun, upbeat, pop hits as opposed to the variables that are weighted in the negative direction. 
+
+* PC2: The most significant loadings factors for principal component two are Danceability ($\hat {e_{24}} = 0.634$) in the positive direction and Tempo ($\hat {e_{24}} = -0.448$) in the negative direction. It is interesting that Danceability and Tempo have opposite contributions since one would assume that these features are related. Too slow of a song would mean less ability for dancing. However, this general assumption does not apply for this data. The rationale for why these two variables would hold opposite correlation effects to the component are unclear. 
+
+* PC3: For principal component three, Popularity ($\hat {e_{31}} = 0.634$) is weighted very heavily in the positive direction with a loading factor of 0.654 compared to other positively weighted variables. In the negative direction the most heavily weighted factor is Duration($\hat {e_{32}} = -0.480$). Other chapters have shown evidence to suggest the inverse relationship between the features of Popularity and Duration. This opposite effect on the principal component could perhaps be attributed to the confounding variable of time. Popularity largely relies on how recent the track is played by listeners which means that songs at later dates tend to higher popularity. While it has been observed that Duration has decreased over time. This in turn would make the relationship between Popularity and Duration also inverse. However, without the context of a possible confounding variable, one can easily interpret this to be that shorter songs are more popular. This is a very feasible reason as many people enjoy songs that typically last between 2.5 - 4.5 minutes.
+
+* PC4: The largest loading factors in the positive direction for principal component four are Instrumentalness ($\hat {e_{46}} = 0.543$) and Speechiness ($\hat {e_{48}} = 0.469$) in the positive direction. The largest negative loading factor is Duration ($\hat {e_{42}} = -0.549$). Since Instrumentalness is the absence of speech and Speechiness is the presence of speech, it is interesting that both would be correlated in the same direction. Both of these features are inversely related to duration. This means that when Instrumentalness and Speechiness are high, the song's duration tends to be shorter.
+
+* PC5: For principal component five, the greatest weight in the positive direction is Instrumentalness ($\hat {e_{56}} = 0.572$) and the greatest weight in the negative direction is Speechiness ($\hat {e_{58}} = -0.658$). For the Mode 0 songs it is interesting that Instrumentalness and Speechiness are accounted for in two separate principal components where the direction of the loading factors is different for each one. For this component the two have opposite signs indicating an inverse relationship for this component.
+
+
+
+biplot
+```{r}
+#png(filename = "~/Desktop/KPOPThesis/Figures/PCA/biplot_mode0.png")
+biplot(pca0, scale = 0, xlabs=rep("·", nrow(mode0)))
+#dev.off()
 ```
 
 
+### Comparing Mode 0 and Mode 1 PCA
 
+Overall, PCA appears effective in being able to retain around 70\% of the variation in the data with just 5 dimensions. There exists some similarity between modes of which variables are contained in eachof the components. However, the groupings do not have a particularly obvious theme to generate names or labels for each principal component. Rather, generalizations the characteristics of each principal components for both major and minor mode songs can be explained.
+
+For both musical modes, the first principal component groups the highest contributing variables in the same manner: Energy, Loudness and Valence versus Acousticness. However, the signs for the loadings on the variables are opposite between major and minor modes. The minor mode principal components have positive signed coefficients for variables of Energy, Loudness and Valence and negative Acousticness. Whereas, the signs are negative and positive for these respective variables for the major mode songs. This shows that the first principal component captures the differences between major and minor mode songs. 
+
+The second component characterizes the inverse relationship between Danceability and Tempo such that higher values of Danceability for a song correspond to the song having a lower value of tempo. The third component captures the inverse relationship of Popularity and Duration such that high Popularity scores corresponds to lower duration. Furthermore, for the major mode songs, the feature of Speechiness is a notable contributor which is grouped in the positive direction with Popularity.
+
+The fourth principal component of minor mode songs has a different group of influential loading factors than the fourth principal component of major mode songs. For minor mode songs, the contributions captured are the higher values of speechiness and instrumentalness correspond to lower vlaues of duration. Whereas, the component explains the inverse relationship such that higher values of Instrumentalness correspond to lower scores of Popularity. Overall, for both major and minor modes, the contribution of instrumentalness is explained.
+
+Finally, the fifth component for both major and minor mode songs explains the relationship that higher measures of Instrumentalness correspond with lower measures of Speechiness.
 
 ## Clustering on PCA: Kmeans clustering ##
+
+Now that the optimal principal components have been chosen and interpreted, the reduced dimensions can be used to cluster the data. This section will use K-means clustering to find optimal groupings within the data using the principal components of the audio features. 
+
+The K-means clustering algorithm requires that the number of clusters be specified before clustering occurs. Therefore, the silhouette method is used to identify the optimal number of clusters to model for the data. Both of the silhouette plots for Mode 0 and Mode 1 songs are shown side by side. The two plots conclude that 2 clusters is the optimal number for the data set. 
+
+[INSERT SILHOUETTE PLOTS SIDE BY SIDE]
+
+Now K-means clustering can be performed for two clusters on the first five principal components. The data points are plotted on a scatterplot with the first principal component on the x-axis and the second principal component on the y-axis.
+
+[INSERT KMEANS SCATTER PLOTS SIDE BY SIDE]
+
+Because the majority of variation explained by the first principal component had opposite feature effects between mode 0 and mode 1, clusters 1 and 2 are located on opposite sides of the plot. Since the data set is split into two populations based on mode, it is difficult to say what the optimal number of groups would be for the entire K-pop genre. But if one were to acknowledge the music into these two groupings of modes, in each musical mode there are two recognized clusters, rather than the commonly discussed 4 generation groups defined by the Spotify Audio Features.
  
 ### for songs where mode = 0
 Choosing number of groups (K) via elbow method
@@ -219,7 +325,9 @@ plot(k.vals, wss_values,
 silhouette method
 ```{r}
 library(factoextra)
+#png(filename = "~/Desktop/KPOPThesis/Figures/PCA/silhouett_mode0.png")
 fviz_nbclust(pc0_1to5, kmeans, method="silhouette")
+#dev.off()
 ```
 
 
@@ -229,8 +337,11 @@ set.seed(123)
 k <- kmeans(pc0_1to5, 2, iter.max = 1000, nstart = 25, algorithm = "Hartigan-Wong")
 pc0_1to5$clusters <- as.factor(k$cluster)
 ggplot(pc0_1to5, aes(PC1, PC2, color = clusters)) + geom_point() + 
-  labs(title = "K-means Cluster on Principal Components", x = "PC1", y = "PC2") +
+  scale_color_manual(values = c("1" = deux.pal[1], "2" = deux.pal[2])) +
+  labs(title = "Mode 1 K-means Cluster on Principal Components", x = "PC1", y = "PC2") +
   theme_bw()
+# ggsave("~/Desktop/KPOPThesis/Figures/PCA/kmeans_mode0.png")
+# dev.off()
 ```
 
 ### for songs where mode = 1
@@ -252,90 +363,31 @@ plot(k.vals, wss_values,
 ```
 
 silhouette method
+ref: https://towardsdatascience.com/silhouette-method-better-than-elbow-method-to-find-optimal-clusters-378d62ff6891
+
+"The silhouette value is a measure of how similar an object is to its own cluster (cohesion) compared to other clusters (separation). The value of the silhouette ranges between [1, -1], where a high value indicates that the object is well matched to its own cluster and poorly matched to neighboring clusters. "
+
 ```{r}
+#png(filename = "~/Desktop/KPOPThesis/Figures/PCA/silhouett_mode1.png")
 fviz_nbclust(pc1_1to5, kmeans, method="silhouette")
+#dev.off()
 ```
+
+
 
 ```{r}
 set.seed(123)
 k <- kmeans(pc1_1to5, 2, iter.max = 1000, nstart = 25, algorithm = "Hartigan-Wong")
 pc1_1to5$clusters <- as.factor(k$cluster)
 ggplot(pc1_1to5, aes(PC1, PC2, color = clusters)) + geom_point() + 
-  labs(title = "K-means Cluster on Principal Components", x = "PC1", y = "PC2") +
+  scale_color_manual(values = c("1" = deux.pal[1], "2" = deux.pal[2])) +
+  labs(title = "Mode 1 : K-means Cluster on Principal Components", x = "PC1", y = "PC2") +
   theme_bw()
-```
-
-## Heirarchical Clustering: Ward's method ##
-
-```{r}
-mode0.st <- scale(mode0)
-mode1.st <- scale(mode1)
-
+# ggsave("~/Desktop/KPOPThesis/Figures/PCA/kmeans_mode1.png")
+# dev.off()
 ```
 
 
-column means and covariates of songs with mode == 0
-```{r}
-colMeans(mode0.st);cov(mode0.st)
-```
-
-
-column means and covariates of songs with mode == 1
-```{r}
-colMeans(mode1.st);cov(mode1.st)
-```
-
-
-
-No issues of multicollinearity in either subset.
-
-### Ward's Method: Mode 0
-
-```{r}
-mode0.d <- dist(mode0.st, method = "euclidean")
-mode0_ward <- hclust(mode0.d, method = "ward.D2")
-plot(mode0_ward)
-```
-
-The largest distance from the first cluster can be observed on the left side where the height has a distance of about 30. Therefore, Ward's method groups the dataset into 3 clusters. 
-
-```{r}
-plot(mode0_ward)
-rect.hclust(mode0_ward, k=3, border="red")
-```
-
-
-We can see that there is one large cluster to the left, a very small amount of songs in the second cluster and about 1/5 of the songs in the 3rd cluster. Lets see exactly how many songs are assigned to each cluster:
-```{r}
-mode0.groups <- cutree(mode0_ward, k=3)
-table(mode0.groups)
-table(mode0.groups)/nrow(mode0)
-```
-
-
-
-### Ward's Method: Mode 1
-
-```{r}
-mode1.d <- dist(mode1.st, method = "euclidean")
-mode1_ward <- hclust(mode1.d, method = "ward.D2")
-plot(mode1_ward)
-```
-
-Similarly to the songs where mode = 0, Ward's heirarchical method clusters the music into 3 separate groups. In addition, the 2nd group is also extremely small compared to the rest of the music.
-
-
-```{r}
-plot(mode1_ward)
-rect.hclust(mode1_ward, k=3, border="red")
-```
-
-
-```{r}
-mode1.groups <- cutree(mode1_ward, k=3)
-table(mode1.groups)
-table(mode1.groups)/nrow(mode1)
-```
 
 
 

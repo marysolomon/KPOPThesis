@@ -75,6 +75,8 @@ ggplot(data, aes(x=popularity)) +
   ggtitle(paste("Popularity", "Distribution")) +
   theme_bw()
 summary(data$popularity)
+#ggsave("~/Desktop/KPOPThesis/Figures/Predicting Popularity/popularity_DensityPlot.png")
+#dev.off()
 ```
 
 ```{r}
@@ -99,10 +101,12 @@ ggplot(data, aes(x=popularity^0.5)) +
     lwd = 1, 
     col = 'red'
   ) +
-  xlab("Popularity") + ylab("Density") +
-  ggtitle(paste("Popularity", "Distribution")) +
+  xlab("sqrt(Popularity)") + ylab("Density") +
+  ggtitle(paste("sqrt(Popularity)", "Distribution")) +
   theme_bw()
 summary(data$popularity^0.5)
+# ggsave("~/Desktop/KPOPThesis/Figures/Predicting Popularity/sqrt_popularity_DensityPlot.png")
+# dev.off()
 ```
 
 
@@ -176,8 +180,10 @@ summary(ml0.sqrt)
 
 assumption checking and diagnostics
 ```{r}
+png(filename = "~/Desktop/KPOPThesis/Figures/Predicting Popularity/sqrt_popularity_diagnostics_mode0.png")
 par(mfrow = c(2,2))
 plot(ml0.sqrt)
+dev.off
 ```
 
 Interpretting the diagnostic plots: 
@@ -461,8 +467,11 @@ plot(ml1)
 ```
 
 ```{r}
+png(filename = "~/Desktop/KPOPThesis/Figures/Predicting Popularity/sqrt_popularity_diagnostics_mode1.png")
+par(mfrow = c(2,2))
 ml1.sqrt <- lm(popularity ~. , data = train1 %>% mutate(popularity = popularity^0.5))
 plot(ml1.sqrt)
+dev.off()
 ```
 
 
@@ -612,7 +621,7 @@ The Ridge Multiple Linear Regularized Regression model can be written:
 $$
 \hat {\sqrt {popularity}} = 10.348 - 0.010{Duration} + 0.170{Acousticness} + 0.050{Danceability} - 2.621{Energy} - 1.928{Instrumentalness} 
 \\
-+ 0.294{Key1} + 0.183Key2} + 0.399{Key3} - 0.049{Key4} + 0.179{Key5} + 0.189{Key6} + 0.260{Key7} 
++ 0.294{Key1} + 0.183{Key2} + 0.399{Key3} - 0.049{Key4} + 0.179{Key5} + 0.189{Key6} + 0.260{Key7} 
 \\ 
 + 0.273{Key8} + 0.249{Key9} + 0.052{Key10} + 0.361{Key11} + 0.356{Loudness} + 4.325{Speechiness}
 \\
@@ -794,8 +803,6 @@ $$
 log(\frac{\hat \pi}{1 - \hat \pi}) = 5.059 - 0.009{Duration} - 1.472{Acousticness} + 0.311{Danceability} - 3.723{Energy} -2.809{Instrumentalness}
 \\
 + 0.111{Key1} - 0.088{Key2} + 0.772{Key3} - 0.327{Key4} + 0.180{Key5} + 0.314{Key6} + 0.175{Key7} + 0.218{Key8} + 0.032{Key9}
-\\
-\\
 \\
 + 0.152{Key10} + 0.059{Key11} + 0.350{Loudness} + 3.453{Speechiness} - 0.001{Tempo} -1.639{Valence}
 $$
@@ -1039,7 +1046,7 @@ Ridge 10 Fold Cross Validation:
 $$
 log(\frac{\hat \pi}{1 - \hat \pi}) = 0.322 - 0.004{Duration} - 0.409{Acousticness} - 0.063{Danceability} - 0.607{Energy} - 0.839{Instrumentalness}
 \\
-0.013{Key1} - 0.091{Key2} + 0.401{Key3} - 0.053{Key4} + 0.054{Key5} + 0.142{Key6} + 0.037{Key7} + 0.030{Key8} - 0.042{Key9}
++ 0.013{Key1} - 0.091{Key2} + 0.401{Key3} - 0.053{Key4} + 0.054{Key5} + 0.142{Key6} + 0.037{Key7} + 0.030{Key8} - 0.042{Key9}
 \\
 + 0.034{Key10} - 0.034{Key11} + 0.084{Loudness} + 1.616{Speechiness} - 0.0003{Tempo} - 0.724{Valence}
 $$
@@ -1248,8 +1255,6 @@ $$
 log(\frac{\hat \pi}{1 - \hat \pi}) = 3.198 - 0.008{Duration} - 0.747{Acousticness} + 0.935{Danceability} - 3.457{Energy} - 12.325{Instrumentalness}
 \\
 + 0.134{Key1} + 0.070{Key2} + 0.586{Key3} - 0.159{Key4} + 0.031{Key5} + 0.052{Key6} + 0.174{Key7} + 0.344{Key8} + 0.275{Key9}
-\\
-\\
 \\
 - 0.385{Key10} - 0.071{Key11} + 0.330{Loudness} + 4.734{Speechiness} + 0.003{Tempo} - 1.386{Valence}
 $$
@@ -1494,8 +1499,6 @@ log(\frac{\hat \pi}{1 - \hat \pi}) = -1.031 - 0.003{Duration} - 0.103{Acousticne
 \\
 + 0.027{Key1} + 0.007{Key2} + 0.266{Key3} - 0.114{Key4} - 0.025{Key5} - 0.032{Key6} + 0.078{Key7} + 0.138{Key8} + 0.130{Key9}
 \\
-\\
-\\
 - 0.214{Key10} - 0.064{Key11} + 0.065{Loudness} + 2.178{Speechiness} + 0.002{Tempo} - 0.474{Valence}
 $$
 
@@ -1616,7 +1619,7 @@ enet1.model
 
 Elastic Net 10 Cross Validation
 $$
-log(\frac{\hat \pi}{1 - \hat \pi}) = -1.031 - 0.003{Duration} - 0.103{Acousticness} + 0.159{Deanceability} - 0.270{Energy} - 0.817{Instrumentalness}
+log(\frac{\hat \pi}{1 - \hat \pi}) = -1.031 - 0.003{Duration} - 0.103{Acousticness} + 0.159{Danceability} - 0.270{Energy} - 0.817{Instrumentalness}
 \\
 + 0.027{Key1} + 0.007{Key2} + 0.266{Key3} - 0.114{Key4} - 0.025{Key5} - 0.032{Key6} + 0.078{Key7} + 0.138{Key 8}
 \\ 
